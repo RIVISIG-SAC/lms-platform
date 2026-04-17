@@ -43,5 +43,7 @@ export async function loginAction(_prev: unknown, formData: FormData) {
     name: user.name,
   });
 
+  const next = formData.get("next") as string | null;
+  if (next && next.startsWith("/")) redirect(next);
   redirect(user.role === "ADMIN" ? "/admin" : "/student");
 }

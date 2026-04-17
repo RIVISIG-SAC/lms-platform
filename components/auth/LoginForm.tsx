@@ -5,7 +5,9 @@ import { loginAction } from "@/app/actions/auth";
 
 type ActionState = { error?: string } | null;
 
-export function LoginForm() {
+type Props = { next?: string };
+
+export function LoginForm({ next }: Props) {
   const [state, action, pending] = useActionState<ActionState, FormData>(
     loginAction,
     null
@@ -13,6 +15,7 @@ export function LoginForm() {
 
   return (
     <form action={action} className="space-y-4">
+      {next && <input type="hidden" name="next" value={next} />}
       <div>
         <label
           htmlFor="email"

@@ -4,7 +4,10 @@ export const metadata = {
   title: "Iniciar Sesión | Cursos Pro",
 };
 
-export default function LoginPage() {
+export default async function LoginPage(props: { searchParams: Promise<unknown> }) {
+  const sp = (await props.searchParams) as Record<string, string | undefined>;
+  const next = sp.next ?? undefined;
+
   return (
     <div className="w-full max-w-sm">
       <div className="text-center mb-8">
@@ -20,7 +23,7 @@ export default function LoginPage() {
         <h2 className="text-lg font-medium text-[var(--foreground)] mb-6">
           Iniciar Sesión
         </h2>
-        <LoginForm />
+        <LoginForm next={next} />
       </div>
     </div>
   );
