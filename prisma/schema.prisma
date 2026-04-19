@@ -24,36 +24,51 @@ enum CertificateStatus {
   REVOKED
 }
 
+enum CourseLevel {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+}
+
 model User {
-  id                String       @id @default(cuid())
-  name              String
-  email             String       @unique
-  passwordHash      String
-  role              Role         @default(STUDENT)
-  passwordExpiresAt DateTime
-  createdAt         DateTime     @default(now())
-  updatedAt         DateTime     @updatedAt
+  id                    String    @id @default(cuid())
+  name                  String
+  email                 String    @unique
+  passwordHash          String
+  role                  Role      @default(STUDENT)
+  passwordExpiresAt     DateTime
+  emailVerified         Boolean   @default(false)
+  verificationToken     String?   @unique
+  verificationTokenExp  DateTime?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
 
   enrollments Enrollment[]
 
   @@index([email])
+  @@index([verificationToken])
 }
 
 model Course {
-  id           String   @id @default(cuid())
-  title        String
-  description  String
-  price        Decimal  @db.Decimal(10, 2)
-  thumbnailUrl String?
-  published    Boolean  @default(false)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id            String       @id @default(cuid())
+  title         String
+  description   String
+  price         Decimal      @db.Decimal(10, 2)
+  thumbnailUrl  String?
+  category      String?
+  level         CourseLevel?
+  durationHours Int?
+  published     Boolean      @default(false)
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
 
   modules     Module[]
   enrollments Enrollment[]
   questions   Question[]
 
   @@index([published])
+  @@index([category])
+  @@index([level])
 }
 
 model Module {
@@ -80,8 +95,22 @@ model Chapter {
 
   module          Module            @relation(fields: [moduleId], references: [id], onDelete: Cascade)
   chapterProgress ChapterProgress[]
+  resources       ChapterResource[]
 
   @@index([moduleId, order])
+}
+
+model ChapterResource {
+  id        String   @id @default(cuid())
+  chapterId String
+  name      String
+  url       String
+  type      String   @default("PDF")
+  createdAt DateTime @default(now())
+
+  chapter Chapter @relation(fields: [chapterId], references: [id], onDelete: Cascade)
+
+  @@index([chapterId])
 }
 
 model Enrollment {
