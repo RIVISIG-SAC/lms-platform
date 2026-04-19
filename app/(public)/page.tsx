@@ -7,11 +7,12 @@ import { LandingCourseCard } from "@/components/landing/CourseCard";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
 import { cn } from "@/lib/utils";
+import { ArrowRight, ShieldCheck, Award, CheckCircle2, Phone, Mail } from "lucide-react";
 
 export const metadata = {
-  title: "Cursos Pro — Plataforma de Capacitación Profesional",
+  title: "RIVISIG Consultores — Capacitación en Sistemas de Gestión ISO",
   description:
-    "Capacitación certificada en sistemas de gestión, normas ISO y cumplimiento normativo.",
+    "Consultora especializada en implementación, certificación y soporte de Sistemas de Gestión. ISO 9001, 14001, 45001, 27001 y más.",
 };
 
 export default async function LandingPage() {
@@ -31,21 +32,22 @@ export default async function LandingPage() {
   return (
     <>
       {/* ── Hero ─────────────────────────────────────────── */}
-      <section className="bg-gradient-to-b from-white to-muted/40 border-b border-border">
+      <section className="bg-linear-to-b from-white to-muted/40 border-b border-border">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 lg:py-28 flex flex-col items-center text-center">
           <Badge variant="outline" className="mb-6 border-primary/30 text-primary bg-primary/5 text-xs font-medium px-3 py-1">
-            Capacitación certificada · ISO · Cumplimiento normativo
+            Implementación · Certificación · Soporte ISO
           </Badge>
 
           <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-foreground leading-tight tracking-tight max-w-3xl">
-            Certifica a tu equipo con{" "}
-            <span className="text-primary">cursos profesionales</span>
+            Solidez, confianza y{" "}
+            <span className="text-primary">respaldo real</span>{" "}
+            en sistemas de gestión
           </h1>
 
           <p className="mt-6 text-lg text-muted-foreground max-w-2xl leading-relaxed">
-            Capacitación formal en sistemas de gestión para empresas que requieren
-            cumplimiento normativo, preparación para auditorías y respaldo
-            documental ante autoridades.
+            Consultora especializada en implementación, certificación y soporte de Sistemas de Gestión
+            orientada a empresas que requieren cumplimiento normativo y respaldo ante auditorías,
+            clientes y autoridades.
           </p>
 
           <div className="mt-10 flex flex-col sm:flex-row gap-4 items-center">
@@ -64,10 +66,10 @@ export default async function LandingPage() {
           </div>
 
           {/* Stats */}
-          <div className="mt-16 flex flex-wrap justify-center gap-8 sm:gap-12">
+          <div className="mt-16 flex flex-wrap justify-center gap-8 sm:gap-16">
             {[
+              { value: "8+", label: "Normas ISO implementadas" },
               { value: "100%", label: "Cursos con certificado" },
-              { value: "180 días", label: "Acceso garantizado" },
               { value: "Verificable", label: "Código único por diploma" },
             ].map((s) => (
               <div key={s.label} className="text-center">
@@ -79,29 +81,54 @@ export default async function LandingPage() {
         </div>
       </section>
 
+      {/* ── Propuesta de valor breve ─────────────────────── */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+          {[
+            { icon: ShieldCheck, title: "Sistemas auditables", desc: "Implementamos sistemas que resisten auditorías externas y fiscalizaciones reales." },
+            { icon: Award, title: "Certificación garantizada", desc: "Acompañamiento total desde el diagnóstico hasta la auditoría de certificación." },
+            { icon: CheckCircle2, title: "Equipo capacitado", desc: "Formamos a tu equipo para operar el sistema con autonomía, sin dependencia externa." },
+          ].map(({ icon: Icon, title, desc }) => (
+            <div key={title} className="flex gap-4 items-start">
+              <div className="shrink-0 h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                <Icon className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-sm text-foreground mb-1">{title}</h3>
+                <p className="text-xs text-muted-foreground leading-relaxed">{desc}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
       {/* ── Cursos destacados ────────────────────────────── */}
+      <Separator />
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         <div className="flex items-end justify-between mb-8">
           <div>
+            <p className="text-xs font-semibold uppercase tracking-widest text-primary mb-2">
+              Plataforma de capacitación
+            </p>
             <h2 className="text-2xl sm:text-3xl font-bold text-foreground">
               Cursos disponibles
             </h2>
-            <p className="text-muted-foreground mt-1">
-              Contenido actualizado, evaluación incluida y certificado verificable
+            <p className="text-muted-foreground mt-1 text-sm">
+              Contenido actualizado, evaluación incluida y certificado verificable.
             </p>
           </div>
           {courses.length > 0 && (
             <Link
               href="/cursos"
-              className={cn(buttonVariants({ variant: "ghost" }), "hidden sm:flex text-primary")}
+              className={cn(buttonVariants({ variant: "ghost" }), "hidden sm:flex items-center gap-1 text-primary")}
             >
-              Ver todos →
+              Ver todos <ArrowRight className="h-4 w-4" />
             </Link>
           )}
         </div>
 
         {courses.length === 0 ? (
-          <div className="text-center py-20 text-muted-foreground">
+          <div className="text-center py-20 text-muted-foreground text-sm">
             Próximamente nuevos cursos disponibles.
           </div>
         ) : (
@@ -128,43 +155,31 @@ export default async function LandingPage() {
         )}
       </section>
 
-      {/* ── Por qué elegirnos ────────────────────────────── */}
-      <Separator />
-      <section className="bg-muted/30 py-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-2xl font-bold text-foreground text-center mb-12">
-            Diseñado para entornos corporativos y normativos
-          </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {[
-              { icon: "🏅", title: "Certificado verificable", desc: "Código único que cualquier auditor puede confirmar en línea." },
-              { icon: "📋", title: "Contenido normativo", desc: "Cursos alineados a ISO, FSSC, IATF y otros estándares internacionales." },
-              { icon: "🔒", title: "Acceso controlado", desc: "180 días de acceso y máximo 2 intentos para mantener la seriedad del proceso." },
-              { icon: "📊", title: "Seguimiento de progreso", desc: "Rastrea el avance de tu equipo en tiempo real desde el panel de control." },
-            ].map((f) => (
-              <div key={f.title} className="bg-white rounded-xl border border-border p-6 space-y-3">
-                <span className="text-3xl">{f.icon}</span>
-                <h3 className="font-semibold text-foreground">{f.title}</h3>
-                <p className="text-sm text-muted-foreground leading-relaxed">{f.desc}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
       {/* ── CTA final ────────────────────────────────────── */}
-      <section className="bg-primary text-primary-foreground py-16">
-        <div className="max-w-2xl mx-auto px-4 text-center space-y-5">
+      <section className="bg-foreground text-primary-foreground py-20">
+        <div className="max-w-2xl mx-auto px-4 text-center space-y-6">
           <h2 className="text-3xl font-bold">¿Listo para certificar a tu equipo?</h2>
           <p className="text-primary-foreground/80 text-lg">
-            Crea una cuenta, elige el curso y comienza hoy.
+            Crea una cuenta, elige el curso y comienza hoy. O contáctanos para una consultoría personalizada.
           </p>
-          <Link
-            href="/registro"
-            className={cn(buttonVariants({ variant: "secondary", size: "lg" }), "px-8 h-12 text-base font-semibold")}
-          >
-            Comenzar ahora
-          </Link>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Link
+              href="/registro"
+              className={cn(buttonVariants({ variant: "secondary", size: "lg" }), "px-8 h-12 text-base font-semibold")}
+            >
+              Comenzar ahora
+            </Link>
+          </div>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-5 pt-2 text-primary-foreground/70 text-sm">
+            <a href="tel:+51965772053" className="flex items-center gap-2 hover:text-primary-foreground transition-colors">
+              <Phone className="h-4 w-4" />
+              +51 965 772 053
+            </a>
+            <a href="mailto:info@rivisig.com" className="flex items-center gap-2 hover:text-primary-foreground transition-colors">
+              <Mail className="h-4 w-4" />
+              info@rivisig.com
+            </a>
+          </div>
         </div>
       </section>
     </>

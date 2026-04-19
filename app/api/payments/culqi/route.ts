@@ -35,6 +35,15 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Ya estás inscrito en este curso" }, { status: 409 });
   }
 
+  // Limpiar datos previos si se está re-inscribiendo tras reprobar
+  if (existing && ["FAILED", "EXPIRED"].includes(existing.status)) {
+    await prisma.$transaction([
+      prisma.examAttempt.deleteMany({ where: { enrollmentId: existing.id } }),
+      prisma.chapterProgress.deleteMany({ where: { enrollmentId: existing.id } }),
+      prisma.certificate.deleteMany({ where: { enrollmentId: existing.id } }),
+    ]);
+  }
+
   // Procesar cobro con Culqi
   let chargeId: string;
   try {

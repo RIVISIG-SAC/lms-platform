@@ -2,10 +2,11 @@
 
 import { redirect } from "next/navigation";
 import bcrypt from "bcryptjs";
+import crypto from "node:crypto";
 import { prisma } from "@/lib/prisma";
-import { createSession } from "@/lib/auth";
 import { registerSchema } from "@/lib/validations/auth";
 import { addDays } from "@/lib/utils";
+import { sendVerificationEmail } from "@/lib/email";
 
 export async function registerAction(_prev: unknown, formData: FormData) {
   const raw = {
@@ -33,24 +34,23 @@ export async function registerAction(_prev: unknown, formData: FormData) {
   }
 
   const passwordHash = await bcrypt.hash(password, 12);
+  const verificationToken = crypto.randomBytes(32).toString("hex");
+  const verificationTokenExp = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24h
 
-  const user = await prisma.user.create({
+  await prisma.user.create({
     data: {
       name,
       email,
       passwordHash,
       role: "STUDENT",
       passwordExpiresAt: addDays(new Date(), 90),
+      emailVerified: false,
+      verificationToken,
+      verificationTokenExp,
     },
   });
 
-  await createSession({
-    userId: user.id,
-    role: user.role,
-    email: user.email,
-    name: user.name,
-  });
+  await sendVerificationEmail(email, name, verificationToken);
 
-  const next = formData.get("next") as string | null;
-  redirect(next && next.startsWith("/") ? next : "/student");
+  redirect("/registro/verificar");
 }

@@ -1,12 +1,16 @@
 import { PrismaClient } from "@prisma/client";
-import { PrismaPg } from "@prisma/adapter-pg";
+import { PrismaNeon } from "@prisma/adapter-neon";
+import { neonConfig } from "@neondatabase/serverless";
+import ws from "ws";
+
+neonConfig.webSocketConstructor = ws;
 
 const globalForPrisma = globalThis as unknown as { prisma: PrismaClient };
 
 function createPrismaClient() {
-  const adapter = new PrismaPg({
-    connectionString: process.env.DATABASE_URL!,
-  });
+  const connectionString = process.env.DATABASE_URL || process.env.DIRECT_URL;
+  if (!connectionString) throw new Error("DATABASE_URL or DIRECT_URL must be set");
+  const adapter = new PrismaNeon({ connectionString });
   return new PrismaClient({
     adapter,
     log:

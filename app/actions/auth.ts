@@ -29,6 +29,12 @@ export async function loginAction(_prev: unknown, formData: FormData) {
     return { error: "Credenciales incorrectas." };
   }
 
+  if (!user.emailVerified) {
+    return {
+      error: "Debes verificar tu correo antes de iniciar sesión.",
+    };
+  }
+
   if (user.passwordExpiresAt < new Date()) {
     return {
       error:

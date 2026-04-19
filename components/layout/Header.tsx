@@ -1,5 +1,7 @@
 import { deleteSession } from "@/lib/auth";
 import { redirect } from "next/navigation";
+import { LogOut, User } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 type HeaderProps = {
   userName: string;
@@ -14,22 +16,36 @@ async function logout() {
 
 export function Header({ userName, userEmail }: HeaderProps) {
   return (
-    <header className="h-14 border-b border-[var(--border)] bg-[var(--card)] flex items-center justify-between px-6">
-      <div />
+    <header className="h-16 border-b border-border bg-card/50 backdrop-blur-md sticky top-0 z-10 flex items-center justify-between px-8">
       <div className="flex items-center gap-4">
-        <div className="text-right">
-          <p className="text-sm font-medium text-[var(--card-foreground)]">
-            {userName}
-          </p>
-          <p className="text-xs text-[var(--muted-foreground)]">{userEmail}</p>
+        {/* Placeholder for breadcrumbs or page title if needed */}
+      </div>
+      
+      <div className="flex items-center gap-6">
+        <div className="flex items-center gap-3 pr-4 border-r border-border">
+          <div className="text-right hidden sm:block">
+            <p className="text-sm font-semibold text-foreground leading-none mb-1">
+              {userName}
+            </p>
+            <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">
+              Administrador
+            </p>
+          </div>
+          <div className="size-9 rounded-full bg-accent flex items-center justify-center text-accent-foreground border border-border">
+            <User className="size-5" />
+          </div>
         </div>
+
         <form action={logout}>
-          <button
-            type="submit"
-            className="text-xs text-[var(--muted-foreground)] hover:text-[var(--destructive)] transition-colors px-3 py-1.5 rounded border border-[var(--border)] hover:border-[var(--destructive)]"
+          <Button 
+            type="submit" 
+            variant="ghost" 
+            size="sm" 
+            className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 gap-2 font-semibold"
           >
-            Cerrar sesión
-          </button>
+            <LogOut className="size-4" />
+            <span className="hidden md:inline">Cerrar sesión</span>
+          </Button>
         </form>
       </div>
     </header>

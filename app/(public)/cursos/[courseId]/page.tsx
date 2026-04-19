@@ -8,12 +8,13 @@ import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
 import { formatCurrency } from "@/lib/utils";
 import { BuyButton } from "@/components/landing/BuyButton";
+import { Award, ClipboardList, Lock, BarChart3, PlayCircle, BookOpen } from "lucide-react";
 
 export async function generateMetadata(props: { params: Promise<unknown> }) {
   const { courseId } = (await props.params) as { courseId: string };
   const course = await prisma.course.findUnique({ where: { id: courseId } });
   if (!course) return {};
-  return { title: `${course.title} — Cursos Pro`, description: course.description };
+  return { title: `${course.title} — RIVISIG Consultores`, description: course.description };
 }
 
 export default async function CourseDetailPage(props: { params: Promise<unknown> }) {
@@ -95,7 +96,7 @@ export default async function CourseDetailPage(props: { params: Promise<unknown>
                   <ul className="divide-y divide-border">
                     {mod.chapters.map((ch) => (
                       <li key={ch.id} className="px-4 py-2.5 text-sm text-muted-foreground flex items-center gap-2">
-                        <span className="text-primary/60">▷</span>
+                        <PlayCircle className="h-3.5 w-3.5 text-primary/50 shrink-0" />
                         {ch.title}
                       </li>
                     ))}
@@ -109,14 +110,14 @@ export default async function CourseDetailPage(props: { params: Promise<unknown>
           <Separator />
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {[
-              { icon: "🏅", text: "Certificado con código de verificación único" },
-              { icon: "📋", text: "Contenido alineado a normas ISO y estándares internacionales" },
-              { icon: "🔒", text: "Máximo 2 intentos para mantener la seriedad del proceso" },
-              { icon: "📊", text: "Progreso guardado automáticamente" },
-            ].map((item) => (
-              <div key={item.text} className="flex items-start gap-3">
-                <span className="text-2xl">{item.icon}</span>
-                <p className="text-sm text-muted-foreground leading-relaxed">{item.text}</p>
+              { icon: Award, text: "Certificado con código de verificación único" },
+              { icon: ClipboardList, text: "Contenido alineado a normas ISO y estándares internacionales" },
+              { icon: Lock, text: "Máximo 2 intentos para mantener la seriedad del proceso" },
+              { icon: BarChart3, text: "Progreso guardado automáticamente" },
+            ].map(({ icon: Icon, text }) => (
+              <div key={text} className="flex items-start gap-3">
+                <Icon className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+                <p className="text-sm text-muted-foreground leading-relaxed">{text}</p>
               </div>
             ))}
           </div>
@@ -134,7 +135,7 @@ export default async function CourseDetailPage(props: { params: Promise<unknown>
               />
             ) : (
               <div className="w-full aspect-video bg-gradient-to-br from-primary/80 to-primary flex items-center justify-center">
-                <span className="text-6xl opacity-20">📚</span>
+                <BookOpen className="h-14 w-14 text-white/20" />
               </div>
             )}
 

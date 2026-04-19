@@ -2,8 +2,8 @@ import { LandingCourseCard } from "@/components/landing/CourseCard";
 import { prisma } from "@/lib/prisma";
 
 export const metadata = {
-  title: "Cursos — Cursos Pro",
-  description: "Todos nuestros cursos de capacitación certificada.",
+  title: "Cursos — RIVISIG Consultores",
+  description: "Capacitación certificada en sistemas de gestión ISO y cumplimiento normativo.",
 };
 
 export default async function CursosPage() {
@@ -18,10 +18,13 @@ export default async function CursosPage() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-      <div className="mb-8">
+      <div className="mb-10">
+        <p className="text-xs font-semibold uppercase tracking-widest text-primary mb-2">
+          Plataforma de capacitación
+        </p>
         <h1 className="text-3xl font-bold text-foreground">Todos los cursos</h1>
-        <p className="text-muted-foreground mt-1">
-          Capacitación certificada en sistemas de gestión y cumplimiento normativo.
+        <p className="text-muted-foreground mt-1 text-sm">
+          Contenido actualizado, evaluación incluida y certificado verificable.
         </p>
       </div>
 

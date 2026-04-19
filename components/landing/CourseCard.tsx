@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { formatCurrency } from "@/lib/utils";
+import { BookOpen } from "lucide-react";
 
 type Props = {
   id: string;
@@ -28,7 +29,7 @@ export function LandingCourseCard({ id, title, description, price, thumbnailUrl,
             />
           ) : (
             <div className="w-full h-full bg-gradient-to-br from-primary/80 to-primary flex items-center justify-center">
-              <span className="text-5xl opacity-20 select-none">📚</span>
+              <BookOpen className="h-12 w-12 text-white/20" />
             </div>
           )}
         </div>
