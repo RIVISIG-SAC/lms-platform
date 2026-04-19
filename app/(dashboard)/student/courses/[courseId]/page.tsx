@@ -24,7 +24,10 @@ export default async function CoursePlayerPage({ params, searchParams }: Props) 
           include: {
             chapters: {
               orderBy: { order: "asc" },
-              select: { id: true, title: true, vimeoVideoId: true, content: true, order: true },
+              select: {
+                id: true, title: true, vimeoVideoId: true, content: true, order: true,
+                resources: { select: { id: true, name: true, url: true, type: true }, orderBy: { createdAt: "asc" } },
+              },
             },
           },
         },
@@ -111,6 +114,32 @@ export default async function CoursePlayerPage({ params, searchParams }: Props) 
             {activeChapter.content && (
               <div className="prose prose-sm max-w-none text-[var(--muted-foreground)] leading-relaxed whitespace-pre-wrap border-t border-[var(--border)] pt-4">
                 {activeChapter.content}
+              </div>
+            )}
+
+            {activeChapter.resources.length > 0 && (
+              <div className="border-t border-[var(--border)] pt-4 space-y-2">
+                <h3 className="text-sm font-semibold text-[var(--foreground)]">
+                  Recursos descargables
+                </h3>
+                <div className="flex flex-wrap gap-2">
+                  {activeChapter.resources.map((r) => (
+                    <a
+                      key={r.id}
+                      href={r.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      download
+                      className="inline-flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-md border border-[var(--border)] hover:bg-slate-50 transition-colors text-[var(--foreground)]"
+                    >
+                      <span className="text-base">
+                        {r.type === "PDF" ? "📄" : r.type === "PPTX" ? "📊" : r.type === "DOCX" ? "📝" : r.type === "XLSX" ? "📋" : "📎"}
+                      </span>
+                      <span>{r.name}</span>
+                      <span className="text-[10px] uppercase text-[var(--muted-foreground)] font-medium">{r.type}</span>
+                    </a>
+                  ))}
+                </div>
               </div>
             )}
           </div>

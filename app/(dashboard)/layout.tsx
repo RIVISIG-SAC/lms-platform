@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import { DashboardShell } from "@/components/layout/DashboardShell";
+import { Toaster } from "@/components/ui/sonner";
 
 export default async function DashboardLayout({
   children,
@@ -11,12 +12,15 @@ export default async function DashboardLayout({
   if (!session) redirect("/login");
 
   return (
-    <DashboardShell
-      role={session.role}
-      userName={session.name}
-      userEmail={session.email}
-    >
-      {children}
-    </DashboardShell>
+    <>
+      <DashboardShell
+        role={session.role}
+        userName={session.name}
+        userEmail={session.email}
+      >
+        {children}
+      </DashboardShell>
+      <Toaster position="bottom-right" richColors closeButton />
+    </>
   );
 }

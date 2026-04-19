@@ -1,6 +1,6 @@
-@import "tailwindcss";
-@import "tw-animate-css";
-@import "shadcn/tailwind.css";
+@import 'tailwindcss';
+@import 'tw-animate-css';
+@import 'shadcn/tailwind.css';
 
 @custom-variant dark (&:is(.dark *));
 
@@ -9,7 +9,7 @@
   --background: oklch(0.99 0 0);
   --foreground: oklch(0.15 0 0);
 
-  --primary: oklch(0.49 0.21 27);          /* rojo principal */
+  --primary: oklch(56.089% 0.19143 28.88); /* rojo principal */
   --primary-foreground: oklch(0.99 0 0);
 
   --secondary: oklch(0.96 0 0);
@@ -18,8 +18,8 @@
   --muted: oklch(0.96 0 0);
   --muted-foreground: oklch(0.52 0 0);
 
-  --accent: oklch(0.93 0.03 27);           /* rojo muy suave */
-  --accent-foreground: oklch(0.35 0.12 27);
+  --accent: oklch(0.94 0.01 250); /* gris azulado suave */
+  --accent-foreground: oklch(0.35 0 0);
 
   --destructive: oklch(0.55 0.22 27);
   --destructive-foreground: oklch(0.99 0 0);
@@ -32,14 +32,14 @@
 
   --border: oklch(0.91 0 0);
   --input: oklch(0.91 0 0);
-  --ring: oklch(0.49 0.21 27);
+  --ring: oklch(0.6 0.1 27);
 
   --radius: 0.625rem;
 
   /* ── Dashboard sidebar ── */
-  --sidebar-bg: oklch(0.17 0 0);
-  --sidebar-text: oklch(0.88 0 0);
-  --sidebar-active: oklch(0.49 0.21 27);
+  --sidebar-bg: oklch(0.98 0 0); /* blanco suave */
+  --sidebar-text: oklch(0.25 0 0);
+  --sidebar-active: oklch(0.3 0.05 27); /* rojo oscuro elegante */
   --sidebar: oklch(0.17 0 0);
   --sidebar-foreground: oklch(0.88 0 0);
   --sidebar-primary: oklch(0.49 0.21 27);
@@ -107,7 +107,9 @@
   background: var(--background);
   color: var(--foreground);
   outline: none;
-  transition: border-color 0.15s, box-shadow 0.15s;
+  transition:
+    border-color 0.15s,
+    box-shadow 0.15s;
 }
 .input-field:focus {
   border-color: var(--primary);
