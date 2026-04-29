@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 type HeaderProps = {
   userName: string;
   userEmail: string;
+  role: "ADMIN" | "STUDENT";
 };
 
 async function logout() {
@@ -14,7 +15,7 @@ async function logout() {
   redirect("/login");
 }
 
-export function Header({ userName, userEmail }: HeaderProps) {
+export function Header({ userName, userEmail, role }: HeaderProps) {
   return (
     <header className="h-16 border-b border-border bg-card/50 backdrop-blur-md sticky top-0 z-10 flex items-center justify-between px-8">
       <div className="flex items-center gap-4">
@@ -28,23 +29,24 @@ export function Header({ userName, userEmail }: HeaderProps) {
               {userName}
             </p>
             <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">
-              Administrador
+              {role}
             </p>
           </div>
           <div className="size-9 rounded-full bg-accent flex items-center justify-center text-accent-foreground border border-border">
-            <User className="size-5" />
+            <User className="size-5" aria-hidden="true" />
           </div>
         </div>
 
         <form action={logout}>
-          <Button 
-            type="submit" 
-            variant="ghost" 
-            size="sm" 
+          <Button
+            type="submit"
+            variant="ghost"
+            size="sm"
+            aria-label="Cerrar sesión"
             className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 gap-2 font-semibold"
           >
-            <LogOut className="size-4" />
-            <span className="hidden md:inline">Cerrar sesión</span>
+            <LogOut className="size-4" aria-hidden="true" />
+            <span className="hidden md:inline" aria-hidden="true">Cerrar sesión</span>
           </Button>
         </form>
       </div>

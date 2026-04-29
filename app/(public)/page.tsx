@@ -1,13 +1,20 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { LandingCourseCard } from "@/components/landing/CourseCard";
+import { ImageSlot } from "@/components/public/ImageSlot";
 import { prisma } from "@/lib/prisma";
-import { getSession } from "@/lib/auth";
 import { cn } from "@/lib/utils";
-import { ArrowRight, ShieldCheck, Award, CheckCircle2, Phone, Mail } from "lucide-react";
+import {
+  ArrowRight,
+  ShieldCheck,
+  Award,
+  CheckCircle2,
+  Phone,
+  Mail,
+  Quote,
+} from "lucide-react";
 
 export const metadata = {
   title: "RIVISIG Consultores — Capacitación en Sistemas de Gestión ISO",
@@ -16,9 +23,6 @@ export const metadata = {
 };
 
 export default async function LandingPage() {
-  const session = await getSession();
-  if (session) redirect(session.role === "ADMIN" ? "/admin" : "/student");
-
   const courses = await prisma.course.findMany({
     where: { published: true },
     orderBy: { createdAt: "desc" },
@@ -33,77 +37,129 @@ export default async function LandingPage() {
     <>
       {/* ── Hero ─────────────────────────────────────────── */}
       <section className="bg-linear-to-b from-white to-muted/40 border-b border-border">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 lg:py-28 flex flex-col items-center text-center">
-          <Badge variant="outline" className="mb-6 border-primary/30 text-primary bg-primary/5 text-xs font-medium px-3 py-1">
-            Implementación · Certificación · Soporte ISO
-          </Badge>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 lg:py-24">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+            {/* Copy */}
+            <div>
+              <Badge
+                variant="outline"
+                className="mb-6 border-primary/30 text-primary bg-primary/5 text-xs font-medium px-3 py-1"
+              >
+                Implementación · Certificación · Soporte ISO
+              </Badge>
 
-          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-foreground leading-tight tracking-tight max-w-3xl">
-            Solidez, confianza y{" "}
-            <span className="text-primary">respaldo real</span>{" "}
-            en sistemas de gestión
-          </h1>
+              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-foreground leading-[1.05] tracking-tight">
+                Solidez, confianza y{" "}
+                <span className="text-primary">respaldo real</span>{" "}
+                en sistemas de gestión
+              </h1>
 
-          <p className="mt-6 text-lg text-muted-foreground max-w-2xl leading-relaxed">
-            Consultora especializada en implementación, certificación y soporte de Sistemas de Gestión
-            orientada a empresas que requieren cumplimiento normativo y respaldo ante auditorías,
-            clientes y autoridades.
-          </p>
+              <p className="mt-6 text-lg text-muted-foreground leading-relaxed max-w-xl">
+                Consultora especializada en implementación, certificación y soporte de
+                Sistemas de Gestión orientada a empresas que requieren cumplimiento
+                normativo y respaldo ante auditorías, clientes y autoridades.
+              </p>
 
-          <div className="mt-10 flex flex-col sm:flex-row gap-4 items-center">
-            <Link
-              href="/cursos"
-              className={cn(buttonVariants({ size: "lg" }), "px-8 text-base h-12")}
-            >
-              Ver todos los cursos
-            </Link>
-            <Link
-              href="/registro"
-              className={cn(buttonVariants({ variant: "outline", size: "lg" }), "px-8 text-base h-12")}
-            >
-              Crear cuenta gratis
-            </Link>
-          </div>
-
-          {/* Stats */}
-          <div className="mt-16 flex flex-wrap justify-center gap-8 sm:gap-16">
-            {[
-              { value: "8+", label: "Normas ISO implementadas" },
-              { value: "100%", label: "Cursos con certificado" },
-              { value: "Verificable", label: "Código único por diploma" },
-            ].map((s) => (
-              <div key={s.label} className="text-center">
-                <p className="text-3xl font-bold text-primary">{s.value}</p>
-                <p className="text-sm text-muted-foreground mt-1">{s.label}</p>
+              <div className="mt-8 flex flex-col sm:flex-row gap-4">
+                <Link
+                  href="/cursos"
+                  className={cn(buttonVariants({ size: "lg" }), "px-8 text-base h-12")}
+                >
+                  Ver todos los cursos
+                </Link>
+                <Link
+                  href="/registro"
+                  className={cn(
+                    buttonVariants({ variant: "outline", size: "lg" }),
+                    "px-8 text-base h-12"
+                  )}
+                >
+                  Crear cuenta gratis
+                </Link>
               </div>
+
+              {/* Stats */}
+              <div className="mt-10 grid grid-cols-3 gap-6 max-w-lg">
+                {[
+                  { value: "8+", label: "Normas ISO implementadas" },
+                  { value: "100%", label: "Cursos con certificado" },
+                  { value: "Verificable", label: "Código único por diploma" },
+                ].map((s) => (
+                  <div key={s.label}>
+                    <p className="text-2xl sm:text-3xl font-bold text-primary">
+                      {s.value}
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-1 leading-tight">
+                      {s.label}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* === IMAGE SLOT: Hero principal ===
+                Archivo esperado: /public/images/hero.jpg
+                Sugerencia: foto profesional de equipo consultor, sala de capacitación,
+                o auditoría en planta. Ratio 4/3 o 3/4, mínimo 1200px lado mayor. */}
+            <div className="relative">
+              <ImageSlot
+                src="/images/hero.jpg"
+                alt="Equipo RIVISIG en proceso de auditoría"
+                aspect="aspect-[4/5] sm:aspect-[4/3] lg:aspect-[4/5]"
+                rounded="rounded-2xl"
+                priority
+                hint="Foto hero: equipo consultor, sala de auditoría o capacitación corporativa."
+                className="shadow-xl"
+              />
+              {/* Card flotante con sello de confianza */}
+              <div className="hidden sm:flex absolute -bottom-6 -left-6 bg-white rounded-xl border border-border shadow-lg p-4 items-center gap-3 max-w-xs">
+                <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                  <ShieldCheck className="h-5 w-5 text-primary" />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-foreground leading-tight">
+                    Certificaciones auditables
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    Respaldadas ante organismos externos
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── Clientes / Logos de confianza ────────────────── */}
+      <section className="border-b border-border bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+          <p className="text-center text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-8">
+            Empresas que confían en nosotros
+          </p>
+          {/* === IMAGE SLOTS: Logos de clientes ===
+              Archivos esperados: /public/images/clients/cliente-1.png … cliente-6.png
+              Formato: PNG con fondo transparente, en escala de grises o monocromo.
+              Tamaño sugerido: 240 × 80 px. */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-6 items-center">
+            {[1, 2, 3, 4, 5, 6].map((i) => (
+              <ImageSlot
+                key={i}
+                src={`/images/clients/cliente-${i}.png`}
+                alt={`Cliente ${i}`}
+                aspect="aspect-[3/1]"
+                rounded="rounded-md"
+                cover={false}
+                className="bg-transparent border-dashed grayscale opacity-70 hover:opacity-100 hover:grayscale-0 transition-all"
+                hint={`Logo cliente ${i}`}
+              />
             ))}
           </div>
         </div>
       </section>
 
-      {/* ── Propuesta de valor breve ─────────────────────── */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14">
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-          {[
-            { icon: ShieldCheck, title: "Sistemas auditables", desc: "Implementamos sistemas que resisten auditorías externas y fiscalizaciones reales." },
-            { icon: Award, title: "Certificación garantizada", desc: "Acompañamiento total desde el diagnóstico hasta la auditoría de certificación." },
-            { icon: CheckCircle2, title: "Equipo capacitado", desc: "Formamos a tu equipo para operar el sistema con autonomía, sin dependencia externa." },
-          ].map(({ icon: Icon, title, desc }) => (
-            <div key={title} className="flex gap-4 items-start">
-              <div className="shrink-0 h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                <Icon className="h-5 w-5 text-primary" />
-              </div>
-              <div>
-                <h3 className="font-semibold text-sm text-foreground mb-1">{title}</h3>
-                <p className="text-xs text-muted-foreground leading-relaxed">{desc}</p>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
 
-      {/* ── Cursos destacados ────────────────────────────── */}
-      <Separator />
+{/* ── Cursos destacados ────────────────────────────── */}
+      
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         <div className="flex items-end justify-between mb-8">
           <div>
@@ -120,7 +176,10 @@ export default async function LandingPage() {
           {courses.length > 0 && (
             <Link
               href="/cursos"
-              className={cn(buttonVariants({ variant: "ghost" }), "hidden sm:flex items-center gap-1 text-primary")}
+              className={cn(
+                buttonVariants({ variant: "ghost" }),
+                "hidden sm:flex items-center gap-1 text-primary"
+              )}
             >
               Ver todos <ArrowRight className="h-4 w-4" />
             </Link>
@@ -155,27 +214,104 @@ export default async function LandingPage() {
         )}
       </section>
 
+      {/* ── Propuesta de valor ───────────────────────────── */}
+      <Separator />
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+        <div className="max-w-2xl mb-10">
+          <p className="text-xs font-semibold uppercase tracking-widest text-primary mb-3">
+            Por qué RIVISIG
+          </p>
+          <h2 className="text-2xl sm:text-3xl font-bold text-foreground">
+            Cumplimiento real, no solo documentación
+          </h2>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+          {[
+            {
+              icon: ShieldCheck,
+              title: "Sistemas auditables",
+              desc: "Implementamos sistemas que resisten auditorías externas y fiscalizaciones reales.",
+            },
+            {
+              icon: Award,
+              title: "Certificación garantizada",
+              desc: "Acompañamiento total desde el diagnóstico hasta la auditoría de certificación.",
+            },
+            {
+              icon: CheckCircle2,
+              title: "Equipo capacitado",
+              desc: "Formamos a tu equipo para operar el sistema con autonomía, sin dependencia externa.",
+            },
+          ].map(({ icon: Icon, title, desc }) => (
+            <div
+              key={title}
+              className="bg-white border border-border rounded-xl p-6 hover:border-primary/30 hover:shadow-sm transition-all"
+            >
+              <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
+                <Icon className="h-5 w-5 text-primary" />
+              </div>
+              <h3 className="font-semibold text-foreground mb-2">{title}</h3>
+              <p className="text-sm text-muted-foreground leading-relaxed">{desc}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      
+
       {/* ── CTA final ────────────────────────────────────── */}
-      <section className="bg-foreground text-primary-foreground py-20">
-        <div className="max-w-2xl mx-auto px-4 text-center space-y-6">
-          <h2 className="text-3xl font-bold">¿Listo para certificar a tu equipo?</h2>
-          <p className="text-primary-foreground/80 text-lg">
-            Crea una cuenta, elige el curso y comienza hoy. O contáctanos para una consultoría personalizada.
+      <section className="relative bg-foreground text-primary-foreground overflow-hidden">
+        {/* === IMAGE SLOT: Fondo decorativo CTA (opcional) ===
+            Archivo esperado: /public/images/cta-bg.jpg
+            Foto oscura, de ambiente profesional. Se superpone un overlay. */}
+        <div className="absolute inset-0 opacity-10">
+          <ImageSlot
+            src="/images/cta-bg.jpg"
+            alt=""
+            aspect="h-full"
+            rounded="rounded-none"
+            className="h-full border-0"
+            hint="Fondo decorativo"
+          />
+        </div>
+        <div className="relative max-w-3xl mx-auto px-4 py-20 text-center space-y-6">
+          <h2 className="text-3xl sm:text-4xl font-bold">¿Listo para certificar a tu equipo?</h2>
+          <p className="text-primary-foreground/80 text-lg max-w-xl mx-auto">
+            Crea una cuenta, elige el curso y comienza hoy. O contáctanos para una
+            consultoría personalizada.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link
               href="/registro"
-              className={cn(buttonVariants({ variant: "secondary", size: "lg" }), "px-8 h-12 text-base font-semibold")}
+              className={cn(
+                buttonVariants({ variant: "secondary", size: "lg" }),
+                "px-8 h-12 text-base font-semibold"
+              )}
             >
               Comenzar ahora
             </Link>
+            <a
+              href="mailto:info@rivisig.com"
+              className={cn(
+                buttonVariants({ variant: "outline", size: "lg" }),
+                "px-8 h-12 text-base font-semibold bg-transparent border-white/30 text-white hover:bg-white/10 hover:text-white"
+              )}
+            >
+              Agendar consultoría
+            </a>
           </div>
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-5 pt-2 text-primary-foreground/70 text-sm">
-            <a href="tel:+51965772053" className="flex items-center gap-2 hover:text-primary-foreground transition-colors">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-5 pt-4 text-primary-foreground/70 text-sm">
+            <a
+              href="tel:+51965772053"
+              className="flex items-center gap-2 hover:text-primary-foreground transition-colors"
+            >
               <Phone className="h-4 w-4" />
               +51 965 772 053
             </a>
-            <a href="mailto:info@rivisig.com" className="flex items-center gap-2 hover:text-primary-foreground transition-colors">
+            <a
+              href="mailto:info@rivisig.com"
+              className="flex items-center gap-2 hover:text-primary-foreground transition-colors"
+            >
               <Mail className="h-4 w-4" />
               info@rivisig.com
             </a>

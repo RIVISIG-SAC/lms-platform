@@ -14,6 +14,8 @@ import {
   Globe2,
   Eye,
   EyeOff,
+  Gift,
+  Award,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -68,6 +70,7 @@ function SectionHeader({
 export function CourseForm({ action, course }: Props) {
   const [state, formAction, pending] = useActionState<ActionState, FormData>(action, null);
   const [published, setPublished] = useState<boolean>(course?.published ?? false);
+  const [isFree, setIsFree] = useState<boolean>(course?.isFree ?? false);
   const [level, setLevel] = useState<CourseLevelValue | "">(
     (course?.level as CourseLevelValue | null) ?? ""
   );
@@ -220,28 +223,87 @@ export function CourseForm({ action, course }: Props) {
           hint="Controla el monto y cuándo el curso se muestra al público."
         />
 
+        <input type="hidden" name="isFree" value={isFree ? "true" : "false"} />
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-          <div className="space-y-2">
-            <Label htmlFor="price" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-              Inversión <span className="text-destructive">*</span>
+          {/* Toggle curso gratuito */}
+          <div className="md:col-span-2 space-y-2">
+            <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+              <Gift className="size-3.5" /> Tipo de acceso
             </Label>
-            <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-bold text-muted-foreground">
-                S/
-              </span>
-              <Input
-                id="price"
-                name="price"
-                type="number"
-                min="0"
-                step="0.01"
-                required
-                defaultValue={course ? Number(course.price) : ""}
-                placeholder="0.00"
-                className="pl-9 h-11 font-semibold"
-              />
+            <div className="h-11 flex items-center gap-3 rounded-lg border border-input bg-accent/30 px-3.5">
+              <Switch id="isFree" checked={isFree} onCheckedChange={setIsFree} />
+              <Label htmlFor="isFree" className="flex items-center gap-2 cursor-pointer text-sm font-medium">
+                {isFree ? (
+                  <>
+                    <Gift className="size-3.5 text-primary" />
+                    Curso gratuito (el certificado tiene costo)
+                  </>
+                ) : (
+                  <>
+                    <DollarSign className="size-3.5 text-muted-foreground" />
+                    Curso de pago
+                  </>
+                )}
+              </Label>
             </div>
           </div>
+
+          {/* Precio del curso (solo si no es gratuito) */}
+          {!isFree && (
+            <div className="space-y-2">
+              <Label htmlFor="price" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                Inversión <span className="text-destructive">*</span>
+              </Label>
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-bold text-muted-foreground">
+                  S/
+                </span>
+                <Input
+                  id="price"
+                  name="price"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  required={!isFree}
+                  defaultValue={course && !course.isFree ? Number(course.price) : ""}
+                  placeholder="0.00"
+                  className="pl-9 h-11 font-semibold"
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Costo del certificado (solo si es gratuito) */}
+          {isFree && (
+            <>
+              <input type="hidden" name="price" value="0" />
+              <div className="space-y-2">
+                <Label htmlFor="certificateFee" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                  <Award className="size-3.5" /> Costo del certificado <span className="text-destructive">*</span>
+                </Label>
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-bold text-muted-foreground">
+                    S/
+                  </span>
+                  <Input
+                    id="certificateFee"
+                    name="certificateFee"
+                    type="number"
+                    min="1"
+                    step="0.01"
+                    required={isFree}
+                    defaultValue={course?.certificateFee != null ? Number(course.certificateFee) : ""}
+                    placeholder="0.00"
+                    className="pl-9 h-11 font-semibold"
+                  />
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Monto que pagará el estudiante para obtener su certificado al aprobar.
+                </p>
+              </div>
+            </>
+          )}
 
           {course && (
             <div className="space-y-2">

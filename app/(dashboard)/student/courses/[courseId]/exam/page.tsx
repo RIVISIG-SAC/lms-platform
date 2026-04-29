@@ -3,6 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getRequiredSession } from "@/lib/auth";
 import { ExamForm } from "@/components/student/ExamForm";
+import { CertificateCheckout } from "@/components/student/CertificateCheckout";
 
 type Props = { params: Promise<{ courseId: string }> };
 
@@ -14,9 +15,9 @@ export default async function ExamPage({ params }: Props) {
     prisma.enrollment.findUnique({
       where: { userId_courseId: { userId: session.userId, courseId } },
       include: {
-        course: { select: { title: true } },
+        course: { select: { title: true, isFree: true, certificateFee: true } },
         examAttempts: { orderBy: { attemptNumber: "desc" } },
-        certificate: { select: { verificationCode: true, status: true, issueDate: true } },
+        certificate: { select: { id: true, verificationCode: true, status: true, issueDate: true } },
       },
     }),
     prisma.question.findMany({
@@ -59,6 +60,27 @@ export default async function ExamPage({ params }: Props) {
             </p>
           </div>
         </div>
+
+        {/* Certificado pendiente de pago (curso gratuito) */}
+        {hasPassed && enrollment.certificate?.status === "PENDING_PAYMENT" && (
+          <div className="bg-amber-50 border border-amber-200 rounded-xl p-6 text-center space-y-3">
+            <div className="text-4xl">🎓</div>
+            <h2 className="text-lg font-semibold text-amber-800">¡Evaluación Aprobada!</h2>
+            <p className="text-sm text-amber-700">
+              Calificación: <strong>{lastAttempt.score.toFixed(0)}%</strong>
+            </p>
+            <p className="text-sm text-amber-700">
+              Para obtener tu certificado debes realizar el pago correspondiente.
+            </p>
+            <div className="pt-2 max-w-xs mx-auto">
+              <CertificateCheckout
+                enrollmentId={enrollment.id}
+                courseTitle={enrollment.course.title}
+                certificateFeeInSoles={Number(enrollment.course.certificateFee)}
+              />
+            </div>
+          </div>
+        )}
 
         {/* Certificado ya obtenido */}
         {hasPassed && enrollment.certificate?.status === "ACTIVE" && (

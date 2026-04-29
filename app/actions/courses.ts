@@ -15,11 +15,17 @@ function parseCoursePayload(formData: FormData) {
     rawDuration === null || rawDuration === "" ? undefined : Number(rawDuration);
   const rawLevel = (formData.get("level") as string) || "";
   const rawCategory = ((formData.get("category") as string) || "").trim();
+  const isFree = formData.get("isFree") === "true";
+  const rawCertFee = formData.get("certificateFee");
+  const certificateFee =
+    rawCertFee === null || rawCertFee === "" ? undefined : Number(rawCertFee);
 
   return {
     title: formData.get("title"),
     description: formData.get("description"),
     price: Number(formData.get("price")),
+    isFree,
+    certificateFee,
     thumbnailUrl: formData.get("thumbnailUrl") || undefined,
     category: rawCategory,
     level: rawLevel,
@@ -28,13 +34,14 @@ function parseCoursePayload(formData: FormData) {
 }
 
 function buildCourseData(parsed: ReturnType<typeof courseSchema.safeParse> & { success: true }) {
-  const { category, level, durationHours, thumbnailUrl, ...rest } = parsed.data;
+  const { category, level, durationHours, thumbnailUrl, certificateFee, ...rest } = parsed.data;
   return {
     ...rest,
     thumbnailUrl: thumbnailUrl && thumbnailUrl !== "" ? thumbnailUrl : null,
     category: category && category !== "" ? category : null,
     level: level ? (level as CourseLevel) : null,
     durationHours: typeof durationHours === "number" ? durationHours : null,
+    certificateFee: typeof certificateFee === "number" ? certificateFee : null,
   };
 }
 

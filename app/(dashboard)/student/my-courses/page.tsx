@@ -110,6 +110,11 @@ export default async function StudentMyCoursesPage() {
                               <Award className="size-3" /> Certificado
                             </Badge>
                           )}
+                          {enrollment.certificate?.status === "PENDING_PAYMENT" && (
+                            <Badge className="bg-orange-100 text-orange-700 border-none font-bold text-[10px] uppercase flex items-center gap-1 px-2 py-0.5">
+                              <Award className="size-3" /> Certificado pendiente
+                            </Badge>
+                          )}
                         </div>
                         <h3 className="text-xl font-bold text-foreground leading-tight group-hover:text-primary transition-colors">
                           {course.title}
@@ -172,6 +177,14 @@ export default async function StudentMyCoursesPage() {
                         >
                           <Award className="size-4" /> Certificado
                         </a>
+                      )}
+                      {enrollment.certificate?.status === "PENDING_PAYMENT" && (
+                        <Link
+                          href={`/student/courses/${course.id}/exam`}
+                          className={cn(buttonVariants({ variant: "ghost", size: "sm" }), "w-full font-bold hover:bg-orange-50 hover:text-orange-700 gap-2")}
+                        >
+                          <Award className="size-4" /> Pagar certificado
+                        </Link>
                       )}
                     </div>
                   </div>
