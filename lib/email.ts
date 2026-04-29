@@ -1,22 +1,22 @@
-import { Resend } from "resend";
+import { Resend } from 'resend';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 function getAppUrl() {
-  return process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+  return process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000';
 }
 
 export async function sendVerificationEmail(
   email: string,
   name: string,
-  token: string
+  token: string,
 ) {
   const verifyUrl = `${getAppUrl()}/verify-email?token=${token}`;
 
   await resend.emails.send({
-    from: "RIVISIG Consultores <noreply@rivisig.com>",
+    from: 'RIVISIG Consultores <onboarding@resend.dev>',
     to: email,
-    subject: "Verifica tu correo electrónico — RIVISIG",
+    subject: 'Verifica tu correo electrónico — RIVISIG',
     html: `
 <!DOCTYPE html>
 <html lang="es">

@@ -2,11 +2,11 @@ import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { getRequiredSession } from "@/lib/auth";
 import { cn } from "@/lib/utils";
-import { 
-  BookOpen, 
-  Award, 
-  ChevronRight, 
-  Library, 
+import {
+  BookOpen,
+  Award,
+  ChevronRight,
+  Globe,
   GraduationCap,
   TrendingUp,
   Sparkles
@@ -50,8 +50,8 @@ export default async function StudentHomePage() {
             <Link href="/student/my-courses" className={cn(buttonVariants(), "rounded-full px-6 shadow-lg shadow-primary/20 font-bold")}>
               Ir a mis cursos
             </Link>
-            <Link href="/student/catalog" className={cn(buttonVariants({ variant: "ghost" }), "rounded-full px-6 font-bold flex items-center gap-2")}>
-              Explorar catálogo <ChevronRight className="size-4" />
+            <Link href="/cursos" className={cn(buttonVariants({ variant: "ghost" }), "rounded-full px-6 font-bold flex items-center gap-2")}>
+              Ver cursos <ChevronRight className="size-4" />
             </Link>
           </div>
         </div>
@@ -158,17 +158,17 @@ export default async function StudentHomePage() {
             <CardHeader className="relative z-10 pb-2">
               <CardTitle className="text-lg font-bold">Nuevas Oportunidades</CardTitle>
               <CardDescription className="text-primary-foreground/70 font-medium">
-                Explora cursos recomendados para ti según tu perfil.
+                Explora todos los cursos disponibles en nuestra plataforma.
               </CardDescription>
             </CardHeader>
             <CardContent className="relative z-10">
-              <Link href="/student/catalog" className={cn(buttonVariants({ variant: "secondary" }), "w-full font-bold shadow-md hover:scale-105 transition-transform flex items-center justify-center gap-2")}>
-                <Library className="size-4" /> Ir al Catálogo
+              <Link href="/cursos" className={cn(buttonVariants({ variant: "secondary" }), "w-full font-bold shadow-md hover:scale-105 transition-transform flex items-center justify-center gap-2")}>
+                <Globe className="size-4" /> Ver cursos
               </Link>
             </CardContent>
             {/* Background pattern */}
             <div className="absolute right-0 top-0 opacity-10 pointer-events-none translate-x-1/4 -translate-y-1/4">
-              <Library className="size-48 rotate-12" />
+              <Globe className="size-48 rotate-12" />
             </div>
           </Card>
 

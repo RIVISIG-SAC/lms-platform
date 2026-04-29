@@ -1,10 +1,13 @@
 "use client";
 
 import { useActionState } from "react";
+import { AlertCircle } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
 import { loginAction } from "@/app/actions/auth";
 
 type ActionState = { error?: string } | null;
-
 type Props = { next?: string };
 
 export function LoginForm({ next }: Props) {
@@ -14,57 +17,43 @@ export function LoginForm({ next }: Props) {
   );
 
   return (
-    <form action={action} className="space-y-4">
+    <form action={action} className="space-y-5">
       {next && <input type="hidden" name="next" value={next} />}
-      <div>
-        <label
-          htmlFor="email"
-          className="block text-sm font-medium text-[var(--foreground)] mb-1.5"
-        >
-          Correo electrónico
-        </label>
-        <input
+
+      <div className="space-y-1.5">
+        <Label htmlFor="email">Correo electrónico</Label>
+        <Input
           id="email"
           name="email"
           type="email"
           autoComplete="email"
           required
-          className="w-full px-3 py-2 text-sm border border-[var(--border)] rounded-md bg-[var(--background)] text-[var(--foreground)] focus:outline-none focus:ring-2 focus:ring-[var(--ring)] focus:border-transparent placeholder:text-[var(--muted-foreground)]"
           placeholder="nombre@empresa.com"
         />
       </div>
 
-      <div>
-        <label
-          htmlFor="password"
-          className="block text-sm font-medium text-[var(--foreground)] mb-1.5"
-        >
-          Contraseña
-        </label>
-        <input
+      <div className="space-y-1.5">
+        <Label htmlFor="password">Contraseña</Label>
+        <Input
           id="password"
           name="password"
           type="password"
           autoComplete="current-password"
           required
-          className="w-full px-3 py-2 text-sm border border-[var(--border)] rounded-md bg-[var(--background)] text-[var(--foreground)] focus:outline-none focus:ring-2 focus:ring-[var(--ring)] focus:border-transparent placeholder:text-[var(--muted-foreground)]"
           placeholder="••••••••"
         />
       </div>
 
       {state?.error && (
-        <p className="text-sm text-[var(--destructive)] bg-red-50 px-3 py-2 rounded-md">
-          {state.error}
-        </p>
+        <div className="flex items-start gap-2.5 text-sm text-destructive bg-destructive/10 border border-destructive/20 px-3.5 py-3 rounded-lg">
+          <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
+          <span>{state.error}</span>
+        </div>
       )}
 
-      <button
-        type="submit"
-        disabled={pending}
-        className="w-full bg-[var(--primary)] text-white text-sm font-medium py-2.5 rounded-md hover:opacity-90 transition-opacity disabled:opacity-60 disabled:cursor-not-allowed mt-2"
-      >
-        {pending ? "Ingresando..." : "Ingresar"}
-      </button>
+      <Button type="submit" disabled={pending} className="w-full h-11 text-sm font-medium">
+        {pending ? "Ingresando..." : "Iniciar sesión"}
+      </Button>
     </form>
   );
 }

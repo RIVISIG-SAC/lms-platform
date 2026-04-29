@@ -8,6 +8,7 @@ import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
 import { formatCurrency } from "@/lib/utils";
 import { BuyButton } from "@/components/landing/BuyButton";
+import { enrollFree } from "@/app/actions/enrollments";
 import { Award, ClipboardList, Lock, BarChart3, PlayCircle, BookOpen } from "lucide-react";
 
 export async function generateMetadata(props: { params: Promise<unknown> }) {
@@ -56,7 +57,7 @@ export default async function CourseDetailPage(props: { params: Promise<unknown>
         <div className="lg:col-span-2 space-y-8">
           <div>
             <Badge variant="outline" className="mb-3 text-primary border-primary/30 bg-primary/5">
-              Certificado al aprobar
+              {course.isFree ? "Acceso gratuito · Certificado con costo" : "Certificado al aprobar"}
             </Badge>
             <h1 className="text-3xl font-bold text-foreground leading-tight">
               {course.title}
@@ -140,10 +141,21 @@ export default async function CourseDetailPage(props: { params: Promise<unknown>
             )}
 
             <div className="p-6 space-y-4">
-              <p className="text-3xl font-bold text-foreground">
-                {formatCurrency(course.price)}
-              </p>
-              <p className="text-xs text-muted-foreground">Acceso por 180 días · Certificado incluido</p>
+              {course.isFree ? (
+                <>
+                  <p className="text-3xl font-bold text-green-600">Gratis</p>
+                  <p className="text-xs text-muted-foreground">
+                    Acceso por 180 días · Certificado S/. {Number(course.certificateFee).toFixed(2)} al aprobar
+                  </p>
+                </>
+              ) : (
+                <>
+                  <p className="text-3xl font-bold text-foreground">
+                    {formatCurrency(course.price)}
+                  </p>
+                  <p className="text-xs text-muted-foreground">Acceso por 180 días · Certificado incluido</p>
+                </>
+              )}
 
               {isPaid ? (
                 <Link
@@ -152,6 +164,24 @@ export default async function CourseDetailPage(props: { params: Promise<unknown>
                 >
                   Ir al curso →
                 </Link>
+              ) : course.isFree ? (
+                session ? (
+                  <form action={enrollFree.bind(null, courseId)}>
+                    <button
+                      type="submit"
+                      className="w-full h-11 bg-green-600 text-white font-semibold rounded-lg hover:opacity-90 transition-opacity"
+                    >
+                      Inscribirse gratis
+                    </button>
+                  </form>
+                ) : (
+                  <Link
+                    href={`/login?next=/cursos/${courseId}`}
+                    className={cn(buttonVariants(), "w-full h-11 justify-center")}
+                  >
+                    Iniciar sesión para inscribirse
+                  </Link>
+                )
               ) : session ? (
                 <BuyButton courseId={courseId} price={course.price} />
               ) : (

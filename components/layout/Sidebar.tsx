@@ -8,7 +8,7 @@ import {
   BookOpen,
   Users,
   Home,
-  Library,
+  Globe,
   GraduationCap,
 } from 'lucide-react';
 
@@ -26,8 +26,8 @@ const adminNav: NavItem[] = [
 
 const studentNav: NavItem[] = [
   { label: 'Inicio', href: '/student', icon: Home },
-  { label: 'Catálogo', href: '/student/catalog', icon: Library },
   { label: 'Mis Cursos', href: '/student/my-courses', icon: GraduationCap },
+  { label: 'Ver cursos', href: '/cursos', icon: Globe },
 ];
 
 type SidebarProps = {
@@ -43,7 +43,7 @@ export function Sidebar({ role }: SidebarProps) {
       <div className="px-6 py-8 border-b border-sidebar-border/50">
         <div className="flex items-center gap-2 mb-1">
           <div className="size-8 rounded-lg bg-primary flex items-center justify-center">
-            <GraduationCap className="size-5 text-primary-foreground" />
+            <GraduationCap className="size-5 text-primary-foreground" aria-hidden="true" />
           </div>
           <h1 className="text-xl font-bold text-primary tracking-tight">
             RIVISG
@@ -66,6 +66,7 @@ export function Sidebar({ role }: SidebarProps) {
             <Link
               key={item.href}
               href={item.href}
+              aria-current={isActive ? 'page' : undefined}
               className={cn(
                 'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 group',
                 isActive
@@ -74,6 +75,7 @@ export function Sidebar({ role }: SidebarProps) {
               )}
             >
               <Icon
+                aria-hidden="true"
                 className={cn(
                   'size-4.5 transition-transform duration-200',
                   isActive

@@ -61,11 +61,12 @@ export async function deleteQuestion(questionId: string, courseId: string) {
 export async function submitExam(
   courseId: string,
   answers: Record<string, string> // { questionId: selectedOptionId }
-): Promise<{ error?: string; score?: number; passed?: boolean }> {
+): Promise<{ error?: string; score?: number; passed?: boolean; requiresCertPayment?: boolean }> {
   const session = await getRequiredSession();
 
   const enrollment = await prisma.enrollment.findUnique({
     where: { userId_courseId: { userId: session.userId, courseId } },
+    include: { course: { select: { isFree: true } } },
   });
 
   if (!enrollment || enrollment.status !== "COMPLETED") {
@@ -110,16 +111,12 @@ export async function submitExam(
   });
 
   if (passed) {
-    // Generar certificado
+    const certStatus = enrollment.course.isFree ? "PENDING_PAYMENT" : "ACTIVE";
     const verificationCode = generateVerificationCode();
     await prisma.certificate.upsert({
       where: { enrollmentId: enrollment.id },
-      create: {
-        enrollmentId: enrollment.id,
-        verificationCode,
-        status: "ACTIVE",
-      },
-      update: { status: "ACTIVE" },
+      create: { enrollmentId: enrollment.id, verificationCode, status: certStatus },
+      update: { status: certStatus },
     });
   } else if (attemptCount + 1 >= 2) {
     // Agotó intentos sin aprobar
@@ -130,7 +127,7 @@ export async function submitExam(
   }
 
   revalidatePath(`/student/courses/${courseId}/exam`);
-  return { score, passed };
+  return { score, passed, requiresCertPayment: passed && enrollment.course.isFree };
 }
 
 function generateVerificationCode(): string {

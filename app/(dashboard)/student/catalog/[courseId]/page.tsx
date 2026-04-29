@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { getRequiredSession } from "@/lib/auth";
 import { CulqiCheckout } from "@/components/student/CulqiCheckout";
 import { formatCurrency } from "@/lib/utils";
+import { enrollFree } from "@/app/actions/enrollments";
 
 type Props = { params: Promise<{ courseId: string }> };
 
@@ -129,23 +130,36 @@ export default async function CourseCatalogDetailPage({ params }: Props) {
           </div>
         </div>
 
-        {/* Sidebar — Compra */}
+        {/* Sidebar — Compra / Inscripción */}
         <div className="lg:col-span-1">
           <div className="bg-[var(--card)] border border-[var(--border)] rounded-xl p-6 sticky top-6 space-y-5">
             <div className="text-center">
-              <p className="text-3xl font-bold text-[var(--foreground)]">
-                {formatCurrency(course.price)}
-              </p>
-              <p className="text-sm text-[var(--muted-foreground)] mt-1">
-                Pago único · Acceso 180 días
-              </p>
+              {course.isFree ? (
+                <>
+                  <p className="text-3xl font-bold text-green-600">Gratis</p>
+                  <p className="text-sm text-[var(--muted-foreground)] mt-1">
+                    Acceso 180 días · Certificado por S/. {Number(course.certificateFee).toFixed(2)}
+                  </p>
+                </>
+              ) : (
+                <>
+                  <p className="text-3xl font-bold text-[var(--foreground)]">
+                    {formatCurrency(course.price)}
+                  </p>
+                  <p className="text-sm text-[var(--muted-foreground)] mt-1">
+                    Pago único · Acceso 180 días
+                  </p>
+                </>
+              )}
             </div>
 
             <ul className="space-y-2 text-sm text-[var(--muted-foreground)]">
               {[
                 `${totalChapters} clases en video`,
                 "Evaluación final incluida",
-                "Certificado verificable al aprobar",
+                course.isFree
+                  ? `Certificado al aprobar (S/. ${Number(course.certificateFee).toFixed(2)})`
+                  : "Certificado verificable al aprobar",
                 "Acceso desde cualquier dispositivo",
               ].map((item) => (
                 <li key={item} className="flex items-center gap-2">
@@ -155,11 +169,22 @@ export default async function CourseCatalogDetailPage({ params }: Props) {
               ))}
             </ul>
 
-            <CulqiCheckout
-              courseId={course.id}
-              courseTitle={course.title}
-              priceInSoles={Number(course.price)}
-            />
+            {course.isFree ? (
+              <form action={enrollFree.bind(null, course.id)}>
+                <button
+                  type="submit"
+                  className="w-full bg-green-600 text-white font-medium py-3 rounded-lg hover:opacity-90 transition-opacity text-base"
+                >
+                  Inscribirse gratis
+                </button>
+              </form>
+            ) : (
+              <CulqiCheckout
+                courseId={course.id}
+                courseTitle={course.title}
+                priceInSoles={Number(course.price)}
+              />
+            )}
 
             {enrollment?.status === "FAILED" && (
               <p className="text-xs text-center text-amber-600 bg-amber-50 border border-amber-200 px-3 py-2 rounded">
