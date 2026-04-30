@@ -1,6 +1,7 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
+import { getSession } from "@/lib/auth";
 import { serializeCourse } from "@/lib/serialize";
 import { CourseForm } from "@/components/admin/CourseForm";
 import { ModuleAccordion } from "@/components/admin/modules/ModuleAccordion";
@@ -29,51 +30,46 @@ type Props = { params: Promise<{ courseId: string }> };
 export async function generateMetadata({ params }: Props) {
   const { courseId } = await params;
   const course = await prisma.course.findUnique({ where: { id: courseId } });
-  return { title: course ? `${course.title} | Admin` : "Curso | Admin" };
+  return { title: course ? `${course.title} | Instructor` : "Curso | Instructor" };
 }
 
-export default async function EditCoursePage({ params }: Props) {
+export default async function InstructorEditCoursePage({ params }: Props) {
   const { courseId } = await params;
+  const session = await getSession();
+  if (!session || session.role !== "INSTRUCTOR") redirect("/login");
 
-  const [course, instructors] = await Promise.all([
-    prisma.course.findUnique({
-      where: { id: courseId },
-      include: {
-        modules: {
-          orderBy: { order: "asc" },
-          include: {
-            chapters: {
-              orderBy: { order: "asc" },
-              include: { resources: { orderBy: { createdAt: "asc" } } },
-            },
+  const profile = await prisma.instructorProfile.findUnique({ where: { userId: session.userId } });
+
+  const course = await prisma.course.findUnique({
+    where: { id: courseId },
+    include: {
+      modules: {
+        orderBy: { order: "asc" },
+        include: {
+          chapters: {
+            orderBy: { order: "asc" },
+            include: { resources: { orderBy: { createdAt: "asc" } } },
           },
         },
-        questions: {
-          orderBy: { order: "asc" },
-          include: { options: true },
-        },
       },
-    }),
-    prisma.instructorProfile.findMany({
-      include: { user: { select: { name: true } } },
-      orderBy: { user: { name: "asc" } },
-    }),
-  ]);
+      questions: {
+        orderBy: { order: "asc" },
+        include: { options: true },
+      },
+    },
+  });
 
-  if (!course) notFound();
+  if (!course || course.instructorId !== profile?.id) notFound();
 
   const totalChapters = course.modules.reduce((acc, m) => acc + m.chapters.length, 0);
-  const levelLabel = course.level
-    ? COURSE_LEVEL_LABELS[course.level as CourseLevelValue]
-    : null;
+  const levelLabel = course.level ? COURSE_LEVEL_LABELS[course.level as CourseLevelValue] : null;
 
   return (
     <div className="max-w-6xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      {/* Breadcrumb */}
       <Breadcrumb>
         <BreadcrumbList className="text-xs font-semibold uppercase tracking-widest">
           <BreadcrumbItem>
-            <BreadcrumbLink render={<Link href="/admin/courses" />}>Cursos</BreadcrumbLink>
+            <BreadcrumbLink render={<Link href="/instructor/courses" />}>Mis Cursos</BreadcrumbLink>
           </BreadcrumbItem>
           <BreadcrumbSeparator />
           <BreadcrumbItem>
@@ -84,36 +80,24 @@ export default async function EditCoursePage({ params }: Props) {
         </BreadcrumbList>
       </Breadcrumb>
 
-      {/* Header */}
       <div className="flex flex-col md:flex-row md:items-start justify-between gap-4 rounded-2xl border border-border bg-card p-6 shadow-sm">
         <div className="flex items-start gap-4 min-w-0">
           <div className="size-12 rounded-xl bg-primary/10 flex items-center justify-center border border-primary/15 shrink-0">
             <BookOpen className="size-5 text-primary" />
           </div>
           <div className="min-w-0">
-            <h1 className="text-2xl font-bold tracking-tight text-foreground truncate">
-              {course.title}
-            </h1>
+            <h1 className="text-2xl font-bold tracking-tight text-foreground truncate">{course.title}</h1>
             <div className="flex flex-wrap items-center gap-2 mt-2">
-              <Badge
-                variant={course.published ? "default" : "outline"}
-                className="font-semibold"
-              >
+              <Badge variant={course.published ? "default" : "outline"} className="font-semibold">
                 {course.published ? "Publicado" : "Borrador"}
               </Badge>
-              <Badge variant="secondary" className="font-semibold">
-                {formatCurrency(course.price)}
-              </Badge>
+              <Badge variant="secondary" className="font-semibold">{formatCurrency(course.price)}</Badge>
               {course.category && (
                 <Badge variant="outline" className="gap-1 font-semibold">
                   <Tag className="size-3" /> {course.category}
                 </Badge>
               )}
-              {levelLabel && (
-                <Badge variant="outline" className="font-semibold">
-                  {levelLabel}
-                </Badge>
-              )}
+              {levelLabel && <Badge variant="outline" className="font-semibold">{levelLabel}</Badge>}
               {course.durationHours != null && (
                 <Badge variant="outline" className="gap-1 font-semibold">
                   <Clock className="size-3" /> {course.durationHours} h
@@ -126,46 +110,40 @@ export default async function EditCoursePage({ params }: Props) {
           <DeleteConfirmDialog
             action={deleteCourse.bind(null, course.id)}
             title="¿Eliminar curso?"
-            description={`Se eliminará "${course.title}" junto con todos sus módulos, capítulos, recursos e inscripciones.`}
+            description={`Se eliminará "${course.title}" junto con todos sus módulos, capítulos y recursos.`}
             triggerLabel="Eliminar curso"
             successMessage="Curso eliminado"
           />
         </div>
       </div>
 
-      {/* Tabs */}
       <Tabs defaultValue="info">
         <TabsList className="h-11 bg-muted/70 p-1">
           <TabsTrigger value="info" className="px-4 gap-2">
-            <FileText className="size-4" />
-            Información
+            <FileText className="size-4" /> Información
           </TabsTrigger>
           <TabsTrigger value="content" className="px-4 gap-2">
-            <Layers className="size-4" />
-            Contenido
+            <Layers className="size-4" /> Contenido
             <Badge variant="outline" className="ml-1 text-[10px] font-semibold">
               {course.modules.length} · {totalChapters}
             </Badge>
           </TabsTrigger>
           <TabsTrigger value="exam" className="px-4 gap-2">
-            <GraduationCap className="size-4" />
-            Evaluación
+            <GraduationCap className="size-4" /> Evaluación
             <Badge variant="outline" className="ml-1 text-[10px] font-semibold">
               {course.questions.length}
             </Badge>
           </TabsTrigger>
         </TabsList>
 
-        {/* ── Info Tab ─────────────────────────────────────── */}
         <TabsContent value="info" className="mt-6">
           <Card>
             <CardContent className="p-6 md:p-8">
-              <CourseForm action={updateCourse} course={serializeCourse(course)} instructors={instructors} />
+              <CourseForm action={updateCourse} course={serializeCourse(course)} />
             </CardContent>
           </Card>
         </TabsContent>
 
-        {/* ── Content Tab ──────────────────────────────────── */}
         <TabsContent value="content" className="mt-6">
           <div className="space-y-4">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
@@ -175,24 +153,14 @@ export default async function EditCoursePage({ params }: Props) {
                   Organiza los módulos y capítulos que verán los estudiantes.
                 </p>
               </div>
-              <AddModuleButton
-                courseId={course.id}
-                nextOrder={course.modules.length}
-              />
+              <AddModuleButton courseId={course.id} nextOrder={course.modules.length} />
             </div>
-
             {course.modules.length === 0 ? (
               <EmptyState
                 icon={Layers}
                 title="Aún no hay módulos"
-                description="Los cursos se organizan en módulos y, dentro de cada módulo, capítulos. Empieza creando el primer módulo."
-                action={
-                  <AddModuleButton
-                    courseId={course.id}
-                    nextOrder={0}
-                    variant="ghost"
-                  />
-                }
+                description="Los cursos se organizan en módulos y capítulos. Empieza creando el primer módulo."
+                action={<AddModuleButton courseId={course.id} nextOrder={0} variant="ghost" />}
               />
             ) : (
               <div className="space-y-3">
@@ -204,7 +172,6 @@ export default async function EditCoursePage({ params }: Props) {
           </div>
         </TabsContent>
 
-        {/* ── Exam Tab ─────────────────────────────────────── */}
         <TabsContent value="exam" className="mt-6">
           <Card>
             <CardContent className="p-6 md:p-8">

@@ -1,8 +1,15 @@
 import Link from "next/link";
+import Image from "next/image";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { formatCurrency } from "@/lib/utils";
-import { BookOpen } from "lucide-react";
+import { BookOpen, User } from "lucide-react";
+
+type InstructorInfo = {
+  id: string;
+  name: string;
+  avatarUrl?: string | null;
+};
 
 type Props = {
   id: string;
@@ -12,9 +19,10 @@ type Props = {
   thumbnailUrl?: string | null;
   moduleCount: number;
   chapterCount: number;
+  instructor?: InstructorInfo | null;
 };
 
-export function LandingCourseCard({ id, title, description, price, thumbnailUrl, moduleCount, chapterCount }: Props) {
+export function LandingCourseCard({ id, title, description, price, thumbnailUrl, moduleCount, chapterCount, instructor }: Props) {
   return (
     <Link href={`/cursos/${id}`} className="group block">
       <Card className="h-full overflow-hidden border-border hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5 gap-0 py-0">
@@ -53,6 +61,25 @@ export function LandingCourseCard({ id, title, description, price, thumbnailUrl,
             </Badge>
           </div>
         </CardContent>
+
+        {instructor && (
+          <div className="px-5 pb-3 flex items-center gap-2">
+            {instructor.avatarUrl ? (
+              <Image
+                src={instructor.avatarUrl}
+                alt={instructor.name}
+                width={20}
+                height={20}
+                className="size-5 rounded-full object-cover border border-border"
+              />
+            ) : (
+              <div className="size-5 rounded-full bg-primary/10 flex items-center justify-center">
+                <User className="size-3 text-primary" />
+              </div>
+            )}
+            <span className="text-xs text-muted-foreground truncate">{instructor.name}</span>
+          </div>
+        )}
 
         <CardFooter className="px-5 py-4 border-t border-border bg-muted/30 flex items-center justify-between">
           <span className="text-xs text-muted-foreground">Certificado al aprobar</span>

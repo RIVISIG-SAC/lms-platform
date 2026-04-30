@@ -9,7 +9,8 @@ import { getSession } from "@/lib/auth";
 import { formatCurrency } from "@/lib/utils";
 import { BuyButton } from "@/components/landing/BuyButton";
 import { enrollFree } from "@/app/actions/enrollments";
-import { Award, ClipboardList, Lock, BarChart3, PlayCircle, BookOpen } from "lucide-react";
+import { Award, ClipboardList, Lock, BarChart3, PlayCircle, BookOpen, User } from "lucide-react";
+import { InstructorCard } from "@/components/instructor/InstructorCard";
 
 export async function generateMetadata(props: { params: Promise<unknown> }) {
   const { courseId } = (await props.params) as { courseId: string };
@@ -32,6 +33,9 @@ export default async function CourseDetailPage(props: { params: Promise<unknown>
           },
         },
         _count: { select: { enrollments: true } },
+        instructor: {
+          include: { user: { select: { name: true } } },
+        },
       },
     }),
     getSession(),
@@ -106,6 +110,28 @@ export default async function CourseDetailPage(props: { params: Promise<unknown>
               ))}
             </div>
           </div>
+
+          {/* Instructor */}
+          {course.instructor && (
+            <>
+              <Separator />
+              <div>
+                <h2 className="text-xl font-semibold text-foreground mb-4 flex items-center gap-2">
+                  <User className="size-5 text-primary" />
+                  Instructor
+                </h2>
+                <InstructorCard
+                  instructorId={course.instructor.id}
+                  name={course.instructor.user.name}
+                  title={course.instructor.title}
+                  bio={course.instructor.bio}
+                  avatarUrl={course.instructor.avatarUrl}
+                  linkedin={course.instructor.linkedin}
+                  website={course.instructor.website}
+                />
+              </div>
+            </>
+          )}
 
           {/* What you'll get */}
           <Separator />
