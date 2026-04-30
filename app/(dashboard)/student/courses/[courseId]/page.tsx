@@ -4,6 +4,7 @@ import { getRequiredSession } from "@/lib/auth";
 import { VimeoPlayer } from "@/components/student/VimeoPlayer";
 import { ChapterSidebar } from "@/components/student/ChapterSidebar";
 import { MarkCompleteButton } from "@/components/student/MarkCompleteButton";
+import { InstructorCard } from "@/components/instructor/InstructorCard";
 
 type Props = {
   params: Promise<{ courseId: string }>;
@@ -30,6 +31,9 @@ export default async function CoursePlayerPage({ params, searchParams }: Props) 
               },
             },
           },
+        },
+        instructor: {
+          include: { user: { select: { name: true } } },
         },
       },
     }),
@@ -143,6 +147,24 @@ export default async function CoursePlayerPage({ params, searchParams }: Props) 
               </div>
             )}
           </div>
+
+          {/* Instructor */}
+          {course.instructor && (
+            <div className="border-t border-border pt-4">
+              <h3 className="text-sm font-semibold text-foreground mb-3">
+                Instructor del curso
+              </h3>
+              <InstructorCard
+                instructorId={course.instructor.id}
+                name={course.instructor.user.name}
+                title={course.instructor.title}
+                bio={course.instructor.bio}
+                avatarUrl={course.instructor.avatarUrl}
+                linkedin={course.instructor.linkedin}
+                website={course.instructor.website}
+              />
+            </div>
+          )}
 
           {/* Navigation */}
           <div className="flex justify-between pt-4 border-t border-[var(--border)]">

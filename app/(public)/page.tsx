@@ -30,6 +30,7 @@ export default async function LandingPage() {
     include: {
       _count: { select: { modules: true } },
       modules: { include: { _count: { select: { chapters: true } } } },
+      instructor: { include: { user: { select: { name: true } } } },
     },
   });
 
@@ -207,6 +208,11 @@ export default async function LandingPage() {
                   thumbnailUrl={course.thumbnailUrl}
                   moduleCount={course._count.modules}
                   chapterCount={chapterCount}
+                  instructor={course.instructor ? {
+                    id: course.instructor.id,
+                    name: course.instructor.user.name,
+                    avatarUrl: course.instructor.avatarUrl,
+                  } : null}
                 />
               );
             })}
