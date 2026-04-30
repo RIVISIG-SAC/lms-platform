@@ -9,6 +9,7 @@ datasource db {
 enum Role {
   ADMIN
   STUDENT
+  INSTRUCTOR
 }
 
 enum EnrollmentStatus {
@@ -41,13 +42,33 @@ model User {
   emailVerified         Boolean   @default(false)
   verificationToken     String?   @unique
   verificationTokenExp  DateTime?
+  isActive              Boolean   @default(true)
   createdAt             DateTime  @default(now())
   updatedAt             DateTime  @updatedAt
 
-  enrollments Enrollment[]
+  enrollments       Enrollment[]
+  instructorProfile InstructorProfile?
 
   @@index([email])
   @@index([verificationToken])
+}
+
+model InstructorProfile {
+  id             String   @id @default(cuid())
+  userId         String   @unique
+  bio            String?
+  avatarUrl      String?
+  title          String?
+  specialization String?
+  linkedin       String?
+  website        String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  courses Course[]
+
+  @@index([userId])
 }
 
 model Course {
@@ -62,9 +83,11 @@ model Course {
   level         CourseLevel?
   durationHours Int?
   published     Boolean      @default(false)
+  instructorId  String?
   createdAt     DateTime     @default(now())
   updatedAt     DateTime     @updatedAt
 
+  instructor  InstructorProfile? @relation(fields: [instructorId], references: [id], onDelete: SetNull)
   modules     Module[]
   enrollments Enrollment[]
   questions   Question[]
@@ -72,6 +95,7 @@ model Course {
   @@index([published])
   @@index([category])
   @@index([level])
+  @@index([instructorId])
 }
 
 model Module {
