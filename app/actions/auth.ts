@@ -42,6 +42,12 @@ export async function loginAction(_prev: unknown, formData: FormData) {
     };
   }
 
+  if (!user.isActive) {
+    return {
+      error: "Tu cuenta ha sido desactivada. Contacta al administrador.",
+    };
+  }
+
   await createSession({
     userId: user.id,
     role: user.role,
@@ -51,5 +57,8 @@ export async function loginAction(_prev: unknown, formData: FormData) {
 
   const next = formData.get("next") as string | null;
   if (next && next.startsWith("/")) redirect(next);
-  redirect(user.role === "ADMIN" ? "/admin" : "/student");
+
+  if (user.role === "ADMIN") redirect("/admin");
+  if (user.role === "INSTRUCTOR") redirect("/instructor");
+  redirect("/student");
 }

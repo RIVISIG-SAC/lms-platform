@@ -3,10 +3,16 @@ import { redirect } from "next/navigation";
 import { LogOut, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
+const roleLabel: Record<string, string> = {
+  ADMIN: "Administrador",
+  STUDENT: "Estudiante",
+  INSTRUCTOR: "Instructor",
+};
+
 type HeaderProps = {
   userName: string;
   userEmail: string;
-  role: "ADMIN" | "STUDENT";
+  role: "ADMIN" | "STUDENT" | "INSTRUCTOR";
 };
 
 async function logout() {
@@ -29,7 +35,7 @@ export function Header({ userName, userEmail, role }: HeaderProps) {
               {userName}
             </p>
             <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">
-              {role}
+              {roleLabel[role] ?? role}
             </p>
           </div>
           <div className="size-9 rounded-full bg-accent flex items-center justify-center text-accent-foreground border border-border">
