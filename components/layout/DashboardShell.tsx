@@ -2,7 +2,7 @@ import { Sidebar } from "./Sidebar";
 import { Header } from "./Header";
 
 type DashboardShellProps = {
-  role: "ADMIN" | "STUDENT";
+  role: "ADMIN" | "STUDENT" | "INSTRUCTOR";
   userName: string;
   userEmail: string;
   children: React.ReactNode;

@@ -36,6 +36,7 @@ import {
   COURSE_LEVEL_LABELS,
   type CourseLevelValue,
 } from "@/lib/validations/course";
+import { InstructorSelect, type InstructorOption } from "@/components/admin/InstructorSelect";
 
 type ActionState = { error?: string; success?: boolean } | null;
 type CourseAction = (prev: ActionState, formData: FormData) => Promise<ActionState>;
@@ -43,6 +44,7 @@ type CourseAction = (prev: ActionState, formData: FormData) => Promise<ActionSta
 type Props = {
   action: CourseAction;
   course?: SerializedCourse;
+  instructors?: InstructorOption[];
 };
 
 function SectionHeader({
@@ -67,7 +69,7 @@ function SectionHeader({
   );
 }
 
-export function CourseForm({ action, course }: Props) {
+export function CourseForm({ action, course, instructors = [] }: Props) {
   const [state, formAction, pending] = useActionState<ActionState, FormData>(action, null);
   const [published, setPublished] = useState<boolean>(course?.published ?? false);
   const [isFree, setIsFree] = useState<boolean>(course?.isFree ?? false);
@@ -210,6 +212,15 @@ export function CourseForm({ action, course }: Props) {
               </span>
             </div>
           </div>
+
+          {instructors.length > 0 && (
+            <div className="md:col-span-3">
+              <InstructorSelect
+                instructors={instructors}
+                defaultValue={(course as (SerializedCourse & { instructorId?: string | null }) | undefined)?.instructorId}
+              />
+            </div>
+          )}
         </div>
       </section>
 

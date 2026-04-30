@@ -10,6 +10,8 @@ import {
   Home,
   Globe,
   GraduationCap,
+  UserCircle,
+  Award,
 } from 'lucide-react';
 
 type NavItem = {
@@ -21,25 +23,37 @@ type NavItem = {
 const adminNav: NavItem[] = [
   { label: 'Dashboard', href: '/admin', icon: LayoutDashboard },
   { label: 'Cursos', href: '/admin/courses', icon: BookOpen },
-  { label: 'Estudiantes', href: '/admin/students', icon: Users },
+  { label: 'Usuarios', href: '/admin/users', icon: Users },
+  { label: 'Mi Perfil', href: '/admin/profile', icon: UserCircle },
 ];
 
 const studentNav: NavItem[] = [
   { label: 'Inicio', href: '/student', icon: Home },
   { label: 'Mis Cursos', href: '/student/my-courses', icon: GraduationCap },
+  { label: 'Certificados', href: '/student/certificates', icon: Award },
   { label: 'Ver cursos', href: '/cursos', icon: Globe },
+  { label: 'Mi Perfil', href: '/student/profile', icon: UserCircle },
+];
+
+const instructorNav: NavItem[] = [
+  { label: 'Dashboard', href: '/instructor', icon: LayoutDashboard },
+  { label: 'Mis Cursos', href: '/instructor/courses', icon: BookOpen },
+  { label: 'Mi Perfil', href: '/instructor/profile', icon: UserCircle },
 ];
 
 type SidebarProps = {
-  role: 'ADMIN' | 'STUDENT';
+  role: 'ADMIN' | 'STUDENT' | 'INSTRUCTOR';
 };
 
 export function Sidebar({ role }: SidebarProps) {
   const pathname = usePathname();
-  const navItems = role === 'ADMIN' ? adminNav : studentNav;
+  const navItems =
+    role === 'ADMIN' ? adminNav :
+    role === 'INSTRUCTOR' ? instructorNav :
+    studentNav;
 
   return (
-    <aside className="w-64 flex-shrink-0 bg-[var(--sidebar-bg)] text-[var(--sidebar-text)] flex flex-col min-h-screen">
+    <aside className="w-64 shrink-0 bg-(--sidebar-bg) text-(--sidebar-text) flex flex-col min-h-screen">
       <div className="px-6 py-8 border-b border-sidebar-border/50">
         <div className="flex items-center gap-2 mb-1">
           <div className="size-8 rounded-lg bg-primary flex items-center justify-center">
@@ -50,15 +64,19 @@ export function Sidebar({ role }: SidebarProps) {
           </h1>
         </div>
         <p className="text-[10px] uppercase tracking-wider font-semibold text-slate-800 mt-2">
-          {role === 'ADMIN' ? 'Administración' : 'Aprendizaje'}
+          {role === 'ADMIN' ? 'Administración' : role === 'INSTRUCTOR' ? 'Instructor' : 'Aprendizaje'}
         </p>
       </div>
 
       <nav className="flex-1 px-3 py-6 space-y-1">
         {navItems.map((item) => {
           const Icon = item.icon;
+          const rootHref =
+            role === 'ADMIN' ? '/admin' :
+            role === 'INSTRUCTOR' ? '/instructor' :
+            '/student';
           const isActive =
-            item.href === `/${role.toLowerCase()}`
+            item.href === rootHref
               ? pathname === item.href
               : pathname.startsWith(item.href);
 
