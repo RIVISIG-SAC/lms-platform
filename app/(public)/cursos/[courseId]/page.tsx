@@ -161,7 +161,7 @@ export default async function CourseDetailPage(props: { params: Promise<unknown>
                 className="w-full aspect-video object-cover"
               />
             ) : (
-              <div className="w-full aspect-video bg-gradient-to-br from-primary/80 to-primary flex items-center justify-center">
+              <div className="w-full aspect-video bg-linear-to-br from-primary/80 to-primary flex items-center justify-center">
                 <BookOpen className="h-14 w-14 text-white/20" />
               </div>
             )}

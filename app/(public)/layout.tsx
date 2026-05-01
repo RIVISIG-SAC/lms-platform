@@ -81,7 +81,7 @@ export default async function PublicLayout({ children }: { children: React.React
               <>
                 <Link
                   href="/login"
-                  className={cn(buttonVariants({ variant: "ghost", size: "sm" }))}
+                  className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
                 >
                   Iniciar sesión
                 </Link>

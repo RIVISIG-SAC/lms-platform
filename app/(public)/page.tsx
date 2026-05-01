@@ -1,11 +1,11 @@
-import Link from "next/link";
-import { Badge } from "@/components/ui/badge";
-import { buttonVariants } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
-import { LandingCourseCard } from "@/components/landing/CourseCard";
-import { ImageSlot } from "@/components/public/ImageSlot";
-import { prisma } from "@/lib/prisma";
-import { cn } from "@/lib/utils";
+import Link from 'next/link';
+import { Badge } from '@/components/ui/badge';
+import { buttonVariants } from '@/components/ui/button';
+import { Separator } from '@/components/ui/separator';
+import { LandingCourseCard } from '@/components/landing/CourseCard';
+import { ImageSlot } from '@/components/public/ImageSlot';
+import { prisma } from '@/lib/prisma';
+import { cn } from '@/lib/utils';
 import {
   ArrowRight,
   ShieldCheck,
@@ -14,18 +14,18 @@ import {
   Phone,
   Mail,
   Quote,
-} from "lucide-react";
+} from 'lucide-react';
 
 export const metadata = {
-  title: "RIVISIG Consultores — Capacitación en Sistemas de Gestión ISO",
+  title: 'RIVISIG Consultores — Capacitación en Sistemas de Gestión ISO',
   description:
-    "Consultora especializada en implementación, certificación y soporte de Sistemas de Gestión. ISO 9001, 14001, 45001, 27001 y más.",
+    'Consultora especializada en implementación, certificación y soporte de Sistemas de Gestión. ISO 9001, 14001, 45001, 27001 y más.',
 };
 
 export default async function LandingPage() {
   const courses = await prisma.course.findMany({
     where: { published: true },
-    orderBy: { createdAt: "desc" },
+    orderBy: { createdAt: 'desc' },
     take: 6,
     include: {
       _count: { select: { modules: true } },
@@ -50,29 +50,33 @@ export default async function LandingPage() {
               </Badge>
 
               <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-foreground leading-[1.05] tracking-tight">
-                Solidez, confianza y{" "}
-                <span className="text-primary">respaldo real</span>{" "}
-                en sistemas de gestión
+                Solidez, confianza y{' '}
+                <span className="text-primary">respaldo real</span> en sistemas
+                de gestión
               </h1>
 
               <p className="mt-6 text-lg text-muted-foreground leading-relaxed max-w-xl">
-                Consultora especializada en implementación, certificación y soporte de
-                Sistemas de Gestión orientada a empresas que requieren cumplimiento
-                normativo y respaldo ante auditorías, clientes y autoridades.
+                Consultora especializada en implementación, certificación y
+                soporte de Sistemas de Gestión orientada a empresas que
+                requieren cumplimiento normativo y respaldo ante auditorías,
+                clientes y autoridades.
               </p>
 
               <div className="mt-8 flex flex-col sm:flex-row gap-4">
                 <Link
                   href="/cursos"
-                  className={cn(buttonVariants({ size: "lg" }), "px-8 text-base h-12")}
+                  className={cn(
+                    buttonVariants({ size: 'lg' }),
+                    'px-8 text-base h-12',
+                  )}
                 >
                   Ver todos los cursos
                 </Link>
                 <Link
                   href="/registro"
                   className={cn(
-                    buttonVariants({ variant: "outline", size: "lg" }),
-                    "px-8 text-base h-12"
+                    buttonVariants({ variant: 'outline', size: 'lg' }),
+                    'px-8 text-base h-12',
                   )}
                 >
                   Crear cuenta gratis
@@ -82,9 +86,9 @@ export default async function LandingPage() {
               {/* Stats */}
               <div className="mt-10 grid grid-cols-3 gap-6 max-w-lg">
                 {[
-                  { value: "8+", label: "Normas ISO implementadas" },
-                  { value: "100%", label: "Cursos con certificado" },
-                  { value: "Verificable", label: "Código único por diploma" },
+                  { value: '8+', label: 'Normas ISO implementadas' },
+                  { value: '100%', label: 'Cursos con certificado' },
+                  { value: 'Verificable', label: 'Código único por diploma' },
                 ].map((s) => (
                   <div key={s.label}>
                     <p className="text-2xl sm:text-3xl font-bold text-primary">
@@ -145,9 +149,9 @@ export default async function LandingPage() {
             {[1, 2, 3, 4, 5, 6].map((i) => (
               <ImageSlot
                 key={i}
-                src={`/images/clients/cliente-${i}.png`}
+                src={`/images/clients/cliente-${i}.webp`}
                 alt={`Cliente ${i}`}
-                aspect="aspect-[3/1]"
+                aspect="aspect-[2/1]"
                 rounded="rounded-md"
                 cover={false}
                 className="bg-transparent border-dashed grayscale opacity-70 hover:opacity-100 hover:grayscale-0 transition-all"
@@ -158,9 +162,8 @@ export default async function LandingPage() {
         </div>
       </section>
 
+      {/* ── Cursos destacados ────────────────────────────── */}
 
-{/* ── Cursos destacados ────────────────────────────── */}
-      
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         <div className="flex items-end justify-between mb-8">
           <div>
@@ -171,15 +174,16 @@ export default async function LandingPage() {
               Cursos disponibles
             </h2>
             <p className="text-muted-foreground mt-1 text-sm">
-              Contenido actualizado, evaluación incluida y certificado verificable.
+              Contenido actualizado, evaluación incluida y certificado
+              verificable.
             </p>
           </div>
           {courses.length > 0 && (
             <Link
               href="/cursos"
               className={cn(
-                buttonVariants({ variant: "ghost" }),
-                "hidden sm:flex items-center gap-1 text-primary"
+                buttonVariants({ variant: 'ghost' }),
+                'hidden sm:flex items-center gap-1 text-primary',
               )}
             >
               Ver todos <ArrowRight className="h-4 w-4" />
@@ -196,7 +200,7 @@ export default async function LandingPage() {
             {courses.map((course) => {
               const chapterCount = course.modules.reduce(
                 (acc, m) => acc + m._count.chapters,
-                0
+                0,
               );
               return (
                 <LandingCourseCard
@@ -208,11 +212,15 @@ export default async function LandingPage() {
                   thumbnailUrl={course.thumbnailUrl}
                   moduleCount={course._count.modules}
                   chapterCount={chapterCount}
-                  instructor={course.instructor ? {
-                    id: course.instructor.id,
-                    name: course.instructor.user.name,
-                    avatarUrl: course.instructor.avatarUrl,
-                  } : null}
+                  instructor={
+                    course.instructor
+                      ? {
+                          id: course.instructor.id,
+                          name: course.instructor.user.name,
+                          avatarUrl: course.instructor.avatarUrl,
+                        }
+                      : null
+                  }
                 />
               );
             })}
@@ -235,18 +243,18 @@ export default async function LandingPage() {
           {[
             {
               icon: ShieldCheck,
-              title: "Sistemas auditables",
-              desc: "Implementamos sistemas que resisten auditorías externas y fiscalizaciones reales.",
+              title: 'Sistemas auditables',
+              desc: 'Implementamos sistemas que resisten auditorías externas y fiscalizaciones reales.',
             },
             {
               icon: Award,
-              title: "Certificación garantizada",
-              desc: "Acompañamiento total desde el diagnóstico hasta la auditoría de certificación.",
+              title: 'Certificación garantizada',
+              desc: 'Acompañamiento total desde el diagnóstico hasta la auditoría de certificación.',
             },
             {
               icon: CheckCircle2,
-              title: "Equipo capacitado",
-              desc: "Formamos a tu equipo para operar el sistema con autonomía, sin dependencia externa.",
+              title: 'Equipo capacitado',
+              desc: 'Formamos a tu equipo para operar el sistema con autonomía, sin dependencia externa.',
             },
           ].map(({ icon: Icon, title, desc }) => (
             <div
@@ -257,13 +265,13 @@ export default async function LandingPage() {
                 <Icon className="h-5 w-5 text-primary" />
               </div>
               <h3 className="font-semibold text-foreground mb-2">{title}</h3>
-              <p className="text-sm text-muted-foreground leading-relaxed">{desc}</p>
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                {desc}
+              </p>
             </div>
           ))}
         </div>
       </section>
-
-      
 
       {/* ── CTA final ────────────────────────────────────── */}
       <section className="relative bg-foreground text-primary-foreground overflow-hidden">
@@ -281,30 +289,23 @@ export default async function LandingPage() {
           />
         </div>
         <div className="relative max-w-3xl mx-auto px-4 py-20 text-center space-y-6">
-          <h2 className="text-3xl sm:text-4xl font-bold">¿Listo para certificar a tu equipo?</h2>
+          <h2 className="text-3xl sm:text-4xl font-bold">
+            ¿Listo para certificar a tu equipo?
+          </h2>
           <p className="text-primary-foreground/80 text-lg max-w-xl mx-auto">
-            Crea una cuenta, elige el curso y comienza hoy. O contáctanos para una
-            consultoría personalizada.
+            Crea una cuenta, elige el curso y comienza hoy. O contáctanos para
+            una consultoría personalizada.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link
               href="/registro"
               className={cn(
-                buttonVariants({ variant: "secondary", size: "lg" }),
-                "px-8 h-12 text-base font-semibold"
+                buttonVariants({ variant: 'secondary', size: 'lg' }),
+                'px-8 h-12 text-base font-semibold',
               )}
             >
               Comenzar ahora
             </Link>
-            <a
-              href="mailto:info@rivisig.com"
-              className={cn(
-                buttonVariants({ variant: "outline", size: "lg" }),
-                "px-8 h-12 text-base font-semibold bg-transparent border-white/30 text-white hover:bg-white/10 hover:text-white"
-              )}
-            >
-              Agendar consultoría
-            </a>
           </div>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-5 pt-4 text-primary-foreground/70 text-sm">
             <a

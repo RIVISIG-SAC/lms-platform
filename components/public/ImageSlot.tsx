@@ -46,10 +46,8 @@ export function ImageSlot({
         <Image
           src={src}
           alt={alt}
-          fill={cover}
-          width={cover ? undefined : 1200}
-          height={cover ? undefined : 800}
-          className={cn(cover && "object-cover")}
+          fill
+          className={cn(cover ? "object-cover" : "object-contain p-1")}
           sizes={sizes}
           priority={priority}
           onError={() => setErrored(true)}

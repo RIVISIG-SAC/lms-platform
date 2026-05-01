@@ -46,10 +46,10 @@ export function Header({ userName, userEmail, role }: HeaderProps) {
         <form action={logout}>
           <Button
             type="submit"
-            variant="ghost"
+            variant="outline"
             size="sm"
             aria-label="Cerrar sesión"
-            className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 gap-2 font-semibold"
+            className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 gap-2 font-semibold  cursor-pointer"
           >
             <LogOut className="size-4" aria-hidden="true" />
             <span className="hidden md:inline" aria-hidden="true">Cerrar sesión</span>

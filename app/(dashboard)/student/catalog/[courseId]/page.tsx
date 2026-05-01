@@ -56,7 +56,7 @@ export default async function CourseCatalogDetailPage({ params }: Props) {
         {/* Main content */}
         <div className="lg:col-span-2 space-y-6">
           {/* Hero */}
-          <div className="aspect-video bg-gradient-to-br from-blue-600 to-blue-900 rounded-xl overflow-hidden">
+          <div className="aspect-video bg-linear-to-br from-primary to-primary/80 rounded-xl overflow-hidden">
             {course.thumbnailUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
