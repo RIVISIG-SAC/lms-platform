@@ -17,6 +17,7 @@ import {
   Gift,
   Award,
 } from "lucide-react";
+import { CloudinaryUpload } from "@/components/admin/CloudinaryUpload";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -76,6 +77,7 @@ export function CourseForm({ action, course, instructors = [] }: Props) {
   const [level, setLevel] = useState<CourseLevelValue | "">(
     (course?.level as CourseLevelValue | null) ?? ""
   );
+  const [thumbnailUrl, setThumbnailUrl] = useState<string>(course?.thumbnailUrl ?? "");
 
   useEffect(() => {
     if (!state) return;
@@ -130,16 +132,16 @@ export function CourseForm({ action, course, instructors = [] }: Props) {
           </div>
 
           <div className="md:col-span-2 space-y-2">
-            <Label htmlFor="thumbnailUrl" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-              <ImageIcon className="size-3.5" /> Imagen de portada (URL)
+            <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+              <ImageIcon className="size-3.5" /> Imagen de portada
             </Label>
-            <Input
-              id="thumbnailUrl"
-              name="thumbnailUrl"
-              type="url"
-              defaultValue={course?.thumbnailUrl ?? ""}
-              placeholder="https://..."
-              className="h-11"
+            <input type="hidden" name="thumbnailUrl" value={thumbnailUrl} />
+            <CloudinaryUpload
+              value={thumbnailUrl}
+              onChange={setThumbnailUrl}
+              resourceType="image"
+              label="Subir imagen de portada"
+              folder="lms/thumbnails"
             />
           </div>
         </div>

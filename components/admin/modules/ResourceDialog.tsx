@@ -4,6 +4,7 @@ import { useActionState, useEffect, useState, type ReactNode } from "react";
 import { Loader2, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { createResource } from "@/app/actions/courses";
+import { CloudinaryUpload } from "@/components/admin/CloudinaryUpload";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -43,6 +44,7 @@ type Props = {
 export function ResourceDialog({ chapterId, courseId, trigger }: Props) {
   const [open, setOpen] = useState(false);
   const [type, setType] = useState("PDF");
+  const [resourceUrl, setResourceUrl] = useState("");
   const [state, formAction, pending] = useActionState<ActionState, FormData>(createResource, null);
 
   useEffect(() => {
@@ -53,6 +55,7 @@ export function ResourceDialog({ chapterId, courseId, trigger }: Props) {
       toast.success("Recurso añadido");
       setOpen(false);
       setType("PDF");
+      setResourceUrl("");
     }
   }, [state]);
 
@@ -111,15 +114,16 @@ export function ResourceDialog({ chapterId, courseId, trigger }: Props) {
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="resource-url" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-              URL del archivo <span className="text-destructive">*</span>
+            <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              Archivo <span className="text-destructive">*</span>
             </Label>
-            <Input
-              id="resource-url"
-              name="url"
-              type="url"
-              required
-              placeholder="https://..."
+            <input type="hidden" name="url" value={resourceUrl} />
+            <CloudinaryUpload
+              value={resourceUrl}
+              onChange={setResourceUrl}
+              resourceType="raw"
+              label="Subir archivo"
+              folder="lms/resources"
             />
           </div>
 
