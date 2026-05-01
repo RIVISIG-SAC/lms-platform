@@ -2,6 +2,8 @@
 
 import { useState, useTransition } from "react";
 import { submitExam } from "@/app/actions/exam";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 type Option = { id: string; text: string };
 type Question = { id: string; text: string; order: number; options: Option[] };
@@ -42,17 +44,20 @@ export function ExamForm({ courseId, questions, attemptNumber }: Props) {
 
   if (result) {
     return (
-      <div className={`rounded-xl p-8 text-center space-y-4 border ${result.passed ? "bg-green-50 border-green-200" : "bg-red-50 border-red-200"}`}>
+      <div className={cn(
+        "rounded-xl p-8 text-center space-y-4 border",
+        result.passed ? "bg-green-50 border-green-200" : "bg-destructive/5 border-destructive/20"
+      )}>
         <div className="text-5xl">{result.passed ? "🎓" : "📋"}</div>
         <div>
-          <p className="text-2xl font-bold" style={{ color: result.passed ? "#166534" : "#991b1b" }}>
+          <p className={cn("text-2xl font-bold", result.passed ? "text-green-700" : "text-destructive")}>
             {result.score.toFixed(0)}%
           </p>
-          <p className={`text-lg font-semibold mt-1 ${result.passed ? "text-green-800" : "text-red-800"}`}>
+          <p className={cn("text-lg font-semibold mt-1", result.passed ? "text-green-800" : "text-destructive/80")}>
             {result.passed ? "¡Evaluación Aprobada!" : "No Aprobado"}
           </p>
         </div>
-        <p className={`text-sm ${result.passed ? "text-green-700" : "text-red-700"}`}>
+        <p className={cn("text-sm", result.passed ? "text-green-700" : "text-muted-foreground")}>
           {result.passed
             ? "Tu certificado ha sido generado. Puedes descargarlo desde Mis Cursos."
             : attemptNumber >= 2
@@ -61,7 +66,10 @@ export function ExamForm({ courseId, questions, attemptNumber }: Props) {
         </p>
         <a
           href={result.passed ? "/student/my-courses" : `/student/courses/${courseId}`}
-          className={`inline-block text-sm font-medium px-5 py-2.5 rounded-md ${result.passed ? "bg-green-600 text-white hover:opacity-90" : "bg-[var(--primary)] text-white hover:opacity-90"}`}
+          className={cn(
+            "inline-block text-sm font-medium px-5 py-2.5 rounded-md transition-opacity hover:opacity-90",
+            result.passed ? "bg-green-600 text-white" : "bg-primary text-primary-foreground"
+          )}
         >
           {result.passed ? "Ver mi certificado" : "Volver al curso"}
         </a>
@@ -71,7 +79,7 @@ export function ExamForm({ courseId, questions, attemptNumber }: Props) {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between text-sm text-[var(--muted-foreground)] bg-slate-50 border border-[var(--border)] rounded-lg px-4 py-3">
+      <div className="flex items-center justify-between text-sm text-muted-foreground bg-muted/50 border border-border rounded-lg px-4 py-3">
         <span>Intento {attemptNumber} de 2</span>
         <span>
           {Object.keys(answers).length} / {questions.length} respondidas
@@ -81,9 +89,9 @@ export function ExamForm({ courseId, questions, attemptNumber }: Props) {
 
       <div className="space-y-5">
         {questions.map((question, qi) => (
-          <div key={question.id} className="bg-[var(--card)] border border-[var(--border)] rounded-lg p-5">
-            <p className="text-sm font-medium text-[var(--foreground)] mb-4">
-              <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-[var(--primary)] text-white text-xs font-bold mr-2">
+          <div key={question.id} className="bg-card border border-border rounded-lg p-5">
+            <p className="text-sm font-medium text-foreground mb-4">
+              <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-primary text-primary-foreground text-xs font-bold mr-2">
                 {qi + 1}
               </span>
               {question.text}
@@ -94,19 +102,21 @@ export function ExamForm({ courseId, questions, attemptNumber }: Props) {
                 return (
                   <label
                     key={opt.id}
-                    className={`flex items-center gap-3 px-4 py-3 rounded-lg border cursor-pointer transition-all ${
+                    className={cn(
+                      "flex items-center gap-3 px-4 py-3 rounded-lg border cursor-pointer transition-all",
                       selected
-                        ? "border-[var(--primary)] bg-blue-50"
-                        : "border-[var(--border)] hover:border-slate-300 hover:bg-slate-50"
-                    }`}
+                        ? "border-primary bg-primary/5"
+                        : "border-border hover:border-primary/30 hover:bg-accent/50"
+                    )}
                   >
                     <span
-                      className={`w-4 h-4 rounded-full border-2 flex-shrink-0 flex items-center justify-center ${
-                        selected ? "border-[var(--primary)]" : "border-slate-300"
-                      }`}
+                      className={cn(
+                        "w-4 h-4 rounded-full border-2 shrink-0 flex items-center justify-center",
+                        selected ? "border-primary" : "border-border"
+                      )}
                     >
                       {selected && (
-                        <span className="w-2 h-2 rounded-full bg-[var(--primary)]" />
+                        <span className="w-2 h-2 rounded-full bg-primary" />
                       )}
                     </span>
                     <input
@@ -117,7 +127,7 @@ export function ExamForm({ courseId, questions, attemptNumber }: Props) {
                       onChange={() => setAnswers({ ...answers, [question.id]: opt.id })}
                       className="sr-only"
                     />
-                    <span className="text-sm text-[var(--foreground)]">{opt.text}</span>
+                    <span className="text-sm text-foreground">{opt.text}</span>
                   </label>
                 );
               })}
@@ -127,18 +137,18 @@ export function ExamForm({ courseId, questions, attemptNumber }: Props) {
       </div>
 
       {error && (
-        <p className="text-sm text-[var(--destructive)] bg-red-50 border border-red-200 px-4 py-3 rounded-lg">
+        <p className="text-sm text-destructive bg-destructive/10 border border-destructive/20 px-4 py-3 rounded-lg">
           {error}
         </p>
       )}
 
-      <button
+      <Button
         onClick={handleSubmit}
         disabled={pending || !allAnswered}
-        className="w-full bg-[var(--primary)] text-white font-medium py-3 rounded-lg hover:opacity-90 transition-opacity disabled:opacity-60 disabled:cursor-not-allowed"
+        className="w-full py-6 text-base font-semibold"
       >
         {pending ? "Enviando evaluación..." : "Enviar evaluación"}
-      </button>
+      </Button>
     </div>
   );
 }

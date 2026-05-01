@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { cn } from "@/lib/utils";
+import { CheckCircle2, PlayCircle, Circle } from "lucide-react";
 
 type Chapter = {
   id: string;
@@ -33,16 +34,16 @@ export function ChapterSidebar({
   progressPercentage,
 }: Props) {
   return (
-    <aside className="w-72 flex-shrink-0 border-r border-[var(--border)] bg-[var(--card)] flex flex-col h-full overflow-hidden">
+    <aside className="w-72 shrink-0 border-r border-border bg-card flex flex-col h-full overflow-hidden">
       {/* Progress header */}
-      <div className="px-4 py-3 border-b border-[var(--border)]">
-        <div className="flex justify-between text-xs text-[var(--muted-foreground)] mb-1.5">
+      <div className="px-4 py-3 border-b border-border">
+        <div className="flex justify-between text-xs text-muted-foreground mb-1.5">
           <span>Progreso del curso</span>
           <span className="font-medium">{Math.round(progressPercentage)}%</span>
         </div>
-        <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
+        <div className="h-1.5 bg-muted rounded-full overflow-hidden">
           <div
-            className="h-full bg-[var(--primary)] rounded-full transition-all duration-500"
+            className="h-full bg-primary rounded-full transition-all duration-500"
             style={{ width: `${progressPercentage}%` }}
           />
         </div>
@@ -52,7 +53,7 @@ export function ChapterSidebar({
       <nav className="flex-1 overflow-y-auto py-2">
         {modules.map((mod) => (
           <div key={mod.id}>
-            <p className="px-4 py-2 text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wide">
+            <p className="px-4 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
               {mod.order + 1}. {mod.title}
             </p>
             {mod.chapters.map((ch) => {
@@ -66,29 +67,21 @@ export function ChapterSidebar({
                   className={cn(
                     "flex items-center gap-3 px-4 py-2.5 text-sm transition-colors",
                     isActive
-                      ? "bg-blue-50 text-[var(--primary)] font-medium border-r-2 border-[var(--primary)]"
-                      : "text-[var(--foreground)] hover:bg-slate-50"
+                      ? "bg-primary/5 text-primary font-medium border-r-2 border-primary"
+                      : "text-foreground hover:bg-accent/50"
                   )}
                 >
                   {/* Status icon */}
-                  <span className="flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center text-xs">
-                    {isDone ? (
-                      <span className="w-5 h-5 rounded-full bg-green-100 text-green-600 flex items-center justify-center text-xs">
-                        ✓
-                      </span>
-                    ) : isActive ? (
-                      <span className="w-5 h-5 rounded-full bg-blue-100 text-[var(--primary)] flex items-center justify-center text-xs">
-                        ▶
-                      </span>
-                    ) : (
-                      <span className="w-5 h-5 rounded-full border border-slate-200 bg-white" />
-                    )}
-                  </span>
+                  {isDone ? (
+                    <CheckCircle2 className="shrink-0 size-5 text-green-600" />
+                  ) : isActive ? (
+                    <PlayCircle className="shrink-0 size-5 text-primary" />
+                  ) : (
+                    <Circle className="shrink-0 size-5 text-border" />
+                  )}
                   <span className="flex-1 leading-snug line-clamp-2">{ch.title}</span>
-                  {ch.vimeoVideoId && (
-                    <span className="flex-shrink-0 text-xs text-[var(--muted-foreground)]">
-                      ▶
-                    </span>
+                  {ch.vimeoVideoId && !isActive && !isDone && (
+                    <span className="shrink-0 text-[10px] text-muted-foreground font-medium">▶</span>
                   )}
                 </Link>
               );

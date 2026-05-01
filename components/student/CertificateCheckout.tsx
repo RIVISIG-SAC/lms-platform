@@ -100,20 +100,20 @@ export function CertificateCheckout({ enrollmentId, courseTitle, certificateFeeI
   return (
     <div className="space-y-3">
       {error && (
-        <p className="text-sm text-[var(--destructive)] bg-red-50 border border-red-200 px-3 py-2 rounded-md">
+        <p className="text-sm text-destructive bg-destructive/10 border border-destructive/20 px-3 py-2 rounded-md">
           {error}
         </p>
       )}
       <button
         onClick={handlePay}
         disabled={loading || !scriptReady}
-        className="w-full bg-[var(--primary)] text-white font-medium py-3 rounded-lg hover:opacity-90 transition-opacity disabled:opacity-60 disabled:cursor-not-allowed text-base"
+        className="w-full bg-primary text-primary-foreground font-medium py-3 rounded-lg hover:opacity-90 transition-opacity disabled:opacity-60 disabled:cursor-not-allowed text-base"
       >
         {loading
           ? "Procesando pago..."
           : `Obtener certificado — S/. ${certificateFeeInSoles.toFixed(2)}`}
       </button>
-      <p className="text-xs text-center text-[var(--muted-foreground)]">
+      <p className="text-xs text-center text-muted-foreground">
         Pago seguro procesado por Culqi
       </p>
     </div>

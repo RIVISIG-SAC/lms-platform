@@ -36,14 +36,14 @@ export function LandingCourseCard({ id, title, description, price, thumbnailUrl,
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
             />
           ) : (
-            <div className="w-full h-full bg-gradient-to-br from-primary/80 to-primary flex items-center justify-center">
+            <div className="w-full h-full bg-linear-to-br from-primary/80 to-primary flex items-center justify-center">
               <BookOpen className="h-12 w-12 text-white/20" />
             </div>
           )}
         </div>
 
         <CardContent className="p-5 flex-1">
-          <h3 className="font-semibold text-foreground leading-snug mb-2 group-hover:text-primary transition-colors line-clamp-2">
+          <h3 className="text-base font-bold text-foreground leading-snug mb-2 group-hover:text-primary transition-colors duration-300 line-clamp-2">
             {title}
           </h3>
           <p className="text-sm text-muted-foreground line-clamp-2 mb-3">

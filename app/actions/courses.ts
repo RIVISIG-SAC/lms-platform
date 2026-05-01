@@ -115,6 +115,11 @@ export async function updateCourse(_prev: unknown, formData: FormData) {
 export async function deleteCourse(courseId: string) {
   try { await assertCourseAccess(courseId); } catch { return { error: "No autorizado" }; }
 
+  const enrollmentCount = await prisma.enrollment.count({ where: { courseId } });
+  if (enrollmentCount > 0) {
+    return { error: `No se puede eliminar un curso con ${enrollmentCount} estudiante(s) inscrito(s).` };
+  }
+
   const session = await getRequiredSession();
   await prisma.course.delete({ where: { id: courseId } });
   revalidatePath("/admin/courses");

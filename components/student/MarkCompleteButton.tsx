@@ -3,6 +3,8 @@
 import { useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { markChapterComplete } from "@/app/actions/progress";
+import { Button } from "@/components/ui/button";
+import { CheckCircle2 } from "lucide-react";
 
 type Props = {
   chapterId: string;
@@ -30,36 +32,26 @@ export function MarkCompleteButton({ chapterId, courseId, nextChapterId, isDone 
     return (
       <div className="flex items-center gap-2">
         <span className="flex items-center gap-1.5 text-green-600 text-sm font-medium">
-          <span className="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center text-xs">✓</span>
+          <CheckCircle2 className="size-5" />
           Completado
         </span>
         {nextChapterId && (
-          <button
-            onClick={() => router.push(`/student/courses/${courseId}?chapter=${nextChapterId}`)}
-            className="bg-[var(--primary)] text-white text-sm font-medium px-4 py-2 rounded-md hover:opacity-90 transition-opacity"
-          >
+          <Button size="sm" onClick={() => router.push(`/student/courses/${courseId}?chapter=${nextChapterId}`)}>
             Siguiente →
-          </button>
+          </Button>
         )}
         {!nextChapterId && (
-          <button
-            onClick={() => router.push(`/student/courses/${courseId}/exam`)}
-            className="bg-green-600 text-white text-sm font-medium px-4 py-2 rounded-md hover:opacity-90 transition-opacity"
-          >
+          <Button size="sm" variant="secondary" className="bg-green-600 text-white hover:bg-green-700" onClick={() => router.push(`/student/courses/${courseId}/exam`)}>
             Ir a evaluación →
-          </button>
+          </Button>
         )}
       </div>
     );
   }
 
   return (
-    <button
-      onClick={handleClick}
-      disabled={pending}
-      className="bg-[var(--primary)] text-white text-sm font-medium px-4 py-2 rounded-md hover:opacity-90 transition-opacity disabled:opacity-60 disabled:cursor-not-allowed"
-    >
+    <Button onClick={handleClick} disabled={pending} size="sm">
       {pending ? "Guardando..." : "Marcar como completado"}
-    </button>
+    </Button>
   );
 }
