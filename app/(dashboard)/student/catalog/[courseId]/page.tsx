@@ -40,7 +40,7 @@ export default async function CourseCatalogDetailPage({ params }: Props) {
     redirect(`/student/courses/${courseId}`);
   }
 
-  const totalChapters = course.modules.reduce((acc, m) => acc + m.chapters.length, 0);
+  const totalChapters = course.modules.reduce((acc: number, m) => acc + m.chapters.length, 0);
 
   return (
     <div className="max-w-4xl">
