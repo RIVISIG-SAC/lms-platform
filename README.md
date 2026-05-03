@@ -226,6 +226,31 @@ pnpm db:studio    # Abrir Prisma Studio
 
 ---
 
+## Deploy en Vercel
+
+Configuración recomendada para evitar errores en producción:
+
+1. Importa el repositorio en Vercel y deja los valores por defecto de Next.js.
+2. En **Settings → Environment Variables**, configura estas variables:
+   - `DATABASE_URL`
+   - `DIRECT_URL`
+   - `JWT_SECRET`
+   - `CULQI_PUBLIC_KEY`
+   - `CULQI_SECRET_KEY`
+   - `NEXT_PUBLIC_CULQI_PUBLIC_KEY`
+   - `CLOUDINARY_CLOUD_NAME`
+   - `CLOUDINARY_API_KEY`
+   - `CLOUDINARY_API_SECRET`
+   - `NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME`
+   - `RESEND_API_KEY`
+   - `NEXT_PUBLIC_APP_URL` (ejemplo: `https://tu-app.vercel.app`)
+3. Asegura Node.js 20+ (el proyecto define `"engines": { "node": ">=20" }`).
+4. El comando de build es `next build` y Prisma se genera automáticamente en `postinstall`.
+
+Si usas Neon, verifica que `DATABASE_URL` sea la conexión pooled y `DIRECT_URL` la conexión directa para migraciones.
+
+---
+
 ## Contribuir
 
 1. Crear branch desde `main`: `git checkout -b feature/nueva-funcionalidad`
