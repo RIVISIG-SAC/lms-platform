@@ -7,9 +7,13 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "postinstall": "prisma generate",
     "db:seed": "dotenv -e .env -- tsx prisma/seed.ts",
     "db:reset-demo": "dotenv -e .env -- tsx prisma/reset-demo.ts",
     "db:studio": "prisma studio"
+  },
+  "engines": {
+    "node": ">=20"
   },
   "dependencies": {
     "@base-ui/react": "^1.4.0",
