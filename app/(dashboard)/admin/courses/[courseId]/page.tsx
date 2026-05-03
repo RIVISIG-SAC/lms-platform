@@ -62,7 +62,7 @@ export default async function EditCoursePage({ params }: Props) {
 
   if (!course) notFound();
 
-  const totalChapters = course.modules.reduce((acc, m) => acc + m.chapters.length, 0);
+  const totalChapters = course.modules.reduce((acc: number, m) => acc + m.chapters.length, 0);
   const levelLabel = course.level
     ? COURSE_LEVEL_LABELS[course.level as CourseLevelValue]
     : null;
