@@ -123,6 +123,16 @@ const styles = StyleSheet.create({
     color: "#16a34a",
     fontFamily: "Helvetica-Bold",
   },
+  expiresValue: {
+    fontSize: 11,
+    color: "#dc2626",
+    fontFamily: "Helvetica-Bold",
+  },
+  noExpiryValue: {
+    fontSize: 11,
+    color: "#16a34a",
+    fontFamily: "Helvetica-Bold",
+  },
 });
 
 type Props = {
@@ -131,9 +141,10 @@ type Props = {
   issueDate: Date;
   verificationCode: string;
   score: number;
+  expiresAt?: Date | null;
 };
 
-export function CertificatePDF({ studentName, courseTitle, issueDate, verificationCode, score }: Props) {
+export function CertificatePDF({ studentName, courseTitle, issueDate, verificationCode, score, expiresAt }: Props) {
   return (
     <Document
       title={`Certificado — ${courseTitle}`}
@@ -169,6 +180,14 @@ export function CertificatePDF({ studentName, courseTitle, issueDate, verificati
             <View style={styles.metaItem}>
               <Text style={styles.metaLabel}>Código de verificación</Text>
               <Text style={styles.metaValue}>{verificationCode}</Text>
+            </View>
+            <View style={styles.metaItem}>
+              <Text style={styles.metaLabel}>Vigencia</Text>
+              {expiresAt ? (
+                <Text style={styles.expiresValue}>Hasta {formatDate(expiresAt)}</Text>
+              ) : (
+                <Text style={styles.noExpiryValue}>Sin vencimiento</Text>
+              )}
             </View>
           </View>
         </View>

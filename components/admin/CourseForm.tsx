@@ -16,6 +16,7 @@ import {
   EyeOff,
   Gift,
   Award,
+  CalendarDays,
 } from "lucide-react";
 import { CloudinaryUpload } from "@/components/admin/CloudinaryUpload";
 import { toast } from "sonner";
@@ -35,6 +36,7 @@ import {
 import {
   COURSE_LEVELS,
   COURSE_LEVEL_LABELS,
+  VALIDITY_OPTIONS,
   type CourseLevelValue,
 } from "@/lib/validations/course";
 import { InstructorSelect, type InstructorOption } from "@/components/admin/InstructorSelect";
@@ -78,6 +80,19 @@ export function CourseForm({ action, course, instructors = [] }: Props) {
     (course?.level as CourseLevelValue | null) ?? ""
   );
   const [thumbnailUrl, setThumbnailUrl] = useState<string>(course?.thumbnailUrl ?? "");
+  const [hasCertExpiry, setHasCertExpiry] = useState<boolean>(
+    course?.certificateValidityDays != null
+  );
+  const [validityDays, setValidityDays] = useState<number | "custom">(() => {
+    const v = course?.certificateValidityDays;
+    if (v == null) return 365;
+    return VALIDITY_OPTIONS.some((o) => o.value === v) ? v : "custom";
+  });
+  const [customDays, setCustomDays] = useState<string>(() => {
+    const v = course?.certificateValidityDays;
+    if (v == null || VALIDITY_OPTIONS.some((o) => o.value === v)) return "";
+    return String(v);
+  });
 
   useEffect(() => {
     if (!state) return;
@@ -347,6 +362,105 @@ export function CourseForm({ action, course, instructors = [] }: Props) {
                   )}
                 </Label>
               </div>
+            </div>
+          )}
+        </div>
+      </section>
+
+      <Separator />
+
+      {/* ── Sección 4: Vigencia del certificado ───────────────── */}
+      <section className="space-y-5">
+        <SectionHeader
+          icon={CalendarDays}
+          title="Vigencia del certificado"
+          hint="Define si el certificado emitido al aprobar tiene fecha de vencimiento."
+        />
+
+        <input
+          type="hidden"
+          name="certificateValidityDays"
+          value={
+            hasCertExpiry
+              ? validityDays === "custom"
+                ? customDays
+                : String(validityDays)
+              : ""
+          }
+        />
+
+        <div className="space-y-4">
+          <div className="h-11 flex items-center gap-3 rounded-lg border border-input bg-accent/30 px-3.5">
+            <Switch
+              id="hasCertExpiry"
+              checked={hasCertExpiry}
+              onCheckedChange={setHasCertExpiry}
+            />
+            <Label htmlFor="hasCertExpiry" className="flex items-center gap-2 cursor-pointer text-sm font-medium">
+              {hasCertExpiry ? (
+                <>
+                  <CalendarDays className="size-3.5 text-primary" />
+                  El certificado tiene fecha de vencimiento
+                </>
+              ) : (
+                <>
+                  <CalendarDays className="size-3.5 text-muted-foreground" />
+                  Sin fecha de vencimiento
+                </>
+              )}
+            </Label>
+          </div>
+
+          {hasCertExpiry && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="validitySelect" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  Duración de la vigencia
+                </Label>
+                <Select
+                  value={String(validityDays)}
+                  onValueChange={(v) =>
+                    setValidityDays(v === "custom" ? "custom" : Number(v))
+                  }
+                >
+                  <SelectTrigger id="validitySelect" className="h-11 w-full">
+                    <SelectValue placeholder="Selecciona una opción" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {VALIDITY_OPTIONS.map((o) => (
+                      <SelectItem key={o.value} value={String(o.value)}>
+                        {o.label}
+                      </SelectItem>
+                    ))}
+                    <SelectItem value="custom">Días personalizados</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {validityDays === "custom" && (
+                <div className="space-y-2">
+                  <Label htmlFor="customDays" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                    Días de validez
+                  </Label>
+                  <div className="relative">
+                    <Input
+                      id="customDays"
+                      type="number"
+                      min="1"
+                      max="3650"
+                      step="1"
+                      value={customDays}
+                      onChange={(e) => setCustomDays(e.target.value)}
+                      placeholder="Ej. 545"
+                      className="h-11 pr-14"
+                    />
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-semibold text-muted-foreground">
+                      días
+                    </span>
+                  </div>
+                  <p className="text-xs text-muted-foreground">Entre 1 y 3650 días.</p>
+                </div>
+              )}
             </div>
           )}
         </div>

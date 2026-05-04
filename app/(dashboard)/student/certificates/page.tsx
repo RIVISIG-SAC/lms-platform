@@ -1,10 +1,10 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { getRequiredSession } from "@/lib/auth";
-import { Award, BookOpen, Download, Lock } from "lucide-react";
+import { Award, BookOpen, Download, Lock, CalendarX } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+import { cn, getCertificateEffectiveStatus } from "@/lib/utils";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -22,11 +22,20 @@ export default async function StudentCertificatesPage() {
     orderBy: { startDate: "desc" },
     include: {
       course: { select: { id: true, title: true, thumbnailUrl: true } },
-      certificate: { select: { verificationCode: true, status: true, issueDate: true } },
+      certificate: { select: { verificationCode: true, status: true, issueDate: true, expiresAt: true } },
     },
   });
 
-  const withCert = enrollments.filter((e) => e.certificate?.status === "ACTIVE");
+  const withCert = enrollments.filter(
+    (e) =>
+      e.certificate &&
+      getCertificateEffectiveStatus(e.certificate.status, e.certificate.expiresAt) === "ACTIVE"
+  );
+  const expired = enrollments.filter(
+    (e) =>
+      e.certificate &&
+      getCertificateEffectiveStatus(e.certificate.status, e.certificate.expiresAt) === "EXPIRED"
+  );
   const pending = enrollments.filter((e) => e.certificate?.status === "PENDING_PAYMENT");
   const notEligible = enrollments.filter(
     (e) => !e.certificate && !["PAID", "COMPLETED"].includes(e.status)
@@ -83,6 +92,18 @@ export default async function StudentCertificatesPage() {
                       })}
                     </p>
                   )}
+                  {e.certificate?.expiresAt ? (
+                    <p className="text-xs text-amber-600 font-medium mt-0.5">
+                      Válido hasta{" "}
+                      {new Date(e.certificate.expiresAt).toLocaleDateString("es-ES", {
+                        day: "2-digit",
+                        month: "long",
+                        year: "numeric",
+                      })}
+                    </p>
+                  ) : (
+                    <p className="text-xs text-green-600 font-medium mt-0.5">Sin fecha de vencimiento</p>
+                  )}
                 </div>
                 <a
                   href={`/api/certificates/${e.certificate!.verificationCode}/download`}
@@ -95,6 +116,37 @@ export default async function StudentCertificatesPage() {
                 >
                   <Download className="size-3.5" /> Descargar
                 </a>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* Expired certificates */}
+      {expired.length > 0 && (
+        <section className="space-y-3">
+          <h2 className="text-xs font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+            <CalendarX className="size-3.5 text-destructive" /> Certificados vencidos
+          </h2>
+          <div className="rounded-xl border border-border/50 bg-muted/20 shadow-sm overflow-hidden divide-y divide-border/40">
+            {expired.map((e) => (
+              <div key={e.id} className="flex items-center gap-4 px-5 py-4 opacity-70">
+                <div className="size-10 rounded-lg bg-red-50 border border-red-200 flex items-center justify-center shrink-0">
+                  <CalendarX className="size-4 text-destructive" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-semibold text-sm text-foreground truncate">{e.course.title}</p>
+                  <p className="text-xs text-destructive mt-0.5">
+                    Venció el{" "}
+                    {new Date(e.certificate!.expiresAt!).toLocaleDateString("es-ES", {
+                      day: "2-digit",
+                      month: "long",
+                      year: "numeric",
+                    })}
+                  </p>
+                  <p className="text-xs text-muted-foreground">Contacta al administrador si necesitas renovarlo.</p>
+                </div>
+                <Badge variant="destructive" className="text-[10px] font-semibold shrink-0">Vencido</Badge>
               </div>
             ))}
           </div>

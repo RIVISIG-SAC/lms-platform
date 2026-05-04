@@ -24,6 +24,7 @@ enum CertificateStatus {
   ACTIVE
   REVOKED
   PENDING_PAYMENT
+  EXPIRED
 }
 
 enum CourseLevel {
@@ -81,7 +82,8 @@ model Course {
   thumbnailUrl     String?
   category      String?
   level         CourseLevel?
-  durationHours Int?
+  durationHours               Int?
+  certificateValidityDays     Int?
   published     Boolean      @default(false)
   instructorId  String?
   createdAt     DateTime     @default(now())
@@ -220,6 +222,7 @@ model Certificate {
   verificationCode String            @unique @default(cuid())
   status            CertificateStatus @default(ACTIVE)
   certificatePaidAt DateTime?
+  expiresAt         DateTime?
 
   enrollment Enrollment @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
 

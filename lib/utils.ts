@@ -28,3 +28,13 @@ export function addDays(date: Date, days: number): Date {
   result.setDate(result.getDate() + days);
   return result;
 }
+
+export function getCertificateEffectiveStatus(
+  status: "ACTIVE" | "REVOKED" | "PENDING_PAYMENT" | "EXPIRED",
+  expiresAt: Date | null
+): "ACTIVE" | "REVOKED" | "PENDING_PAYMENT" | "EXPIRED" {
+  if (status === "ACTIVE" && expiresAt !== null && new Date() > expiresAt) {
+    return "EXPIRED";
+  }
+  return status;
+}

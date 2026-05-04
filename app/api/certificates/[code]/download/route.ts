@@ -4,6 +4,7 @@ import { createElement } from "react";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
 import { CertificatePDF } from "@/lib/certificate-pdf";
+import { getCertificateEffectiveStatus } from "@/lib/utils";
 
 export async function GET(
   _request: NextRequest,
@@ -29,8 +30,13 @@ export async function GET(
     },
   });
 
-  if (!certificate || certificate.status !== "ACTIVE") {
+  if (!certificate) {
     return NextResponse.json({ error: "Certificado no encontrado" }, { status: 404 });
+  }
+
+  const effectiveStatus = getCertificateEffectiveStatus(certificate.status, certificate.expiresAt);
+  if (effectiveStatus !== "ACTIVE") {
+    return NextResponse.json({ error: "Certificado no disponible o vencido" }, { status: 404 });
   }
 
   // Solo el propietario o admin pueden descargarlo
@@ -52,6 +58,7 @@ export async function GET(
       issueDate: certificate.issueDate,
       verificationCode: certificate.verificationCode,
       score,
+      expiresAt: certificate.expiresAt,
     }) as any
   );
 

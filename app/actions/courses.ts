@@ -20,6 +20,9 @@ function parseCoursePayload(formData: FormData) {
   const certificateFee =
     rawCertFee === null || rawCertFee === "" ? undefined : Number(rawCertFee);
   const rawInstructorId = (formData.get("instructorId") as string | null) || "";
+  const rawValidity = formData.get("certificateValidityDays");
+  const certificateValidityDays =
+    rawValidity === null || rawValidity === "" ? undefined : Number(rawValidity);
 
   return {
     title: formData.get("title"),
@@ -31,6 +34,7 @@ function parseCoursePayload(formData: FormData) {
     category: rawCategory,
     level: rawLevel,
     durationHours,
+    certificateValidityDays,
     instructorId: rawInstructorId || null,
   };
 }
@@ -39,7 +43,7 @@ function buildCourseData(
   parsed: ReturnType<typeof courseSchema.safeParse> & { success: true },
   instructorId: string | null,
 ) {
-  const { category, level, durationHours, thumbnailUrl, certificateFee, ...rest } = parsed.data;
+  const { category, level, durationHours, thumbnailUrl, certificateFee, certificateValidityDays, ...rest } = parsed.data;
   return {
     ...rest,
     thumbnailUrl: thumbnailUrl && thumbnailUrl !== "" ? thumbnailUrl : null,
@@ -47,6 +51,7 @@ function buildCourseData(
     level: level ? (level as CourseLevel) : null,
     durationHours: typeof durationHours === "number" ? durationHours : null,
     certificateFee: typeof certificateFee === "number" ? certificateFee : null,
+    certificateValidityDays: typeof certificateValidityDays === "number" ? certificateValidityDays : null,
     instructorId: instructorId || null,
   };
 }
