@@ -1,14 +1,17 @@
-import { NextRequest, NextResponse } from "next/server";
-import { renderToBuffer } from "@react-pdf/renderer";
-import { createElement } from "react";
-import { prisma } from "@/lib/prisma";
-import { getSession } from "@/lib/auth";
-import { CertificatePDF } from "@/lib/certificate-pdf";
-import { getCertificateEffectiveStatus } from "@/lib/utils";
+import { NextRequest, NextResponse } from 'next/server';
+import { renderToBuffer } from '@react-pdf/renderer';
+import { createElement } from 'react';
+import fs from 'fs';
+import path from 'path';
+import QRCode from 'qrcode';
+import { prisma } from '@/lib/prisma';
+import { getSession } from '@/lib/auth';
+import { CertificatePDF } from '@/lib/certificate-pdf';
+import { getCertificateEffectiveStatus } from '@/lib/utils';
 
 export async function GET(
   _request: NextRequest,
-  { params }: { params: Promise<{ code: string }> }
+  { params }: { params: Promise<{ code: string }> },
 ) {
   const { code } = await params;
   const session = await getSession();
@@ -22,7 +25,7 @@ export async function GET(
           course: { select: { title: true } },
           examAttempts: {
             where: { passed: true },
-            orderBy: { createdAt: "desc" },
+            orderBy: { createdAt: 'desc' },
             take: 1,
           },
         },
@@ -31,24 +34,55 @@ export async function GET(
   });
 
   if (!certificate) {
-    return NextResponse.json({ error: "Certificado no encontrado" }, { status: 404 });
+    return NextResponse.json(
+      { error: 'Certificado no encontrado' },
+      { status: 404 },
+    );
   }
 
-  const effectiveStatus = getCertificateEffectiveStatus(certificate.status, certificate.expiresAt);
-  if (effectiveStatus !== "ACTIVE") {
-    return NextResponse.json({ error: "Certificado no disponible o vencido" }, { status: 404 });
+  const effectiveStatus = getCertificateEffectiveStatus(
+    certificate.status,
+    certificate.expiresAt,
+  );
+  if (effectiveStatus !== 'ACTIVE') {
+    return NextResponse.json(
+      { error: 'Certificado no disponible o vencido' },
+      { status: 404 },
+    );
   }
 
-  // Solo el propietario o admin pueden descargarlo
   if (
     session &&
-    session.role !== "ADMIN" &&
+    session.role !== 'ADMIN' &&
     session.userId !== certificate.enrollment.userId
   ) {
-    return NextResponse.json({ error: "No autorizado" }, { status: 403 });
+    return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
   }
 
   const score = certificate.enrollment.examAttempts[0]?.score ?? 100;
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://rivisig.com';
+  const verificationUrl = `${baseUrl}/verificar/${certificate.verificationCode}`;
+
+  const [qrCodeBase64, logoBase64] = await Promise.all([
+    QRCode.toDataURL(verificationUrl, {
+      errorCorrectionLevel: 'M',
+      margin: 1,
+      width: 200,
+      color: { dark: '#1a1a2e', light: '#ffffff' },
+    }),
+    Promise.resolve(
+      (() => {
+        const logoPath = path.join(
+          process.cwd(),
+          'public',
+          'images',
+          'logo.png',
+        );
+        const buffer = fs.readFileSync(logoPath);
+        return `data:image/png;base64,${buffer.toString('base64')}`;
+      })(),
+    ),
+  ]);
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const pdfBuffer = await renderToBuffer(
@@ -57,18 +91,21 @@ export async function GET(
       courseTitle: certificate.enrollment.course.title,
       issueDate: certificate.issueDate,
       verificationCode: certificate.verificationCode,
+      verificationUrl,
       score,
       expiresAt: certificate.expiresAt,
-    }) as any
+      logoBase64,
+      qrCodeBase64,
+    }) as any,
   );
 
   const filename = `certificado-${certificate.verificationCode}.pdf`;
 
   return new NextResponse(Buffer.from(pdfBuffer) as unknown as BodyInit, {
     headers: {
-      "Content-Type": "application/pdf",
-      "Content-Disposition": `attachment; filename="${filename}"`,
-      "Cache-Control": "no-store",
+      'Content-Type': 'application/pdf',
+      'Content-Disposition': `attachment; filename="${filename}"`,
+      'Cache-Control': 'no-store',
     },
   });
 }
