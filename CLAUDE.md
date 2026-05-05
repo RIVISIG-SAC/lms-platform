@@ -8,14 +8,13 @@ Este es un proyecto moderno basado en:
 - TypeScript
 - Tailwind CSS + shadcn/ui
 - Prisma + PostgreSQL
+- Gestor de paquetes pnpm
 
 El proyecto sigue buenas prácticas de escalabilidad, performance y mantenibilidad.
 
 ---
 
 ## Sistema de Agentes (Skills)
-
-Los agentes están definidos en `.agents/skills`.
 
 Claude DEBE utilizar estos agentes para resolver tareas específicas en lugar de responder como generalista.
 
@@ -94,6 +93,6 @@ Para cada solicitud:
 
 ## Regla Crítica
 
-Si existe un agente relevante en `.agents/skills`, Claude DEBE usarlo.
+Si existe un agente relevante Claude DEBE usarlo.
 
 Nunca ignorar los agentes disponibles.
