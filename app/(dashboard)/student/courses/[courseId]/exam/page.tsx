@@ -42,7 +42,7 @@ export default async function ExamPage({ params }: Props) {
   const maxAttemptsReached = attemptsDone >= 2;
 
   return (
-    <main className="flex-1 overflow-y-auto">
+    <main className="flex-1 overflow-y-auto [overflow-anchor:none]">
       <div className="max-w-2xl mx-auto px-6 py-8 space-y-6">
         <div className="flex items-center justify-between">
           <div>
