@@ -164,18 +164,19 @@ export default async function LandingPage() {
 
       {/* ── Cursos destacados ────────────────────────────── */}
 
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-        <div className="flex items-end justify-between mb-8">
+      <section className="relative overflow-hidden border-y border-border bg-linear-to-b from-white via-muted/30 to-white">
+        <div className="absolute -top-20 right-0 size-72 rounded-full bg-primary/8 blur-3xl" />
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 relative">
+        <div className="flex items-end justify-between mb-8 gap-4">
           <div>
             <p className="text-xs font-semibold uppercase tracking-widest text-primary mb-2">
-              Plataforma de capacitación
+              Plataforma de capacitacion
             </p>
-            <h2 className="text-2xl sm:text-3xl font-bold text-foreground">
-              Cursos disponibles
+            <h2 className="text-3xl sm:text-4xl font-black tracking-tight text-foreground leading-tight">
+              Formacion tecnica para equipos que deben cumplir y evidenciar resultados
             </h2>
-            <p className="text-muted-foreground mt-1 text-sm">
-              Contenido actualizado, evaluación incluida y certificado
-              verificable.
+            <p className="text-muted-foreground mt-2 text-sm sm:text-base max-w-2xl leading-relaxed">
+              Cursos estructurados por modulos, evaluacion incluida y certificado verificable para fortalecer auditorias, clientes y procesos internos.
             </p>
           </div>
           {courses.length > 0 && (
@@ -183,20 +184,20 @@ export default async function LandingPage() {
               href="/cursos"
               className={cn(
                 buttonVariants({ variant: 'ghost' }),
-                'hidden sm:flex items-center gap-1 text-primary',
+                'hidden sm:flex items-center gap-1 text-primary rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2',
               )}
             >
-              Ver todos <ArrowRight className="h-4 w-4" />
+              Ir al catalogo <ArrowRight className="h-4 w-4" />
             </Link>
           )}
         </div>
 
         {courses.length === 0 ? (
-          <div className="text-center py-20 text-muted-foreground text-sm">
-            Próximamente nuevos cursos disponibles.
+          <div className="text-center py-20 text-muted-foreground text-sm border border-dashed border-border rounded-2xl bg-white/70">
+            Estamos preparando nuevas rutas de formacion.
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-7">
             {courses.map((course) => {
               const chapterCount = course.modules.reduce(
                 (acc, m) => acc + m._count.chapters,
@@ -226,6 +227,7 @@ export default async function LandingPage() {
             })}
           </div>
         )}
+        </div>
       </section>
 
       {/* ── Propuesta de valor ───────────────────────────── */}
@@ -290,11 +292,10 @@ export default async function LandingPage() {
         </div>
         <div className="relative max-w-3xl mx-auto px-4 py-20 text-center space-y-6">
           <h2 className="text-3xl sm:text-4xl font-bold">
-            ¿Listo para certificar a tu equipo?
+            Activa hoy una ruta de capacitacion con impacto medible
           </h2>
           <p className="text-primary-foreground/80 text-lg max-w-xl mx-auto">
-            Crea una cuenta, elige el curso y comienza hoy. O contáctanos para
-            una consultoría personalizada.
+            Crea una cuenta, elige un curso y empieza en minutos. Si necesitas un plan corporativo, te ayudamos a disenar una ruta personalizada.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link
