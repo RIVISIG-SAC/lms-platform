@@ -197,7 +197,12 @@ export function CourseForm({ action, course, instructors = [] }: Props) {
               onValueChange={(v) => setLevel(v as CourseLevelValue | "")}
             >
               <SelectTrigger id="level" className="h-11 w-full">
-                <SelectValue placeholder="Selecciona un nivel" />
+                <SelectValue placeholder="Selecciona un nivel">
+                  {(value) => {
+                    if (!value) return "Selecciona un nivel";
+                    return COURSE_LEVEL_LABELS[value as CourseLevelValue] ?? String(value);
+                  }}
+                </SelectValue>
               </SelectTrigger>
               <SelectContent>
                 {COURSE_LEVELS.map((l) => (
@@ -424,7 +429,14 @@ export function CourseForm({ action, course, instructors = [] }: Props) {
                   }
                 >
                   <SelectTrigger id="validitySelect" className="h-11 w-full">
-                    <SelectValue placeholder="Selecciona una opción" />
+                    <SelectValue placeholder="Selecciona una opción">
+                      {(value) => {
+                        if (!value) return "Selecciona una opción";
+                        if (value === "custom") return "Días personalizados";
+                        const option = VALIDITY_OPTIONS.find((o) => String(o.value) === String(value));
+                        return option?.label ?? String(value);
+                      }}
+                    </SelectValue>
                   </SelectTrigger>
                   <SelectContent>
                     {VALIDITY_OPTIONS.map((o) => (

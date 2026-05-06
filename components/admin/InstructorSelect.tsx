@@ -24,6 +24,7 @@ type Props = {
 
 export function InstructorSelect({ instructors, defaultValue }: Props) {
   const [value, setValue] = useState<string>(defaultValue ?? "none");
+  const selectedInstructor = instructors.find((instructor) => instructor.id === value);
 
   return (
     <div className="space-y-2">
@@ -33,7 +34,15 @@ export function InstructorSelect({ instructors, defaultValue }: Props) {
       <input type="hidden" name="instructorId" value={value === "none" ? "" : value} />
       <Select value={value} onValueChange={(v) => setValue(v ?? "none")}>
         <SelectTrigger id="instructorId" className="h-11 w-full">
-          <SelectValue placeholder="Sin instructor asignado" />
+          <SelectValue placeholder="Sin instructor asignado">
+            {() =>
+              value === "none"
+                ? "Sin instructor asignado"
+                : selectedInstructor
+                  ? `${selectedInstructor.user.name}${selectedInstructor.title ? ` — ${selectedInstructor.title}` : ""}`
+                  : "Instructor no disponible"
+            }
+          </SelectValue>
         </SelectTrigger>
         <SelectContent>
           <SelectItem value="none">Sin instructor asignado</SelectItem>
