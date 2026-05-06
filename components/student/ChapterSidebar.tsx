@@ -24,6 +24,7 @@ type Props = {
   completedIds: Set<string>;
   courseId: string;
   progressPercentage: number;
+  onClose?: () => void;
 };
 
 export function ChapterSidebar({
@@ -32,14 +33,27 @@ export function ChapterSidebar({
   completedIds,
   courseId,
   progressPercentage,
+  onClose,
 }: Props) {
   return (
     <aside className="w-72 shrink-0 border-r border-border bg-card flex flex-col h-full overflow-hidden">
       {/* Progress header */}
       <div className="px-4 py-3 border-b border-border">
-        <div className="flex justify-between text-xs text-muted-foreground mb-1.5">
-          <span>Progreso del curso</span>
-          <span className="font-medium">{Math.round(progressPercentage)}%</span>
+        <div className="flex items-center justify-between mb-1.5">
+          <div className="flex items-center justify-between flex-1 text-xs text-muted-foreground">
+            <span>Progreso del curso</span>
+            <span className="font-medium">{Math.round(progressPercentage)}%</span>
+          </div>
+          {/* Close button — mobile only */}
+          {onClose && (
+            <button
+              onClick={onClose}
+              className="md:hidden ml-3 p-1 rounded text-muted-foreground hover:text-foreground transition-colors"
+              aria-label="Cerrar temario"
+            >
+              ✕
+            </button>
+          )}
         </div>
         <div className="h-1.5 bg-muted rounded-full overflow-hidden">
           <div

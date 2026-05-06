@@ -12,7 +12,9 @@ import {
   GraduationCap,
   UserCircle,
   Award,
+  X,
 } from 'lucide-react';
+import { useSidebarContext } from './MobileShell';
 
 type NavItem = {
   label: string;
@@ -47,16 +49,24 @@ type SidebarProps = {
 
 export function Sidebar({ role }: SidebarProps) {
   const pathname = usePathname();
+  const { setIsOpen } = useSidebarContext();
   const navItems =
     role === 'ADMIN' ? adminNav :
     role === 'INSTRUCTOR' ? instructorNav :
     studentNav;
 
   return (
-    <aside className="w-64 shrink-0 bg-sidebar-bg text-sidebar-text flex flex-col min-h-screen">
+    <aside className="w-64 shrink-0 bg-sidebar-bg text-sidebar-text flex flex-col min-h-screen relative">
       <div className="px-6 py-8 border-b border-border/50">
-        <div className="flex items-center gap-2 mb-1">
+        <div className="flex items-center justify-between gap-2 mb-1">
           <img src="/images/logo.png" alt="logo rivisig" className="h-10 w-auto" />
+          <button
+            className="md:hidden text-muted-foreground hover:text-foreground transition-colors p-1 rounded"
+            onClick={() => setIsOpen(false)}
+            aria-label="Cerrar menú"
+          >
+            <X className="size-5" />
+          </button>
         </div>
         <p className="text-[10px] uppercase tracking-wider font-semibold text-foreground/60 mt-2">
           {role === 'ADMIN' ? 'Administración' : role === 'INSTRUCTOR' ? 'Instructor' : 'Aprendizaje'}
@@ -79,6 +89,7 @@ export function Sidebar({ role }: SidebarProps) {
             <Link
               key={item.href}
               href={item.href}
+              onClick={() => setIsOpen(false)}
               aria-current={isActive ? 'page' : undefined}
               className={cn(
                 'relative flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 group',
