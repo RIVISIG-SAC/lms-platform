@@ -50,6 +50,11 @@ type Props = {
   instructors?: InstructorOption[];
 };
 
+const fieldLabelClassName = "text-xs font-semibold uppercase tracking-wider text-muted-foreground";
+const sectionCardClassName = "space-y-5 rounded-xl border border-border/70 bg-card p-5 md:p-6";
+const controlClassName = "h-12 rounded-xl border-border/80 bg-background text-[15px]";
+const switchRowClassName = "h-12 flex items-center gap-3 rounded-xl border border-input bg-accent/30 px-4";
+
 function SectionHeader({
   icon: Icon,
   title,
@@ -105,7 +110,7 @@ export function CourseForm({ action, course, instructors = [] }: Props) {
       {course && <input type="hidden" name="id" value={course.id} />}
 
       {/* ── Sección 1: Identidad ────────────────────────────────── */}
-      <section className="space-y-5">
+      <section className={sectionCardClassName}>
         <SectionHeader
           icon={Type}
           title="Identidad del curso"
@@ -114,7 +119,7 @@ export function CourseForm({ action, course, instructors = [] }: Props) {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
           <div className="md:col-span-2 space-y-2">
-            <Label htmlFor="title" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            <Label htmlFor="title" className={fieldLabelClassName}>
               Título <span className="text-destructive">*</span>
             </Label>
             <Input
@@ -124,12 +129,13 @@ export function CourseForm({ action, course, instructors = [] }: Props) {
               minLength={3}
               defaultValue={course?.title}
               placeholder="Ej. Implementación de ISO 9001:2015"
-              className="h-11"
+              className={controlClassName}
             />
+            <p className="text-xs text-muted-foreground">Entre 3 y 120 caracteres, claro y específico.</p>
           </div>
 
           <div className="md:col-span-2 space-y-2">
-            <Label htmlFor="description" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            <Label htmlFor="description" className={fieldLabelClassName}>
               Descripción <span className="text-destructive">*</span>
             </Label>
             <Textarea
@@ -139,7 +145,7 @@ export function CourseForm({ action, course, instructors = [] }: Props) {
               rows={4}
               defaultValue={course?.description}
               placeholder="Resume el objetivo, el alcance y el público objetivo del curso."
-              className="resize-none"
+              className="resize-none rounded-xl border-border/80 bg-background text-[15px]"
             />
             <p className="text-xs text-muted-foreground">
               Se mostrará en el catálogo público. Mínimo 10 caracteres.
@@ -147,7 +153,7 @@ export function CourseForm({ action, course, instructors = [] }: Props) {
           </div>
 
           <div className="md:col-span-2 space-y-2">
-            <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+            <Label className={`${fieldLabelClassName} flex items-center gap-1.5`}>
               <ImageIcon className="size-3.5" /> Imagen de portada
             </Label>
             <input type="hidden" name="thumbnailUrl" value={thumbnailUrl} />
@@ -165,7 +171,7 @@ export function CourseForm({ action, course, instructors = [] }: Props) {
       <Separator />
 
       {/* ── Sección 2: Clasificación ──────────────────────────── */}
-      <section className="space-y-5">
+      <section className={sectionCardClassName}>
         <SectionHeader
           icon={Tag}
           title="Clasificación"
@@ -174,7 +180,7 @@ export function CourseForm({ action, course, instructors = [] }: Props) {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
           <div className="space-y-2">
-            <Label htmlFor="category" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            <Label htmlFor="category" className={fieldLabelClassName}>
               Categoría
             </Label>
             <Input
@@ -183,12 +189,13 @@ export function CourseForm({ action, course, instructors = [] }: Props) {
               defaultValue={course?.category ?? ""}
               placeholder="Ej. ISO 9001"
               maxLength={80}
-              className="h-11"
+              className={controlClassName}
             />
+            <p className="text-xs text-muted-foreground">Opcional. Ejemplo: ISO, SST, liderazgo, auditoría.</p>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="level" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+            <Label htmlFor="level" className={`${fieldLabelClassName} flex items-center gap-1.5`}>
               <Signal className="size-3.5" /> Nivel
             </Label>
             <input type="hidden" name="level" value={level} />
@@ -196,7 +203,7 @@ export function CourseForm({ action, course, instructors = [] }: Props) {
               value={level}
               onValueChange={(v) => setLevel(v as CourseLevelValue | "")}
             >
-              <SelectTrigger id="level" className="h-11 w-full">
+              <SelectTrigger id="level" className={`${controlClassName} w-full`}>
                 <SelectValue placeholder="Selecciona un nivel">
                   {(value) => {
                     if (!value) return "Selecciona un nivel";
@@ -215,7 +222,7 @@ export function CourseForm({ action, course, instructors = [] }: Props) {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="durationHours" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+            <Label htmlFor="durationHours" className={`${fieldLabelClassName} flex items-center gap-1.5`}>
               <Clock className="size-3.5" /> Duración
             </Label>
             <div className="relative">
@@ -227,12 +234,13 @@ export function CourseForm({ action, course, instructors = [] }: Props) {
                 step="1"
                 defaultValue={course?.durationHours ?? ""}
                 placeholder="0"
-                className="h-11 pr-12"
+                className={`${controlClassName} pr-12`}
               />
               <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-semibold text-muted-foreground">
                 hrs
               </span>
             </div>
+            <p className="text-xs text-muted-foreground">Opcional. Solo números enteros en horas.</p>
           </div>
 
           {instructors.length > 0 && (
@@ -249,7 +257,7 @@ export function CourseForm({ action, course, instructors = [] }: Props) {
       <Separator />
 
       {/* ── Sección 3: Precio y publicación ───────────────────── */}
-      <section className="space-y-5">
+      <section className={sectionCardClassName}>
         <SectionHeader
           icon={DollarSign}
           title="Precio y visibilidad"
@@ -261,10 +269,10 @@ export function CourseForm({ action, course, instructors = [] }: Props) {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
           {/* Toggle curso gratuito */}
           <div className="md:col-span-2 space-y-2">
-            <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+            <Label className={`${fieldLabelClassName} flex items-center gap-1.5`}>
               <Gift className="size-3.5" /> Tipo de acceso
             </Label>
-            <div className="h-11 flex items-center gap-3 rounded-lg border border-input bg-accent/30 px-3.5">
+            <div className={switchRowClassName}>
               <Switch id="isFree" checked={isFree} onCheckedChange={setIsFree} />
               <Label htmlFor="isFree" className="flex items-center gap-2 cursor-pointer text-sm font-medium">
                 {isFree ? (
@@ -285,7 +293,7 @@ export function CourseForm({ action, course, instructors = [] }: Props) {
           {/* Precio del curso (solo si no es gratuito) */}
           {!isFree && (
             <div className="space-y-2">
-              <Label htmlFor="price" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              <Label htmlFor="price" className={fieldLabelClassName}>
                 Inversión <span className="text-destructive">*</span>
               </Label>
               <div className="relative">
@@ -301,7 +309,7 @@ export function CourseForm({ action, course, instructors = [] }: Props) {
                   required={!isFree}
                   defaultValue={course && !course.isFree ? Number(course.price) : ""}
                   placeholder="0.00"
-                  className="pl-9 h-11 font-semibold"
+                  className={`${controlClassName} pl-9 font-semibold`}
                 />
               </div>
             </div>
@@ -312,7 +320,7 @@ export function CourseForm({ action, course, instructors = [] }: Props) {
             <>
               <input type="hidden" name="price" value="0" />
               <div className="space-y-2">
-                <Label htmlFor="certificateFee" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                <Label htmlFor="certificateFee" className={`${fieldLabelClassName} flex items-center gap-1.5`}>
                   <Award className="size-3.5" /> Costo del certificado <span className="text-destructive">*</span>
                 </Label>
                 <div className="relative">
@@ -328,7 +336,7 @@ export function CourseForm({ action, course, instructors = [] }: Props) {
                     required={isFree}
                     defaultValue={course?.certificateFee != null ? Number(course.certificateFee) : ""}
                     placeholder="0.00"
-                    className="pl-9 h-11 font-semibold"
+                    className={`${controlClassName} pl-9 font-semibold`}
                   />
                 </div>
                 <p className="text-xs text-muted-foreground">
@@ -340,10 +348,10 @@ export function CourseForm({ action, course, instructors = [] }: Props) {
 
           {course && (
             <div className="space-y-2">
-              <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+              <Label className={`${fieldLabelClassName} flex items-center gap-1.5`}>
                 <Globe2 className="size-3.5" /> Estado
               </Label>
-              <div className="h-11 flex items-center gap-3 rounded-lg border border-input bg-accent/30 px-3.5">
+              <div className={switchRowClassName}>
                 <input type="hidden" name="published" value={published ? "true" : "false"} />
                 <Switch
                   id="published"
@@ -375,7 +383,7 @@ export function CourseForm({ action, course, instructors = [] }: Props) {
       <Separator />
 
       {/* ── Sección 4: Vigencia del certificado ───────────────── */}
-      <section className="space-y-5">
+      <section className={sectionCardClassName}>
         <SectionHeader
           icon={CalendarDays}
           title="Vigencia del certificado"
@@ -395,7 +403,7 @@ export function CourseForm({ action, course, instructors = [] }: Props) {
         />
 
         <div className="space-y-4">
-          <div className="h-11 flex items-center gap-3 rounded-lg border border-input bg-accent/30 px-3.5">
+          <div className={switchRowClassName}>
             <Switch
               id="hasCertExpiry"
               checked={hasCertExpiry}
@@ -419,7 +427,7 @@ export function CourseForm({ action, course, instructors = [] }: Props) {
           {hasCertExpiry && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="validitySelect" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                <Label htmlFor="validitySelect" className={fieldLabelClassName}>
                   Duración de la vigencia
                 </Label>
                 <Select
@@ -428,7 +436,7 @@ export function CourseForm({ action, course, instructors = [] }: Props) {
                     setValidityDays(v === "custom" ? "custom" : Number(v))
                   }
                 >
-                  <SelectTrigger id="validitySelect" className="h-11 w-full">
+                  <SelectTrigger id="validitySelect" className={`${controlClassName} w-full`}>
                     <SelectValue placeholder="Selecciona una opción">
                       {(value) => {
                         if (!value) return "Selecciona una opción";
@@ -451,7 +459,7 @@ export function CourseForm({ action, course, instructors = [] }: Props) {
 
               {validityDays === "custom" && (
                 <div className="space-y-2">
-                  <Label htmlFor="customDays" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  <Label htmlFor="customDays" className={fieldLabelClassName}>
                     Días de validez
                   </Label>
                   <div className="relative">
@@ -464,7 +472,7 @@ export function CourseForm({ action, course, instructors = [] }: Props) {
                       value={customDays}
                       onChange={(e) => setCustomDays(e.target.value)}
                       placeholder="Ej. 545"
-                      className="h-11 pr-14"
+                      className={`${controlClassName} pr-14`}
                     />
                     <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-semibold text-muted-foreground">
                       días
@@ -480,7 +488,7 @@ export function CourseForm({ action, course, instructors = [] }: Props) {
 
       {/* ── Footer ─────────────────────────────────────────────── */}
       <div className="flex items-center justify-end gap-3 pt-2 border-t border-border/60">
-        <Button type="submit" disabled={pending} className="h-10 px-6 font-semibold">
+        <Button type="submit" disabled={pending} className="h-12 rounded-xl px-7 text-[15px] font-semibold">
           {pending ? (
             <>
               <Loader2 className="size-4 animate-spin" />
