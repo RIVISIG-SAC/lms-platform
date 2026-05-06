@@ -76,7 +76,7 @@ export default async function StudentCertificatesPage() {
           </h2>
           <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden divide-y divide-border/60">
             {withCert.map((e) => (
-              <div key={e.id} className="flex items-center gap-4 px-5 py-4">
+              <div key={e.id} className="flex items-center gap-3 sm:gap-4 px-3 sm:px-5 py-3 sm:py-4">
                 <div className="size-10 rounded-lg bg-amber-50 border border-amber-200 flex items-center justify-center shrink-0">
                   <Award className="size-5 text-amber-600" />
                 </div>
@@ -114,7 +114,8 @@ export default async function StudentCertificatesPage() {
                     "shrink-0 gap-2 bg-amber-500 hover:bg-amber-600 text-white border-none"
                   )}
                 >
-                  <Download className="size-3.5" /> Descargar
+                  <Download className="size-3.5" />
+                  <span className="hidden sm:inline">Descargar</span>
                 </a>
               </div>
             ))}
@@ -161,7 +162,7 @@ export default async function StudentCertificatesPage() {
           </h2>
           <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden divide-y divide-border/60">
             {pending.map((e) => (
-              <div key={e.id} className="flex items-center gap-4 px-5 py-4">
+              <div key={e.id} className="flex items-center gap-3 sm:gap-4 px-3 sm:px-5 py-3 sm:py-4">
                 <div className="size-10 rounded-lg bg-orange-50 border border-orange-200 flex items-center justify-center shrink-0">
                   <Award className="size-5 text-orange-400" />
                 </div>
@@ -191,7 +192,7 @@ export default async function StudentCertificatesPage() {
           </h2>
           <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden divide-y divide-border/60">
             {eligible.map((e) => (
-              <div key={e.id} className="flex items-center gap-4 px-5 py-4">
+              <div key={e.id} className="flex items-center gap-3 sm:gap-4 px-3 sm:px-5 py-3 sm:py-4">
                 <div className="size-10 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0">
                   <BookOpen className="size-5 text-primary" />
                 </div>
