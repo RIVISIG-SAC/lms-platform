@@ -4,6 +4,16 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { getRequiredSession } from "@/lib/auth";
 
+function generateVerificationCode(): string {
+  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  let code = "";
+  for (let i = 0; i < 12; i++) {
+    if (i > 0 && i % 4 === 0) code += "-";
+    code += chars[Math.floor(Math.random() * chars.length)];
+  }
+  return code;
+}
+
 export async function issueCertificateAction(enrollmentId: string) {
   const session = await getRequiredSession();
   if (session.role !== "ADMIN") return { error: "No autorizado." };
@@ -19,10 +29,13 @@ export async function issueCertificateAction(enrollmentId: string) {
     return { error: "El estudiante debe haber pagado o completado el curso." };
   }
 
+  const verificationCode = enrollment.certificate?.verificationCode ?? generateVerificationCode();
+
   await prisma.certificate.upsert({
     where: { enrollmentId },
     create: {
       enrollmentId,
+      verificationCode,
       status: "ACTIVE",
       issueDate: new Date(),
     },

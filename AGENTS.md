@@ -1,9 +1,5 @@
 # Agents / Skills disponibles
 
-Este proyecto utiliza un sistema de agentes especializados ubicados en:
-
-.agents/skills
-
 Cada agente representa conocimiento experto en un área específica.
 
 ---

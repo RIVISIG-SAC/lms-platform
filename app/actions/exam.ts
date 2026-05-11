@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { getRequiredSession } from "@/lib/auth";
+import { addDays } from "@/lib/utils";
 
 // ─── Admin: gestión de preguntas ────────────────────────────────────────────
 
@@ -66,7 +67,7 @@ export async function submitExam(
 
   const enrollment = await prisma.enrollment.findUnique({
     where: { userId_courseId: { userId: session.userId, courseId } },
-    include: { course: { select: { isFree: true } } },
+    include: { course: { select: { isFree: true, certificateValidityDays: true } } },
   });
 
   if (!enrollment || enrollment.status !== "COMPLETED") {
@@ -113,10 +114,15 @@ export async function submitExam(
   if (passed) {
     const certStatus = enrollment.course.isFree ? "PENDING_PAYMENT" : "ACTIVE";
     const verificationCode = generateVerificationCode();
+    const issueDate = new Date();
+    const expiresAt =
+      enrollment.course.certificateValidityDays != null
+        ? addDays(issueDate, enrollment.course.certificateValidityDays)
+        : null;
     await prisma.certificate.upsert({
       where: { enrollmentId: enrollment.id },
-      create: { enrollmentId: enrollment.id, verificationCode, status: certStatus },
-      update: { status: certStatus },
+      create: { enrollmentId: enrollment.id, verificationCode, status: certStatus, issueDate, expiresAt },
+      update: { status: certStatus, expiresAt },
     });
   } else if (attemptCount + 1 >= 2) {
     // Agotó intentos sin aprobar

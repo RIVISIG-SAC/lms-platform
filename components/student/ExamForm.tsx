@@ -79,12 +79,12 @@ export function ExamForm({ courseId, questions, attemptNumber }: Props) {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between text-sm text-muted-foreground bg-muted/50 border border-border rounded-lg px-4 py-3">
+      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 text-sm text-muted-foreground bg-muted/50 border border-border rounded-lg px-4 py-3">
         <span>Intento {attemptNumber} de 2</span>
-        <span>
+        <span className="sm:order-last">Mínimo: 70%</span>
+        <span className="w-full sm:w-auto">
           {Object.keys(answers).length} / {questions.length} respondidas
         </span>
-        <span>Mínimo para aprobar: 70%</span>
       </div>
 
       <div className="space-y-5">
@@ -103,7 +103,7 @@ export function ExamForm({ courseId, questions, attemptNumber }: Props) {
                   <label
                     key={opt.id}
                     className={cn(
-                      "flex items-center gap-3 px-4 py-3 rounded-lg border cursor-pointer transition-all",
+                      "relative flex items-center gap-3 px-4 py-3.5 sm:py-3 min-h-[44px] rounded-lg border cursor-pointer transition-all",
                       selected
                         ? "border-primary bg-primary/5"
                         : "border-border hover:border-primary/30 hover:bg-accent/50"
@@ -124,7 +124,7 @@ export function ExamForm({ courseId, questions, attemptNumber }: Props) {
                       name={question.id}
                       value={opt.id}
                       checked={selected}
-                      onChange={() => setAnswers({ ...answers, [question.id]: opt.id })}
+                      onChange={() => setAnswers((prev) => ({ ...prev, [question.id]: opt.id }))}
                       className="sr-only"
                     />
                     <span className="text-sm text-foreground">{opt.text}</span>

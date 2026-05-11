@@ -1,6 +1,13 @@
 import { z } from "zod";
 
 export const COURSE_LEVELS = ["BEGINNER", "INTERMEDIATE", "ADVANCED"] as const;
+
+export const VALIDITY_OPTIONS = [
+  { label: "3 meses", value: 90 },
+  { label: "6 meses", value: 180 },
+  { label: "1 año", value: 365 },
+  { label: "2 años", value: 730 },
+] as const;
 export type CourseLevelValue = (typeof COURSE_LEVELS)[number];
 
 export const COURSE_LEVEL_LABELS: Record<CourseLevelValue, string> = {
@@ -26,6 +33,12 @@ export const courseSchema = z
       .max(2000, { error: "Duración demasiado alta" })
       .optional(),
     published: z.boolean().optional(),
+    certificateValidityDays: z
+      .number({ error: "Días de validez inválidos" })
+      .int()
+      .min(1, { error: "La validez mínima es 1 día" })
+      .max(3650, { error: "La validez máxima es 10 años" })
+      .optional(),
   })
   .superRefine((data, ctx) => {
     if (data.isFree && (data.certificateFee == null || data.certificateFee <= 0)) {

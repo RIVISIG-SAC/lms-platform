@@ -153,7 +153,7 @@ export default async function StudentMyCoursesPage() {
                     </div>
 
                     {/* Actions */}
-                    <div className="flex flex-row sm:flex-col justify-end gap-3 sm:min-w-[140px]">
+                    <div className="flex flex-col gap-2 sm:min-w-[140px]">
                       {isActive ? (
                         <Link href={`/student/courses/${course.id}`} className={cn(buttonVariants(), "w-full font-black shadow-lg shadow-primary/20 gap-2")}>
                           {enrollment.status === "COMPLETED" ? (

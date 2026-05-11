@@ -53,8 +53,8 @@ export default async function InstructorNewCoursePage() {
         <div className="text-sm text-foreground/80">
           <p className="font-semibold text-foreground">Flujo recomendado</p>
           <ol className="mt-1.5 space-y-0.5 text-xs text-muted-foreground list-decimal ml-4">
-            <li>Completa la información básica (título, descripción, categoría, nivel y precio).</li>
-            <li>Al guardar, entrarás al editor del curso donde podrás crear módulos y capítulos.</li>
+            <li>Completa la información básica (título, descripción, categoría, nivel y modelo de acceso).</li>
+            <li>Al guardar, entrarás al editor del curso para crear módulos y capítulos.</li>
             <li>Cuando el curso esté listo, publícalo para que aparezca en el catálogo.</li>
           </ol>
         </div>

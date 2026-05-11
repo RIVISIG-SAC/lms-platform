@@ -13,6 +13,7 @@ import {
   MapPin,
 } from 'lucide-react';
 import { SiteLogo } from '@/components/public/SiteLogo';
+import { WhatsAppBubble } from '@/components/ui/whatsapp-bubble';
 import { LinkedIn } from '@/components/ui/icons-social/LinkedIn';
 import { Facebook } from '@/components/ui/icons-social/Facebook';
 import { Instagram } from '@/components/ui/icons-social/Instagram';
@@ -180,6 +181,8 @@ export default async function PublicLayout({
       <main id="main-content" className="flex-1">
         {children}
       </main>
+
+      <WhatsAppBubble />
 
       {/* Footer */}
       <footer className="border-t border-border bg-white">

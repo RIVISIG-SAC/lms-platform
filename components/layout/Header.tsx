@@ -2,6 +2,7 @@ import { deleteSession } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { LogOut, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { HamburgerButton } from "./HamburgerButton";
 
 const roleLabel: Record<string, string> = {
   ADMIN: "Administrador",
@@ -23,9 +24,9 @@ async function logout() {
 
 export function Header({ userName, userEmail, role }: HeaderProps) {
   return (
-    <header className="h-16 border-b border-border bg-card/50 backdrop-blur-md sticky top-0 z-10 flex items-center justify-between px-8">
+    <header className="h-16 border-b border-border bg-card/50 backdrop-blur-md sticky top-0 z-10 flex items-center justify-between px-4 sm:px-8">
       <div className="flex items-center gap-4">
-        {/* Placeholder for breadcrumbs or page title if needed */}
+        <HamburgerButton />
       </div>
       
       <div className="flex items-center gap-6">

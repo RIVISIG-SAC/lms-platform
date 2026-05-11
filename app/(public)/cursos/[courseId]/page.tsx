@@ -9,7 +9,7 @@ import { getSession } from "@/lib/auth";
 import { formatCurrency } from "@/lib/utils";
 import { BuyButton } from "@/components/landing/BuyButton";
 import { enrollFree } from "@/app/actions/enrollments";
-import { Award, ClipboardList, Lock, BarChart3, PlayCircle, BookOpen, User } from "lucide-react";
+import { Award, ClipboardList, Lock, BarChart3, PlayCircle, BookOpen, User, ArrowRight, ShieldCheck } from "lucide-react";
 import { InstructorCard } from "@/components/instructor/InstructorCard";
 
 export async function generateMetadata(props: { params: Promise<unknown> }) {
@@ -55,44 +55,48 @@ export default async function CourseDetailPage(props: { params: Promise<unknown>
   const isPaid = enrollment?.status === "PAID" || enrollment?.status === "COMPLETED";
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
+    <div className="pb-16">
+      <section className="relative overflow-hidden border-b border-border bg-linear-to-b from-white via-muted/35 to-white">
+        <div className="absolute -top-28 -right-20 size-80 rounded-full bg-primary/10 blur-3xl" />
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-12 pb-10 relative motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-2 motion-safe:duration-700">
+          <Badge variant="outline" className="mb-4 text-primary border-primary/30 bg-primary/5">
+            {course.isFree ? "Acceso gratuito · Certificado con costo" : "Certificado al aprobar"}
+          </Badge>
+          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black text-foreground leading-tight max-w-4xl">
+            {course.title}
+          </h1>
+          <p className="mt-4 text-muted-foreground leading-relaxed max-w-3xl text-base">
+            {course.description}
+          </p>
+
+          <div className="mt-7 flex flex-wrap gap-3">
+            <div className="rounded-full border border-border bg-white px-4 py-2 text-sm text-foreground">
+              <span className="font-bold text-primary">{course.modules.length}</span> modulos
+            </div>
+            <div className="rounded-full border border-border bg-white px-4 py-2 text-sm text-foreground">
+              <span className="font-bold text-primary">{chapterCount}</span> clases
+            </div>
+            <div className="rounded-full border border-border bg-white px-4 py-2 text-sm text-foreground">
+              Acceso por 180 dias
+            </div>
+            <div className="rounded-full border border-border bg-white px-4 py-2 text-sm text-foreground inline-flex items-center gap-2">
+              <ShieldCheck className="size-4 text-primary" /> Certificacion verificable
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-10">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-10 items-start">
         {/* ── Main content ── */}
         <div className="lg:col-span-2 space-y-8">
-          <div>
-            <Badge variant="outline" className="mb-3 text-primary border-primary/30 bg-primary/5">
-              {course.isFree ? "Acceso gratuito · Certificado con costo" : "Certificado al aprobar"}
-            </Badge>
-            <h1 className="text-3xl font-bold text-foreground leading-tight">
-              {course.title}
-            </h1>
-            <p className="mt-3 text-muted-foreground leading-relaxed">
-              {course.description}
-            </p>
-          </div>
-
-          {/* Stats row */}
-          <div className="flex flex-wrap gap-4">
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <span className="text-primary font-semibold">{course.modules.length}</span> módulos
-            </div>
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <span className="text-primary font-semibold">{chapterCount}</span> clases
-            </div>
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <span className="text-primary font-semibold">180 días</span> de acceso
-            </div>
-          </div>
-
-          <Separator />
-
           {/* Curriculum */}
           <div>
-            <h2 className="text-xl font-semibold text-foreground mb-4">Contenido del curso</h2>
+            <h2 className="text-2xl font-bold text-foreground mb-4">Contenido del curso</h2>
             <div className="space-y-3">
               {course.modules.map((mod) => (
-                <div key={mod.id} className="border border-border rounded-lg overflow-hidden">
-                  <div className="bg-muted/50 px-4 py-3 flex items-center justify-between">
+                <div key={mod.id} className="border border-border rounded-xl overflow-hidden bg-white shadow-sm transition-all duration-300 hover:shadow-md hover:border-primary/25">
+                  <div className="bg-muted/50 px-4 py-3.5 flex items-center justify-between">
                     <span className="font-medium text-foreground text-sm">{mod.title}</span>
                     <span className="text-xs text-muted-foreground">
                       {mod.chapters.length} clase{mod.chapters.length !== 1 ? "s" : ""}
@@ -100,7 +104,7 @@ export default async function CourseDetailPage(props: { params: Promise<unknown>
                   </div>
                   <ul className="divide-y divide-border">
                     {mod.chapters.map((ch) => (
-                      <li key={ch.id} className="px-4 py-2.5 text-sm text-muted-foreground flex items-center gap-2">
+                      <li key={ch.id} className="px-4 py-3 text-sm text-muted-foreground flex items-center gap-2">
                         <PlayCircle className="h-3.5 w-3.5 text-primary/50 shrink-0" />
                         {ch.title}
                       </li>
@@ -152,7 +156,7 @@ export default async function CourseDetailPage(props: { params: Promise<unknown>
 
         {/* ── Purchase card ── */}
         <div className="lg:col-span-1">
-          <div className="sticky top-24 border border-border rounded-2xl overflow-hidden shadow-sm bg-white">
+          <div className="sticky top-24 border border-border rounded-2xl overflow-hidden shadow-xl shadow-black/5 bg-white">
             {course.thumbnailUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
@@ -166,7 +170,7 @@ export default async function CourseDetailPage(props: { params: Promise<unknown>
               </div>
             )}
 
-            <div className="p-6 space-y-4">
+            <div className="p-6 space-y-5">
               {course.isFree ? (
                 <>
                   <p className="text-3xl font-bold text-green-600">Gratis</p>
@@ -183,12 +187,20 @@ export default async function CourseDetailPage(props: { params: Promise<unknown>
                 </>
               )}
 
+              <div className="rounded-xl border border-border bg-muted/30 p-3.5 space-y-2">
+                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Incluye</p>
+                <ul className="space-y-1.5 text-sm text-foreground">
+                  <li className="inline-flex items-center gap-2"><ShieldCheck className="size-4 text-primary" /> Ruta completa por modulos</li>
+                  <li className="inline-flex items-center gap-2"><ShieldCheck className="size-4 text-primary" /> Evaluacion y certificado verificable</li>
+                </ul>
+              </div>
+
               {isPaid ? (
                 <Link
                   href={`/student/courses/${courseId}`}
-                  className={cn(buttonVariants(), "w-full h-11 justify-center")}
+                  className={cn(buttonVariants(), "w-full h-11 justify-center gap-2 focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2")}
                 >
-                  Ir al curso →
+                  Ir al curso <ArrowRight className="size-4" />
                 </Link>
               ) : course.isFree ? (
                 session ? (
@@ -203,7 +215,7 @@ export default async function CourseDetailPage(props: { params: Promise<unknown>
                 ) : (
                   <Link
                     href={`/login?next=/cursos/${courseId}`}
-                    className={cn(buttonVariants(), "w-full h-11 justify-center")}
+                    className={cn(buttonVariants(), "w-full h-11 justify-center focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2")}
                   >
                     Iniciar sesión para inscribirse
                   </Link>
@@ -213,7 +225,7 @@ export default async function CourseDetailPage(props: { params: Promise<unknown>
               ) : (
                 <Link
                   href={`/registro?next=/cursos/${courseId}`}
-                  className={cn(buttonVariants(), "w-full h-11 justify-center")}
+                  className={cn(buttonVariants(), "w-full h-11 justify-center focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2")}
                 >
                   Comprar ahora
                 </Link>
@@ -224,7 +236,7 @@ export default async function CourseDetailPage(props: { params: Promise<unknown>
                   ¿Ya tienes cuenta?{" "}
                   <Link
                     href={`/login?next=/cursos/${courseId}`}
-                    className="text-primary hover:underline"
+                    className="text-primary font-semibold hover:underline"
                   >
                     Inicia sesión
                   </Link>
@@ -233,6 +245,7 @@ export default async function CourseDetailPage(props: { params: Promise<unknown>
             </div>
           </div>
         </div>
+      </div>
       </div>
     </div>
   );
