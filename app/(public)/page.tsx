@@ -1,10 +1,10 @@
+import { Suspense } from 'react';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
 import { buttonVariants } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { LandingCourseCard } from '@/components/landing/CourseCard';
 import { ImageSlot } from '@/components/public/ImageSlot';
-import { prisma } from '@/lib/prisma';
 import { cn } from '@/lib/utils';
 import {
   ArrowRight,
@@ -13,8 +13,8 @@ import {
   CheckCircle2,
   Phone,
   Mail,
-  Quote,
 } from 'lucide-react';
+import { getFeaturedCourses } from '@/lib/queries/courses';
 
 export const metadata = {
   title: 'RIVISIG Consultores — Capacitación en Sistemas de Gestión ISO',
@@ -22,18 +22,74 @@ export const metadata = {
     'Consultora especializada en implementación, certificación y soporte de Sistemas de Gestión. ISO 9001, 14001, 45001, 27001 y más.',
 };
 
-export default async function LandingPage() {
-  const courses = await prisma.course.findMany({
-    where: { published: true },
-    orderBy: { createdAt: 'desc' },
-    take: 6,
-    include: {
-      _count: { select: { modules: true } },
-      modules: { include: { _count: { select: { chapters: true } } } },
-      instructor: { include: { user: { select: { name: true } } } },
-    },
-  });
+async function FeaturedCourses() {
+  const courses = await getFeaturedCourses();
 
+  if (courses.length === 0) {
+    return (
+      <div className="text-center py-20 text-muted-foreground text-sm border border-dashed border-border rounded-2xl bg-white/70">
+        Estamos preparando nuevas rutas de formacion.
+      </div>
+    );
+  }
+
+  return (
+    <>
+      <div className="flex justify-end mb-8">
+        <Link
+          href="/cursos"
+          className={cn(
+            buttonVariants({ variant: 'ghost' }),
+            'hidden sm:flex items-center gap-1 text-primary rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2',
+          )}
+        >
+          Ir al catalogo <ArrowRight className="h-4 w-4" />
+        </Link>
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-7">
+        {courses.map((course) => {
+          const chapterCount = course.modules.reduce(
+            (acc, m) => acc + m._count.chapters,
+            0,
+          );
+          return (
+            <LandingCourseCard
+              key={course.id}
+              id={course.id}
+              title={course.title}
+              description={course.description}
+              price={course.price}
+              thumbnailUrl={course.thumbnailUrl}
+              moduleCount={course._count.modules}
+              chapterCount={chapterCount}
+              instructor={
+                course.instructor
+                  ? {
+                      id: course.instructor.id,
+                      name: course.instructor.user.name,
+                      avatarUrl: course.instructor.avatarUrl,
+                    }
+                  : null
+              }
+            />
+          );
+        })}
+      </div>
+    </>
+  );
+}
+
+function CoursesSkeleton() {
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-7">
+      {Array.from({ length: 3 }).map((_, i) => (
+        <div key={i} className="h-72 rounded-2xl bg-muted animate-pulse" />
+      ))}
+    </div>
+  );
+}
+
+export default function LandingPage() {
   return (
     <>
       {/* ── Hero ─────────────────────────────────────────── */}
@@ -167,8 +223,7 @@ export default async function LandingPage() {
       <section className="relative overflow-hidden border-y border-border bg-linear-to-b from-white via-muted/30 to-white">
         <div className="absolute -top-20 right-0 size-72 rounded-full bg-primary/8 blur-3xl" />
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 relative">
-        <div className="flex items-end justify-between mb-8 gap-4">
-          <div>
+          <div className="mb-8">
             <p className="text-xs font-semibold uppercase tracking-widest text-primary mb-2">
               Plataforma de capacitacion
             </p>
@@ -179,54 +234,9 @@ export default async function LandingPage() {
               Cursos estructurados por modulos, evaluacion incluida y certificado verificable para fortalecer auditorias, clientes y procesos internos.
             </p>
           </div>
-          {courses.length > 0 && (
-            <Link
-              href="/cursos"
-              className={cn(
-                buttonVariants({ variant: 'ghost' }),
-                'hidden sm:flex items-center gap-1 text-primary rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2',
-              )}
-            >
-              Ir al catalogo <ArrowRight className="h-4 w-4" />
-            </Link>
-          )}
-        </div>
-
-        {courses.length === 0 ? (
-          <div className="text-center py-20 text-muted-foreground text-sm border border-dashed border-border rounded-2xl bg-white/70">
-            Estamos preparando nuevas rutas de formacion.
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-7">
-            {courses.map((course) => {
-              const chapterCount = course.modules.reduce(
-                (acc, m) => acc + m._count.chapters,
-                0,
-              );
-              return (
-                <LandingCourseCard
-                  key={course.id}
-                  id={course.id}
-                  title={course.title}
-                  description={course.description}
-                  price={course.price}
-                  thumbnailUrl={course.thumbnailUrl}
-                  moduleCount={course._count.modules}
-                  chapterCount={chapterCount}
-                  instructor={
-                    course.instructor
-                      ? {
-                          id: course.instructor.id,
-                          name: course.instructor.user.name,
-                          avatarUrl: course.instructor.avatarUrl,
-                        }
-                      : null
-                  }
-                />
-              );
-            })}
-          </div>
-        )}
+          <Suspense fallback={<CoursesSkeleton />}>
+            <FeaturedCourses />
+          </Suspense>
         </div>
       </section>
 

@@ -1,5 +1,5 @@
+import { Suspense } from 'react';
 import Link from 'next/link';
-import { getSession } from '@/lib/auth';
 import { buttonVariants } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import {
@@ -19,13 +19,16 @@ import { Facebook } from '@/components/ui/icons-social/Facebook';
 import { Instagram } from '@/components/ui/icons-social/Instagram';
 import { TikTok } from '@/components/ui/icons-social/TikTok';
 import { YouTube } from '@/components/ui/icons-social/YouTube';
+import {
+  NavAuthButtons,
+  NavAuthSkeleton,
+} from './_components/NavAuthButtons';
 
-export default async function PublicLayout({
+export default function PublicLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const session = await getSession();
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -149,31 +152,9 @@ export default async function PublicLayout({
           </nav>
 
           <div className="flex items-center gap-3">
-            {session ? (
-              <Link
-                href={session.role === 'ADMIN' ? '/admin' : '/student'}
-                className={cn(buttonVariants({ size: 'sm' }))}
-              >
-                Mi Panel
-              </Link>
-            ) : (
-              <>
-                <Link
-                  href="/login"
-                  className={cn(
-                    buttonVariants({ variant: 'outline', size: 'sm' }),
-                  )}
-                >
-                  Iniciar sesión
-                </Link>
-                <Link
-                  href="/registro"
-                  className={cn(buttonVariants({ size: 'sm' }))}
-                >
-                  Registrarse
-                </Link>
-              </>
-            )}
+            <Suspense fallback={<NavAuthSkeleton />}>
+              <NavAuthButtons />
+            </Suspense>
           </div>
         </div>
       </header>

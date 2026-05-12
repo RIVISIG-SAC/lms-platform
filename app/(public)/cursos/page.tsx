@@ -1,24 +1,79 @@
+import { Suspense } from "react";
 import { LandingCourseCard } from "@/components/landing/CourseCard";
-import { prisma } from "@/lib/prisma";
 import { Badge } from "@/components/ui/badge";
 import { ArrowRight, ShieldCheck } from "lucide-react";
 import Link from "next/link";
+import { getPublishedCourses } from "@/lib/queries/courses";
 
 export const metadata = {
   title: "Cursos — RIVISIG Consultores",
   description: "Capacitación certificada en sistemas de gestión ISO y cumplimiento normativo.",
 };
 
-export default async function CursosPage() {
-  const courses = await prisma.course.findMany({
-    where: { published: true },
-    orderBy: { createdAt: "desc" },
-    include: {
-      _count: { select: { modules: true } },
-      modules: { include: { _count: { select: { chapters: true } } } },
-    },
-  });
+async function CoursesList() {
+  const courses = await getPublishedCourses();
 
+  return (
+    <>
+      <div className="flex items-center justify-between gap-3 mb-7">
+        <p className="text-sm text-muted-foreground">
+          {courses.length} curso{courses.length !== 1 ? "s" : ""} disponible{courses.length !== 1 ? "s" : ""}
+        </p>
+        <Link
+          href="/registro"
+          className="text-sm font-semibold text-primary inline-flex items-center gap-1 hover:gap-2 transition-all rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2"
+        >
+          Comenzar ahora <ArrowRight className="size-4" />
+        </Link>
+      </div>
+
+      {courses.length === 0 ? (
+        <div className="text-center py-24 border border-dashed border-border rounded-2xl bg-muted/30">
+          <p className="text-foreground font-semibold">Estamos preparando nuevos cursos.</p>
+          <p className="text-muted-foreground text-sm mt-1">Vuelve pronto para ver nuevas rutas de formacion.</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-7">
+          {courses.map((course, index) => {
+            const chapterCount = course.modules.reduce(
+              (acc, m) => acc + m._count.chapters,
+              0
+            );
+            return (
+              <div
+                key={course.id}
+                className="motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-3 motion-safe:duration-500"
+                style={{ animationDelay: `${Math.min(index, 8) * 70}ms` }}
+              >
+                <LandingCourseCard
+                  id={course.id}
+                  title={course.title}
+                  description={course.description}
+                  price={course.price}
+                  thumbnailUrl={course.thumbnailUrl}
+                  moduleCount={course._count.modules}
+                  chapterCount={chapterCount}
+                />
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </>
+  );
+}
+
+function CoursesListSkeleton() {
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-7">
+      {Array.from({ length: 6 }).map((_, i) => (
+        <div key={i} className="h-72 rounded-2xl bg-muted animate-pulse" />
+      ))}
+    </div>
+  );
+}
+
+export default function CursosPage() {
   return (
     <div className="pb-16">
       <section className="relative overflow-hidden border-b border-border bg-linear-to-b from-white via-muted/40 to-white">
@@ -51,50 +106,9 @@ export default async function CursosPage() {
       </section>
 
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-10">
-        <div className="flex items-center justify-between gap-3 mb-7">
-          <p className="text-sm text-muted-foreground">
-            {courses.length} curso{courses.length !== 1 ? "s" : ""} disponible{courses.length !== 1 ? "s" : ""}
-          </p>
-          <Link
-            href="/registro"
-            className="text-sm font-semibold text-primary inline-flex items-center gap-1 hover:gap-2 transition-all rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2"
-          >
-            Comenzar ahora <ArrowRight className="size-4" />
-          </Link>
-        </div>
-
-        {courses.length === 0 ? (
-          <div className="text-center py-24 border border-dashed border-border rounded-2xl bg-muted/30">
-            <p className="text-foreground font-semibold">Estamos preparando nuevos cursos.</p>
-            <p className="text-muted-foreground text-sm mt-1">Vuelve pronto para ver nuevas rutas de formacion.</p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-7">
-            {courses.map((course, index) => {
-              const chapterCount = course.modules.reduce(
-                (acc, m) => acc + m._count.chapters,
-                0
-              );
-              return (
-                <div
-                  key={course.id}
-                  className="motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-3 motion-safe:duration-500"
-                  style={{ animationDelay: `${Math.min(index, 8) * 70}ms` }}
-                >
-                  <LandingCourseCard
-                    id={course.id}
-                    title={course.title}
-                    description={course.description}
-                    price={course.price}
-                    thumbnailUrl={course.thumbnailUrl}
-                    moduleCount={course._count.modules}
-                    chapterCount={chapterCount}
-                  />
-                </div>
-              );
-            })}
-          </div>
-        )}
+        <Suspense fallback={<CoursesListSkeleton />}>
+          <CoursesList />
+        </Suspense>
       </section>
     </div>
   );
