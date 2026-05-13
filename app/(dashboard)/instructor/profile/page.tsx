@@ -73,7 +73,7 @@ export default async function InstructorProfilePage() {
           <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-widest mb-4">
             Información de cuenta
           </h2>
-          <ProfileForm name={user.name} email={user.email} />
+          <ProfileForm name={user.name} email={user.email} dni={user.dni} company={user.company} />
         </div>
         <div className="border-t border-border pt-6">
           <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-widest mb-4">

@@ -39,6 +39,12 @@ export const courseSchema = z
       .min(1, { error: "La validez mínima es 1 día" })
       .max(3650, { error: "La validez máxima es 10 años" })
       .optional(),
+    certificateDescription: z
+      .string()
+      .trim()
+      .max(400, { error: "Máximo 400 caracteres" })
+      .optional()
+      .or(z.literal("")),
   })
   .superRefine((data, ctx) => {
     if (data.isFree && (data.certificateFee == null || data.certificateFee <= 0)) {
