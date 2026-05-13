@@ -13,6 +13,12 @@ export const registerSchema = z.object({
     .min(8, { error: "Mínimo 8 caracteres" })
     .regex(/[A-Z]/, { error: "Debe contener al menos una mayúscula" })
     .regex(/[0-9]/, { error: "Debe contener al menos un número" }),
+  dni: z
+    .string()
+    .regex(/^\d{6,12}$/, { error: "El DNI debe tener entre 6 y 12 dígitos" })
+    .optional()
+    .or(z.literal("")),
+  company: z.string().max(100, { error: "Máximo 100 caracteres" }).optional(),
 });
 
 export const changePasswordSchema = z

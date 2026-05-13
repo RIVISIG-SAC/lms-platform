@@ -10,9 +10,11 @@ import { updateUserProfileAction } from "@/app/actions/users";
 type Props = {
   name: string;
   email: string;
+  dni?: string | null;
+  company?: string | null;
 };
 
-export function ProfileForm({ name, email }: Props) {
+export function ProfileForm({ name, email, dni, company }: Props) {
   const [state, action, pending] = useActionState(updateUserProfileAction, null);
 
   useEffect(() => {
@@ -30,6 +32,30 @@ export function ProfileForm({ name, email }: Props) {
         <div className="space-y-1.5">
           <Label htmlFor="email">Correo electrónico</Label>
           <Input id="email" name="email" type="email" defaultValue={email} required />
+        </div>
+        <div className="space-y-1.5">
+          <Label htmlFor="dni">DNI</Label>
+          <Input
+            id="dni"
+            name="dni"
+            type="text"
+            inputMode="numeric"
+            placeholder="12345678"
+            defaultValue={dni ?? ""}
+          />
+        </div>
+        <div className="space-y-1.5">
+          <Label htmlFor="company">
+            Empresa{" "}
+            <span className="text-muted-foreground font-normal text-xs">(opcional)</span>
+          </Label>
+          <Input
+            id="company"
+            name="company"
+            type="text"
+            placeholder="Tu empresa"
+            defaultValue={company ?? ""}
+          />
         </div>
       </div>
       <Button type="submit" disabled={pending}>

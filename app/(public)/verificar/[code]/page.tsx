@@ -1,4 +1,4 @@
-import { ShieldCheck, ShieldX, ShieldAlert, CalendarDays, User, BookOpen, Hash, Award, RotateCcw } from "lucide-react";
+import { ShieldCheck, ShieldX, ShieldAlert, CalendarDays, User, BookOpen, Hash, Award, RotateCcw, Building2, IdCard } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { formatDate, getCertificateEffectiveStatus } from "@/lib/utils";
 import { CertificateSearchForm } from "@/components/public/CertificateSearchForm";
@@ -22,7 +22,7 @@ export default async function VerifyCertificateResultPage({ params }: Props) {
     include: {
       enrollment: {
         include: {
-          user: { select: { name: true } },
+          user: { select: { name: true, dni: true, company: true } },
           course: { select: { title: true, category: true } },
           examAttempts: {
             where: { passed: true },
@@ -31,6 +31,7 @@ export default async function VerifyCertificateResultPage({ params }: Props) {
           },
         },
       },
+      course: { select: { title: true, category: true } },
     },
   });
 
@@ -42,7 +43,14 @@ export default async function VerifyCertificateResultPage({ params }: Props) {
   const isExpired = effectiveStatus === "EXPIRED";
   const isRevoked = effectiveStatus === "REVOKED";
 
-  const score = certificate?.enrollment.examAttempts[0]?.score ?? null;
+  const enrollment = certificate?.enrollment ?? null;
+  const holderName = enrollment?.user.name ?? certificate?.holderName ?? "—";
+  const holderDni = enrollment?.user.dni ?? certificate?.holderDni ?? null;
+  const holderCompany = enrollment?.user.company ?? certificate?.holderCompany ?? null;
+  const courseTitle = enrollment?.course.title ?? certificate?.course?.title ?? "—";
+  const courseCategory =
+    enrollment?.course.category ?? certificate?.course?.category ?? null;
+  const score = enrollment?.examAttempts[0]?.score ?? null;
 
   return (
     <>
@@ -93,10 +101,16 @@ export default async function VerifyCertificateResultPage({ params }: Props) {
                 {/* Details */}
                 <div className="px-6 divide-y divide-border/60">
                   {[
-                    { icon: User, label: "Titular", value: certificate!.enrollment.user.name },
-                    { icon: BookOpen, label: "Curso", value: certificate!.enrollment.course.title },
-                    ...(certificate!.enrollment.course.category
-                      ? [{ icon: Award, label: "Categoría", value: certificate!.enrollment.course.category }]
+                    ...(holderCompany
+                      ? [{ icon: Building2, label: "Empresa", value: holderCompany }]
+                      : []),
+                    { icon: User, label: "Titular", value: holderName },
+                    ...(holderDni
+                      ? [{ icon: IdCard, label: "DNI", value: holderDni }]
+                      : []),
+                    { icon: BookOpen, label: "Curso", value: courseTitle },
+                    ...(courseCategory
+                      ? [{ icon: Award, label: "Categoría", value: courseCategory }]
                       : []),
                     { icon: CalendarDays, label: "Fecha de emisión", value: formatDate(certificate!.issueDate) },
                     ...(certificate!.expiresAt
@@ -150,8 +164,14 @@ export default async function VerifyCertificateResultPage({ params }: Props) {
 
                 <div className="px-6 divide-y divide-border/60">
                   {[
-                    { icon: User, label: "Titular", value: certificate!.enrollment.user.name },
-                    { icon: BookOpen, label: "Curso", value: certificate!.enrollment.course.title },
+                    ...(holderCompany
+                      ? [{ icon: Building2, label: "Empresa", value: holderCompany }]
+                      : []),
+                    { icon: User, label: "Titular", value: holderName },
+                    ...(holderDni
+                      ? [{ icon: IdCard, label: "DNI", value: holderDni }]
+                      : []),
+                    { icon: BookOpen, label: "Curso", value: courseTitle },
                     { icon: CalendarDays, label: "Fecha de emisión", value: formatDate(certificate!.issueDate) },
                     { icon: CalendarDays, label: "Venció el", value: formatDate(certificate!.expiresAt!) },
                     { icon: Hash, label: "Código de verificación", value: certificate!.verificationCode },

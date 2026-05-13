@@ -113,8 +113,14 @@ export async function updateUserProfileAction(_prev: unknown, formData: FormData
 
   const name = (formData.get("name") as string)?.trim();
   const email = (formData.get("email") as string)?.trim().toLowerCase();
+  const dni = (formData.get("dni") as string)?.trim() || null;
+  const company = (formData.get("company") as string)?.trim() || null;
 
   if (!name || !email) return { error: "Nombre y correo son obligatorios." };
+
+  if (dni && !/^\d{6,12}$/.test(dni)) {
+    return { error: "El DNI debe tener entre 6 y 12 dígitos." };
+  }
 
   const existing = await prisma.user.findFirst({
     where: { email, NOT: { id: session.userId } },
@@ -123,7 +129,7 @@ export async function updateUserProfileAction(_prev: unknown, formData: FormData
 
   await prisma.user.update({
     where: { id: session.userId },
-    data: { name, email },
+    data: { name, email, dni, company },
   });
 
   const profilePath =

@@ -25,6 +25,7 @@ type NavItem = {
 const adminNav: NavItem[] = [
   { label: 'Dashboard', href: '/admin', icon: LayoutDashboard },
   { label: 'Cursos', href: '/admin/courses', icon: BookOpen },
+  { label: 'Certificados', href: '/admin/certificates', icon: Award },
   { label: 'Usuarios', href: '/admin/users', icon: Users },
   { label: 'Mi Perfil', href: '/admin/profile', icon: UserCircle },
 ];

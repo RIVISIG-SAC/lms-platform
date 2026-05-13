@@ -21,8 +21,8 @@ export async function GET(
     include: {
       enrollment: {
         include: {
-          user: { select: { name: true } },
-          course: { select: { title: true } },
+          user: { select: { name: true, dni: true, company: true } },
+          course: { select: { title: true, certificateDescription: true } },
           examAttempts: {
             where: { passed: true },
             orderBy: { createdAt: 'desc' },
@@ -30,6 +30,7 @@ export async function GET(
           },
         },
       },
+      course: { select: { title: true, certificateDescription: true } },
     },
   });
 
@@ -51,15 +52,29 @@ export async function GET(
     );
   }
 
+  const enrollment = certificate.enrollment;
+
   if (
     session &&
     session.role !== 'ADMIN' &&
-    session.userId !== certificate.enrollment.userId
+    (enrollment === null || session.userId !== enrollment.userId)
   ) {
     return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
   }
 
-  const score = certificate.enrollment.examAttempts[0]?.score ?? 100;
+  const studentName =
+    enrollment?.user.name ?? certificate.holderName ?? '—';
+  const studentDni =
+    enrollment?.user.dni ?? certificate.holderDni ?? null;
+  const studentCompany =
+    enrollment?.user.company ?? certificate.holderCompany ?? null;
+  const courseTitle =
+    enrollment?.course.title ?? certificate.course?.title ?? '—';
+  const description =
+    certificate.customDescription
+    ?? enrollment?.course.certificateDescription
+    ?? certificate.course?.certificateDescription
+    ?? null;
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://rivisig.com';
   const verificationUrl = `${baseUrl}/verificar/${certificate.verificationCode}`;
 
@@ -69,7 +84,7 @@ export async function GET(
     return `data:image/png;base64,${buffer.toString('base64')}`;
   };
 
-  const [qrCodeBase64, logoBase64, selloBase64] = await Promise.all([
+  const [qrCodeBase64, logoBase64, selloBase64, iconBase64] = await Promise.all([
     QRCode.toDataURL(verificationUrl, {
       errorCorrectionLevel: 'M',
       margin: 1,
@@ -78,21 +93,25 @@ export async function GET(
     }),
     Promise.resolve(readImageAsBase64('logo.png')),
     Promise.resolve(readImageAsBase64('sello.png')),
+    Promise.resolve(readImageAsBase64('icon.png')),
   ]);
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const pdfBuffer = await renderToBuffer(
     createElement(CertificatePDF as any, {
-      studentName: certificate.enrollment.user.name,
-      courseTitle: certificate.enrollment.course.title,
+      studentName,
+      studentDni,
+      studentCompany,
+      courseTitle,
+      description,
       issueDate: certificate.issueDate,
       verificationCode: certificate.verificationCode,
       verificationUrl,
-      score,
       expiresAt: certificate.expiresAt,
       logoBase64,
       selloBase64,
       qrCodeBase64,
+      iconBase64,
     }) as any,
   );
 

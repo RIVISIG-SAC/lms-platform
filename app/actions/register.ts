@@ -13,6 +13,8 @@ export async function registerAction(_prev: unknown, formData: FormData) {
     name: formData.get("name"),
     email: formData.get("email"),
     password: formData.get("password"),
+    dni: formData.get("dni") || undefined,
+    company: formData.get("company") || undefined,
   };
 
   const parsed = registerSchema.safeParse(raw);
@@ -21,7 +23,7 @@ export async function registerAction(_prev: unknown, formData: FormData) {
     return { error: firstError };
   }
 
-  const { name, email, password } = parsed.data;
+  const { name, email, password, dni, company } = parsed.data;
 
   const confirmPassword = formData.get("confirmPassword") as string;
   if (password !== confirmPassword) {
@@ -47,6 +49,8 @@ export async function registerAction(_prev: unknown, formData: FormData) {
       emailVerified: false,
       verificationToken,
       verificationTokenExp,
+      dni: dni || null,
+      company: company || null,
     },
   });
 

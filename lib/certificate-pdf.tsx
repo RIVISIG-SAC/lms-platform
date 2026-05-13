@@ -36,6 +36,8 @@ Font.register({
 });
 
 const RED = "#c0392b";
+const BLACK = "#0f0f10";
+const YELLOW = "#f5c518";
 const DARK = "#1a1a2e";
 const GRAY = "#4f545e";
 const LIGHT_GRAY = "#54585e";
@@ -48,15 +50,75 @@ const styles = StyleSheet.create({
     position: "relative",
   },
 
-  // Corner brackets — 4 L-shapes, each composed of 2 thin rectangles
-  cornerTL_H: { position: "absolute", top: 24, left: 24, width: 44, height: 2.5, backgroundColor: RED },
-  cornerTL_V: { position: "absolute", top: 24, left: 24, width: 2.5, height: 44, backgroundColor: RED },
-  cornerTR_H: { position: "absolute", top: 24, right: 24, width: 44, height: 2.5, backgroundColor: RED },
-  cornerTR_V: { position: "absolute", top: 24, right: 24, width: 2.5, height: 44, backgroundColor: RED },
-  cornerBL_H: { position: "absolute", bottom: 24, left: 24, width: 44, height: 2.5, backgroundColor: RED },
-  cornerBL_V: { position: "absolute", bottom: 24, left: 24, width: 2.5, height: 44, backgroundColor: RED },
-  cornerBR_H: { position: "absolute", bottom: 24, right: 24, width: 44, height: 2.5, backgroundColor: RED },
-  cornerBR_V: { position: "absolute", bottom: 24, right: 24, width: 2.5, height: 44, backgroundColor: RED },
+  // === Watermark — icon.png at low opacity centered behind content ===
+  watermark: {
+    position: "absolute",
+    top: 105,
+    left: 215,
+    width: 380,
+    height: 380,
+    opacity: 0.08,
+    objectFit: "contain",
+  },
+
+  // === Geometric corner accents — top-left ===
+  // Stacked rotated rectangles forming an angular red/black/yellow accent
+  geoTL_Black: {
+    position: "absolute",
+    top: -55,
+    left: -55,
+    width: 150,
+    height: 150,
+    backgroundColor: BLACK,
+    transform: "rotate(45deg)",
+  },
+  geoTL_Red: {
+    position: "absolute",
+    top: -20,
+    left: 18,
+    width: 100,
+    height: 100,
+    backgroundColor: RED,
+    transform: "rotate(45deg)",
+  },
+  geoTL_Yellow: {
+    position: "absolute",
+    top: 58,
+    left: 4,
+    width: 78,
+    height: 9,
+    backgroundColor: YELLOW,
+    transform: "rotate(-32deg)",
+  },
+
+  // === Geometric corner accents — bottom-right (mirror) ===
+  geoBR_Black: {
+    position: "absolute",
+    bottom: -55,
+    right: -55,
+    width: 150,
+    height: 150,
+    backgroundColor: BLACK,
+    transform: "rotate(45deg)",
+  },
+  geoBR_Red: {
+    position: "absolute",
+    bottom: -20,
+    right: 18,
+    width: 100,
+    height: 100,
+    backgroundColor: RED,
+    transform: "rotate(45deg)",
+  },
+  geoBR_Yellow: {
+    position: "absolute",
+    bottom: 58,
+    right: 4,
+    width: 78,
+    height: 9,
+    backgroundColor: YELLOW,
+    transform: "rotate(-32deg)",
+  },
 
   // Header: logo left, cert ID right
   header: {
@@ -114,6 +176,22 @@ const styles = StyleSheet.create({
     fontWeight: 600,
     letterSpacing: 2.5,
     marginBottom: 12,
+  },
+  holderCompany: {
+    fontSize: 9,
+    color: GRAY,
+    fontWeight: 700,
+    letterSpacing: 2,
+    marginBottom: 6,
+    textTransform: "uppercase",
+  },
+  holderDni: {
+    fontSize: 9,
+    color: GRAY,
+    fontWeight: 600,
+    letterSpacing: 1,
+    marginTop: -10,
+    marginBottom: 14,
   },
 
   awardedTo: {
@@ -248,12 +326,6 @@ const styles = StyleSheet.create({
     fontWeight: 600,
     color: "#16a34a",
   },
-  scoreValue: {
-    fontSize: 8.5,
-    fontWeight: 700,
-    color: "#16a34a",
-  },
-
   // Sello (centered at base)
   selloBlock: {
     position: "absolute",
@@ -299,16 +371,22 @@ const styles = StyleSheet.create({
 
 type Props = {
   studentName: string;
+  studentDni?: string | null;
+  studentCompany?: string | null;
   courseTitle: string;
+  description?: string | null;
   issueDate: Date;
   verificationCode: string;
   verificationUrl: string;
-  score: number;
   expiresAt?: Date | null;
   logoBase64: string;
   selloBase64: string;
   qrCodeBase64: string;
+  iconBase64: string;
 };
+
+const DEFAULT_DESCRIPTION =
+  "Por haber completado satisfactoriamente el programa de capacitación profesional, demostrando dominio en los conceptos y prácticas del sector.";
 
 const SIGNATORIES = [
   { script: "L. Rivera", name: "ING. LEWIS RIVERA VILLACREZ", title: "INSTRUCTOR" },
@@ -318,16 +396,21 @@ const SIGNATORIES = [
 
 export function CertificatePDF({
   studentName,
+  studentDni,
+  studentCompany,
   courseTitle,
+  description,
   issueDate,
   verificationCode,
   verificationUrl,
-  score,
   expiresAt,
   logoBase64,
   selloBase64,
   qrCodeBase64,
+  iconBase64,
 }: Props) {
+  const resolvedDescription =
+    description && description.trim() !== "" ? description : DEFAULT_DESCRIPTION;
   return (
     <Document
       title={`Certificado — ${courseTitle}`}
@@ -336,11 +419,18 @@ export function CertificatePDF({
     >
       <Page size="A4" orientation="landscape" style={styles.page}>
 
-        {/* Corner brackets */}
-        <View style={styles.cornerTL_H} /><View style={styles.cornerTL_V} />
-        <View style={styles.cornerTR_H} /><View style={styles.cornerTR_V} />
-        <View style={styles.cornerBL_H} /><View style={styles.cornerBL_V} />
-        <View style={styles.cornerBR_H} /><View style={styles.cornerBR_V} />
+        {/* Watermark — icon at ~8% opacity behind everything */}
+        <Image style={styles.watermark} src={iconBase64} />
+
+        {/* Geometric corner accents — top-left */}
+        <View style={styles.geoTL_Black} />
+        <View style={styles.geoTL_Red} />
+        <View style={styles.geoTL_Yellow} />
+
+        {/* Geometric corner accents — bottom-right (mirror) */}
+        <View style={styles.geoBR_Black} />
+        <View style={styles.geoBR_Red} />
+        <View style={styles.geoBR_Yellow} />
 
         {/* Header */}
         <View style={styles.header}>
@@ -363,15 +453,18 @@ export function CertificatePDF({
           </View>
 
           <Text style={styles.awardedTo}>SE OTORGA EL PRESENTE A</Text>
+          {studentCompany ? (
+            <Text style={styles.holderCompany}>{studentCompany}</Text>
+          ) : null}
           <Text style={styles.studentName}>{studentName}</Text>
           <View style={styles.nameLine} />
+          {studentDni ? (
+            <Text style={styles.holderDni}>DNI: {studentDni}</Text>
+          ) : null}
 
           <Text style={styles.courseLabel}>POR HABER COMPLETADO EXITOSAMENTE EL CURSO</Text>
           <Text style={styles.courseTitle}>{courseTitle}</Text>
-          <Text style={styles.courseDescription}>
-            Por haber completado satisfactoriamente el programa de capacitación profesional,
-            demostrando dominio en los conceptos y prácticas del sector.
-          </Text>
+          <Text style={styles.courseDescription}>{resolvedDescription}</Text>
 
           {/* Divider: — ◆ — */}
           <View style={styles.dividerRow}>
@@ -410,9 +503,6 @@ export function CertificatePDF({
             ) : (
               <Text style={styles.noExpiryValue}>Sin vencimiento</Text>
             )}
-
-            <Text style={styles.infoLabel}>CALIFICACIÓN</Text>
-            <Text style={styles.scoreValue}>{score.toFixed(0)}%</Text>
           </View>
 
           <View style={styles.qrBlock}>

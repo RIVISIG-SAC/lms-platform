@@ -44,6 +44,8 @@ model User {
   verificationToken     String?   @unique
   verificationTokenExp  DateTime?
   isActive              Boolean   @default(true)
+  dni                   String?
+  company               String?
   createdAt             DateTime  @default(now())
   updatedAt             DateTime  @updatedAt
 
@@ -84,6 +86,7 @@ model Course {
   level         CourseLevel?
   durationHours               Int?
   certificateValidityDays     Int?
+  certificateDescription      String?
   published     Boolean      @default(false)
   instructorId  String?
   createdAt     DateTime     @default(now())
@@ -93,6 +96,7 @@ model Course {
   modules     Module[]
   enrollments Enrollment[]
   questions   Question[]
+  certificates Certificate[]
 
   @@index([published])
   @@index([category])
@@ -217,14 +221,23 @@ model ExamAttempt {
 
 model Certificate {
   id               String            @id @default(cuid())
-  enrollmentId     String            @unique
+  enrollmentId     String?           @unique
+  courseId         String?
   issueDate        DateTime          @default(now())
   verificationCode String            @unique @default(cuid())
   status            CertificateStatus @default(ACTIVE)
   certificatePaidAt DateTime?
   expiresAt         DateTime?
 
-  enrollment Enrollment @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+  // Snapshot for manual certificates issued to people without a User account
+  holderName        String?
+  holderDni         String?
+  holderCompany     String?
+  customDescription String?
+
+  enrollment Enrollment? @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+  course     Course?     @relation(fields: [courseId], references: [id], onDelete: SetNull)
 
   @@index([verificationCode])
+  @@index([courseId])
 }
