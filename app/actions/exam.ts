@@ -49,6 +49,51 @@ export async function createQuestion(
   return { success: true };
 }
 
+export async function updateQuestion(
+  _prev: unknown,
+  formData: FormData
+): Promise<{ error?: string; success?: boolean }> {
+  const session = await getRequiredSession();
+  if (session.role !== "ADMIN") return { error: "No autorizado" };
+
+  const questionId = formData.get("questionId") as string;
+  const courseId = formData.get("courseId") as string;
+  const text = (formData.get("text") as string)?.trim();
+
+  if (!questionId) return { error: "Pregunta no encontrada" };
+  if (!text || text.length < 5) return { error: "La pregunta debe tener al menos 5 caracteres" };
+
+  const options: { text: string; isCorrect: boolean }[] = [];
+  let i = 0;
+  while (formData.get(`options[${i}][text]`) !== null) {
+    options.push({
+      text: (formData.get(`options[${i}][text]`) as string).trim(),
+      isCorrect: formData.get(`options[${i}][isCorrect]`) === "true",
+    });
+    i++;
+  }
+
+  if (options.length < 2) return { error: "Debe tener al menos 2 opciones" };
+  if (options.length > 6) return { error: "Máximo 6 opciones" };
+  if (options.filter((o) => o.isCorrect).length !== 1)
+    return { error: "Debe haber exactamente una respuesta correcta" };
+  if (options.some((o) => !o.text)) return { error: "Todas las opciones deben tener texto" };
+
+  await prisma.$transaction([
+    prisma.questionOption.deleteMany({ where: { questionId } }),
+    prisma.question.update({
+      where: { id: questionId },
+      data: {
+        text,
+        options: { create: options },
+      },
+    }),
+  ]);
+
+  revalidatePath(`/admin/courses/${courseId}`);
+  return { success: true };
+}
+
 export async function deleteQuestion(questionId: string, courseId: string) {
   const session = await getRequiredSession();
   if (session.role !== "ADMIN") return { error: "No autorizado" };
