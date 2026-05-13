@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import Link from "next/link";
 import { AlertCircle, Mail, Lock, ArrowRight } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -12,10 +12,8 @@ type ActionState = { error?: string } | null;
 type Props = { next?: string };
 
 export function LoginForm({ next }: Props) {
-  const [state, action, pending] = useActionState<ActionState, FormData>(
-    loginAction,
-    null
-  );
+  const [state, action, pending] = useActionState<ActionState, FormData>(loginAction, null);
+  const [email, setEmail] = useState("");
 
   return (
     <div className="space-y-8">
@@ -45,6 +43,8 @@ export function LoginForm({ next }: Props) {
                 autoComplete="email"
                 required
                 placeholder="nombre@empresa.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 className="pl-10 h-12 bg-background/50 border-muted-foreground/20 focus:border-primary focus:ring-0"
               />
             </div>
