@@ -17,6 +17,7 @@ import {
   Gift,
   Award,
   CalendarDays,
+  FileText,
 } from "lucide-react";
 import { CloudinaryUpload } from "@/components/admin/CloudinaryUpload";
 import { toast } from "sonner";
@@ -483,6 +484,35 @@ export function CourseForm({ action, course, instructors = [] }: Props) {
               )}
             </div>
           )}
+        </div>
+      </section>
+
+      <Separator />
+
+      {/* ── Sección 5: Texto del certificado ──────────────────── */}
+      <section className={sectionCardClassName}>
+        <SectionHeader
+          icon={FileText}
+          title="Texto del certificado"
+          hint="Aparece bajo el título del curso en el PDF emitido. Si lo dejas vacío, se usa el texto por defecto."
+        />
+
+        <div className="space-y-2">
+          <Label htmlFor="certificateDescription" className={fieldLabelClassName}>
+            Descripción
+          </Label>
+          <Textarea
+            id="certificateDescription"
+            name="certificateDescription"
+            rows={3}
+            maxLength={400}
+            defaultValue={course?.certificateDescription ?? ""}
+            placeholder="Ej. Por haber completado satisfactoriamente el programa de capacitación profesional, demostrando dominio en los conceptos y prácticas del sector."
+            className="resize-none rounded-xl border-border/80 bg-background text-[15px]"
+          />
+          <p className="text-xs text-muted-foreground">
+            Máximo 400 caracteres. Este texto se puede sobrescribir al emitir certificados manuales.
+          </p>
         </div>
       </section>
 
