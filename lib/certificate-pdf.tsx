@@ -254,6 +254,21 @@ const styles = StyleSheet.create({
     color: "#16a34a",
   },
 
+  // Sello (centered at base)
+  selloBlock: {
+    position: "absolute",
+    bottom: 36,
+    left: 0,
+    right: 0,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  selloImage: {
+    width: 90,
+    height: 90,
+    objectFit: "contain",
+  },
+
   // QR block
   qrBlock: { alignItems: "center" },
   qrImage: { width: 60, height: 60, marginBottom: 4 },
@@ -291,6 +306,7 @@ type Props = {
   score: number;
   expiresAt?: Date | null;
   logoBase64: string;
+  selloBase64: string;
   qrCodeBase64: string;
 };
 
@@ -309,6 +325,7 @@ export function CertificatePDF({
   score,
   expiresAt,
   logoBase64,
+  selloBase64,
   qrCodeBase64,
 }: Props) {
   return (
@@ -374,6 +391,11 @@ export function CertificatePDF({
               </View>
             ))}
           </View>
+        </View>
+
+        {/* Sello centered at base */}
+        <View style={styles.selloBlock}>
+          <Image style={styles.selloImage} src={selloBase64} />
         </View>
 
         {/* Bottom bar */}

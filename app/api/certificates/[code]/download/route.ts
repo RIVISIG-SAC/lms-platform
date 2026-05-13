@@ -63,25 +63,21 @@ export async function GET(
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://rivisig.com';
   const verificationUrl = `${baseUrl}/verificar/${certificate.verificationCode}`;
 
-  const [qrCodeBase64, logoBase64] = await Promise.all([
+  const readImageAsBase64 = (filename: string) => {
+    const filePath = path.join(process.cwd(), 'public', 'images', filename);
+    const buffer = fs.readFileSync(filePath);
+    return `data:image/png;base64,${buffer.toString('base64')}`;
+  };
+
+  const [qrCodeBase64, logoBase64, selloBase64] = await Promise.all([
     QRCode.toDataURL(verificationUrl, {
       errorCorrectionLevel: 'M',
       margin: 1,
       width: 200,
       color: { dark: '#1a1a2e', light: '#ffffff' },
     }),
-    Promise.resolve(
-      (() => {
-        const logoPath = path.join(
-          process.cwd(),
-          'public',
-          'images',
-          'logo.png',
-        );
-        const buffer = fs.readFileSync(logoPath);
-        return `data:image/png;base64,${buffer.toString('base64')}`;
-      })(),
-    ),
+    Promise.resolve(readImageAsBase64('logo.png')),
+    Promise.resolve(readImageAsBase64('sello.png')),
   ]);
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -95,6 +91,7 @@ export async function GET(
       score,
       expiresAt: certificate.expiresAt,
       logoBase64,
+      selloBase64,
       qrCodeBase64,
     }) as any,
   );
