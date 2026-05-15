@@ -8,11 +8,22 @@ import { prisma } from '@/lib/prisma';
 import { getSession } from '@/lib/auth';
 import { CertificatePDF } from '@/lib/certificate-pdf';
 import { getCertificateEffectiveStatus } from '@/lib/utils';
+import { checkRateLimit } from '@/lib/security/rateLimit';
+import { getClientIp } from '@/lib/security/ip';
 
 export async function GET(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ code: string }> },
 ) {
+  const ip = getClientIp(request.headers);
+  const rl = checkRateLimit(ip, 'certificate:verify');
+  if (!rl.allowed) {
+    return NextResponse.json(
+      { error: `Demasiadas verificaciones. Reintenta en ${rl.retryInSeconds}s.` },
+      { status: 429 },
+    );
+  }
+
   const { code } = await params;
   const session = await getSession();
 
