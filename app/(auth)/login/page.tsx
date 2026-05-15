@@ -7,6 +7,7 @@ export const metadata = {
 export default async function LoginPage(props: { searchParams: Promise<unknown> }) {
   const sp = (await props.searchParams) as Record<string, string | undefined>;
   const next = sp.next ?? undefined;
+  const resetOk = sp.reset === "ok";
 
-  return <LoginForm next={next} />;
+  return <LoginForm next={next} resetOk={resetOk} />;
 }
