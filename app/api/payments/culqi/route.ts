@@ -3,11 +3,20 @@ import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
 import { createCharge, toCents } from "@/lib/culqi";
 import { addDays } from "@/lib/utils";
+import { checkRateLimit } from "@/lib/security/rateLimit";
 
 export async function POST(request: NextRequest) {
   const session = await getSession();
   if (!session || session.role !== "STUDENT") {
     return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+  }
+
+  const rl = checkRateLimit(session.userId, "payment:culqi");
+  if (!rl.allowed) {
+    return NextResponse.json(
+      { error: `Demasiados intentos. Reintenta en ${rl.retryInSeconds}s.` },
+      { status: 429 },
+    );
   }
 
   let body: { token: string; courseId: string };

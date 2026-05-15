@@ -2,11 +2,20 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
 import { createCharge, toCents } from "@/lib/culqi";
+import { checkRateLimit } from "@/lib/security/rateLimit";
 
 export async function POST(request: NextRequest) {
   const session = await getSession();
   if (!session || session.role !== "STUDENT") {
     return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+  }
+
+  const rl = checkRateLimit(session.userId, "payment:certificate");
+  if (!rl.allowed) {
+    return NextResponse.json(
+      { error: `Demasiados intentos. Reintenta en ${rl.retryInSeconds}s.` },
+      { status: 429 },
+    );
   }
 
   let body: { token: string; enrollmentId: string };

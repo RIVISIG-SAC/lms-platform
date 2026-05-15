@@ -6,10 +6,12 @@ import {
   BookOpen,
   Award,
   ChevronRight,
+  Clock3,
   Globe,
   GraduationCap,
   TrendingUp,
-  Sparkles
+  Target,
+  CheckCircle2
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { buttonVariants } from "@/components/ui/button";
@@ -32,68 +34,57 @@ export default async function StudentHomePage() {
   ]);
 
   return (
-    <div className="max-w-7xl mx-auto space-y-8 animate-in fade-in duration-700">
-      {/* Welcome Header */}
-      <div className="relative overflow-hidden bg-primary/10 rounded-3xl p-8 border border-primary/20">
-        <div className="relative z-10">
-          <div className="flex items-center gap-2 text-primary font-bold text-xs uppercase tracking-widest mb-3">
-            <Sparkles className="size-4" />
-            <span>Zona de Estudiante</span>
+    <div className="max-w-7xl mx-auto space-y-6 sm:space-y-8 animate-in fade-in duration-500">
+      <div className="rounded-2xl border border-border bg-card p-4 sm:p-8 shadow-sm">
+        <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+          <div className="space-y-2">
+            <p className="text-xs font-semibold uppercase tracking-widest text-primary">Panel del estudiante</p>
+            <h1 className="text-2xl sm:text-4xl font-black tracking-tight text-foreground">
+              Hola, {session.name.split(" ")[0]}
+            </h1>
+            <p className="text-sm text-muted-foreground max-w-xl">
+              Revisa tu avance, continua tus clases y gestiona tus certificados desde un solo lugar.
+            </p>
           </div>
-          <h1 className="text-4xl font-black tracking-tight text-foreground mb-2">
-            ¡Hola de nuevo, {session.name.split(" ")[0]}! 👋
-          </h1>
-          <p className="text-muted-foreground font-medium max-w-lg mb-6 text-sm">
-            Estás haciendo un excelente trabajo con tu formación. Hoy es un buen día para avanzar un poco más en tu camino profesional.
-          </p>
-          <div className="flex gap-4">
-            <Link href="/student/my-courses" className={cn(buttonVariants(), "rounded-full px-6 shadow-lg shadow-primary/20 font-bold")}>
-              Ir a mis cursos
-            </Link>
-            <Link href="/cursos" className={cn(buttonVariants({ variant: "ghost" }), "rounded-full px-6 font-bold flex items-center gap-2")}>
-              Ver cursos <ChevronRight className="size-4" />
-            </Link>
+          <div className="grid grid-cols-1 sm:flex sm:flex-wrap gap-2 w-full md:w-auto">
+            <Link href="/student/my-courses" className={cn(buttonVariants(), "font-bold w-full sm:w-auto")}>Ir a mis cursos</Link>
+            <Link href="/cursos" className={cn(buttonVariants({ variant: "outline" }), "font-bold gap-2 w-full sm:w-auto justify-center")}>Explorar cursos <ChevronRight className="size-4" /></Link>
           </div>
         </div>
-        
-        {/* Decorative elements */}
-        <div className="absolute right-[-5%] bottom-[-20%] size-64 bg-primary/10 rounded-full blur-3xl" />
-        <div className="absolute right-[10%] top-[-10%] size-32 bg-primary/20 rounded-full blur-2xl" />
-        <GraduationCap className="absolute right-12 top-1/2 -translate-y-1/2 size-48 text-primary/5 -rotate-12 hidden lg:block" />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
         {/* Main Content: Progress & Stats */}
         <div className="lg:col-span-2 space-y-8">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Card className="border-none shadow-xl shadow-black/5 bg-card/60 backdrop-blur-md overflow-hidden group hover:scale-[1.02] transition-transform duration-300">
-              <CardContent className="p-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+            <Card className="border border-border/70 shadow-sm bg-card">
+              <CardContent className="p-4 sm:p-6">
                 <div className="flex items-center justify-between mb-4">
-                  <div className="size-12 rounded-2xl bg-blue-100 flex items-center justify-center text-blue-600 border border-blue-200 shadow-sm">
+                  <div className="size-11 rounded-xl bg-blue-100 flex items-center justify-center text-blue-700 border border-blue-200">
                     <BookOpen className="size-6" />
                   </div>
-                  <TrendingUp className="size-5 text-emerald-500 opacity-50" />
+                  <TrendingUp className="size-5 text-blue-500/70" />
                 </div>
-                <h3 className="text-sm font-bold text-muted-foreground uppercase tracking-wider">Cursos en Marcha</h3>
+                <h3 className="text-sm font-bold text-muted-foreground uppercase tracking-wider">Cursos activos</h3>
                 <div className="flex items-end gap-2 mt-1">
-                  <span className="text-4xl font-black text-foreground">{enrollmentsCount}</span>
-                  <span className="text-xs text-muted-foreground font-bold mb-1.5 uppercase">Activos</span>
+                  <span className="text-3xl sm:text-4xl font-black text-foreground">{enrollmentsCount}</span>
+                  <span className="text-xs text-muted-foreground font-semibold mb-1.5 uppercase">en progreso</span>
                 </div>
               </CardContent>
             </Card>
 
-            <Card className="border-none shadow-xl shadow-black/5 bg-card/60 backdrop-blur-md overflow-hidden group hover:scale-[1.02] transition-transform duration-300">
-              <CardContent className="p-6">
+            <Card className="border border-border/70 shadow-sm bg-card">
+              <CardContent className="p-4 sm:p-6">
                 <div className="flex items-center justify-between mb-4">
-                  <div className="size-12 rounded-2xl bg-amber-100 flex items-center justify-center text-amber-600 border border-amber-200 shadow-sm">
+                  <div className="size-11 rounded-xl bg-amber-100 flex items-center justify-center text-amber-700 border border-amber-200">
                     <Award className="size-6" />
                   </div>
-                  <Sparkles className="size-5 text-amber-500 opacity-50" />
+                  <CheckCircle2 className="size-5 text-amber-600/70" />
                 </div>
                 <h3 className="text-sm font-bold text-muted-foreground uppercase tracking-wider">Certificados</h3>
                 <div className="flex items-end gap-2 mt-1">
-                  <span className="text-4xl font-black text-foreground">{certificatesCount}</span>
-                  <span className="text-xs text-muted-foreground font-bold mb-1.5 uppercase">Logrados</span>
+                  <span className="text-3xl sm:text-4xl font-black text-foreground">{certificatesCount}</span>
+                  <span className="text-xs text-muted-foreground font-semibold mb-1.5 uppercase">disponibles</span>
                 </div>
               </CardContent>
             </Card>
@@ -103,31 +94,31 @@ export default async function StudentHomePage() {
           {lastEnrollment && (
             <div className="space-y-4">
               <h2 className="text-xl font-bold flex items-center gap-2">
-                <span className="size-2 rounded-full bg-primary animate-pulse" />
-                Continuar aprendiendo
+                <Clock3 className="size-5 text-primary" />
+                Continua donde te quedaste
               </h2>
-              <Card className="border border-border/50 shadow-lg shadow-black/5 overflow-hidden group">
+              <Card className="border border-border shadow-sm overflow-hidden group">
                 <div className="flex flex-col md:flex-row">
-                  <div className="md:w-48 bg-accent/50 p-4 flex items-center justify-center border-r border-border/50">
-                    <div className="aspect-video w-full rounded-lg bg-primary/10 flex items-center justify-center border border-primary/20 overflow-hidden relative">
+                  <div className="md:w-52 bg-muted/30 p-3 sm:p-4 flex items-center justify-center border-b md:border-b-0 border-r-0 md:border-r border-border/60">
+                    <div className="aspect-video w-full rounded-lg bg-primary/5 flex items-center justify-center border border-primary/15 overflow-hidden relative">
                       {lastEnrollment.course.thumbnailUrl ? (
-                         // eslint-disable-next-line @next/next/no-img-element
+                          // eslint-disable-next-line @next/next/no-img-element
                         <img src={lastEnrollment.course.thumbnailUrl} alt="" className="object-cover w-full h-full" />
                       ) : (
                         <BookOpen className="size-8 text-primary/40" />
                       )}
-                      <div className="absolute inset-0 bg-primary/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                      <div className="absolute inset-0 bg-primary/10 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                         <ChevronRight className="size-8 text-white scale-75 group-hover:scale-100 transition-transform" />
                       </div>
                     </div>
                   </div>
-                  <div className="flex-1 p-6 space-y-4">
+                  <div className="flex-1 p-4 sm:p-6 space-y-4">
                     <div>
                       <h3 className="text-lg font-bold text-foreground mb-1 group-hover:text-primary transition-colors">
                         {lastEnrollment.course.title}
                       </h3>
                       <div className="flex items-center gap-2">
-                        <span className="text-xs font-bold text-primary uppercase bg-primary/10 px-2 py-0.5 rounded">
+                        <span className="text-xs font-semibold text-primary uppercase bg-primary/10 px-2 py-1 rounded">
                           {Math.round(lastEnrollment.progressPercentage)}% completado
                         </span>
                       </div>
@@ -140,8 +131,8 @@ export default async function StudentHomePage() {
                         />
                       </div>
                     </div>
-                    <div className="flex justify-end">
-                      <Link href={`/student/courses/${lastEnrollment.courseId}`} className={cn(buttonVariants({ size: "sm" }), "font-bold")}>
+                    <div className="flex justify-stretch sm:justify-end">
+                      <Link href={`/student/courses/${lastEnrollment.courseId}`} className={cn(buttonVariants({ size: "sm" }), "font-bold w-full sm:w-auto")}>
                         Reanudar clase
                       </Link>
                     </div>
@@ -154,25 +145,27 @@ export default async function StudentHomePage() {
 
         {/* Sidebar for Student Dashboard */}
         <div className="space-y-6">
-          <Card className="border-none shadow-xl shadow-black/5 bg-primary overflow-hidden text-primary-foreground relative group">
-            <CardHeader className="relative z-10 pb-2">
-              <CardTitle className="text-lg font-bold">Nuevas Oportunidades</CardTitle>
-              <CardDescription className="text-primary-foreground/70 font-medium">
-                Explora todos los cursos disponibles en nuestra plataforma.
+          <Card className="border border-border shadow-sm bg-card">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-lg font-bold flex items-center gap-2"><Target className="size-5 text-primary" /> Acciones rápidas</CardTitle>
+              <CardDescription className="font-medium">
+                Atajos para continuar tu flujo de aprendizaje.
               </CardDescription>
             </CardHeader>
-            <CardContent className="relative z-10">
-              <Link href="/cursos" className={cn(buttonVariants({ variant: "secondary" }), "w-full font-bold shadow-md hover:scale-105 transition-transform flex items-center justify-center gap-2")}>
-                <Globe className="size-4" /> Ver cursos
+            <CardContent className="space-y-2">
+              <Link href="/student/my-courses" className={cn(buttonVariants(), "w-full justify-start gap-2 font-semibold min-h-11")}>
+                <GraduationCap className="size-4" /> Continuar cursos
+              </Link>
+              <Link href="/student/certificates" className={cn(buttonVariants({ variant: "outline" }), "w-full justify-start gap-2 font-semibold min-h-11")}>
+                <Award className="size-4" /> Ver certificados
+              </Link>
+              <Link href="/cursos" className={cn(buttonVariants({ variant: "ghost" }), "w-full justify-start gap-2 font-semibold min-h-11")}>
+                <Globe className="size-4" /> Explorar nuevos cursos
               </Link>
             </CardContent>
-            {/* Background pattern */}
-            <div className="absolute right-0 top-0 opacity-10 pointer-events-none translate-x-1/4 -translate-y-1/4">
-              <Globe className="size-48 rotate-12" />
-            </div>
           </Card>
 
-          <Card className="border-none shadow-xl shadow-black/5 bg-card/60 backdrop-blur-md">
+          <Card className="border border-border shadow-sm bg-card">
             <CardHeader className="pb-3 px-6">
               <CardTitle className="text-base font-bold">Soporte y Recursos</CardTitle>
             </CardHeader>

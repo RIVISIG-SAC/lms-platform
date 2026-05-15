@@ -30,18 +30,18 @@ export function MarkCompleteButton({ chapterId, courseId, nextChapterId, isDone 
 
   if (isDone) {
     return (
-      <div className="flex items-center gap-2">
+      <div className="flex flex-col sm:flex-row sm:items-center gap-2 w-full sm:w-auto">
         <span className="flex items-center gap-1.5 text-green-600 text-sm font-medium">
           <CheckCircle2 className="size-5" />
           Completado
         </span>
         {nextChapterId && (
-          <Button size="sm" onClick={() => router.push(`/student/courses/${courseId}?chapter=${nextChapterId}`)}>
+          <Button className="w-full sm:w-auto" size="sm" onClick={() => router.push(`/student/courses/${courseId}?chapter=${nextChapterId}`)}>
             Siguiente →
           </Button>
         )}
         {!nextChapterId && (
-          <Button size="sm" variant="secondary" className="bg-green-600 text-white hover:bg-green-700" onClick={() => router.push(`/student/courses/${courseId}/exam`)}>
+          <Button size="sm" variant="secondary" className="w-full sm:w-auto bg-green-600 text-white hover:bg-green-700" onClick={() => router.push(`/student/courses/${courseId}/exam`)}>
             Ir a evaluación →
           </Button>
         )}
@@ -50,7 +50,7 @@ export function MarkCompleteButton({ chapterId, courseId, nextChapterId, isDone 
   }
 
   return (
-    <Button onClick={handleClick} disabled={pending} size="sm">
+    <Button onClick={handleClick} disabled={pending} size="sm" className="w-full sm:w-auto min-h-11 sm:min-h-9">
       {pending ? "Guardando..." : "Marcar como completado"}
     </Button>
   );
