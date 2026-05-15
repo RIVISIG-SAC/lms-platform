@@ -12,6 +12,7 @@ import {
   GraduationCap,
   UserCircle,
   Award,
+  NotebookPen,
   X,
 } from 'lucide-react';
 import { useSidebarContext } from './MobileShell';
@@ -25,16 +26,17 @@ type NavItem = {
 const adminNav: NavItem[] = [
   { label: 'Dashboard', href: '/admin', icon: LayoutDashboard },
   { label: 'Cursos', href: '/admin/courses', icon: BookOpen },
+  { label: 'Blog', href: '/admin/blog', icon: NotebookPen },
   { label: 'Certificados', href: '/admin/certificates', icon: Award },
   { label: 'Usuarios', href: '/admin/users', icon: Users },
   { label: 'Mi Perfil', href: '/admin/profile', icon: UserCircle },
 ];
 
 const studentNav: NavItem[] = [
-  { label: 'Inicio', href: '/student', icon: Home },
   { label: 'Mis Cursos', href: '/student/my-courses', icon: GraduationCap },
+  { label: 'Inicio', href: '/student', icon: Home },
   { label: 'Certificados', href: '/student/certificates', icon: Award },
-  { label: 'Ver cursos', href: '/cursos', icon: Globe },
+  { label: 'Explorar Cursos', href: '/cursos', icon: Globe },
   { label: 'Mi Perfil', href: '/student/profile', icon: UserCircle },
 ];
 

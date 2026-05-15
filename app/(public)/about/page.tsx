@@ -93,7 +93,7 @@ export default function AboutPage() {
                 Sugerencia: foto del equipo en oficina, sala de reuniones, o en sitio con cliente.
                 Ratio 4/3, mínimo 1200px en el lado mayor. */}
             <ImageSlot
-              src="/images/about/equipo.png"
+              src="/images/about/equipo.webp"
               alt="Equipo consultor RIVISIG"
               aspect="aspect-[4/3]"
               rounded="rounded-2xl"
@@ -184,10 +184,10 @@ export default function AboutPage() {
             </div>
 
             {/* === IMAGE SLOT: Proceso de auditoría ===
-                Archivo esperado: /public/images/about/auditoria.jpg
+                Archivo esperado: /public/images/about/auditoria.webp
                 Sugerencia: consultor revisando documentos en sitio, o equipo en planta. */}
             <ImageSlot
-              src="/images/about/auditoria.jpg"
+              src="/images/about/auditoria.webp"
               alt="Consultor RIVISIG realizando auditoría en sitio"
               aspect="aspect-[4/3]"
               rounded="rounded-2xl"

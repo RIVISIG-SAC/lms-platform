@@ -82,10 +82,10 @@ export default function ServiciosPage() {
             </div>
 
             {/* === IMAGE SLOT: Banner de servicios ===
-                Archivo esperado: /public/images/servicios/banner.jpg
+                Archivo esperado: /public/images/servicios/banner.webp
                 Sugerencia: foto de consultoría en planta, sala de reuniones o capacitación corporativa. */}
             <ImageSlot
-              src="/images/servicios/banner.jpg"
+              src="/images/servicios/banner.webp"
               alt="Consultoría RIVISIG en sitio"
               aspect="aspect-[4/3]"
               rounded="rounded-2xl"
@@ -132,7 +132,7 @@ export default function ServiciosPage() {
                     Archivo esperado: /public/images/servicios/{imgKey}.jpg
                     Una foto representativa por cada servicio. */}
                 <ImageSlot
-                  src={`/images/servicios/${imgKey}.jpg`}
+                  src={`/images/servicios/${imgKey}.webp`}
                   alt={title}
                   aspect="aspect-[16/9]"
                   rounded="rounded-none"

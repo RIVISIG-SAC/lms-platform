@@ -8,6 +8,7 @@ import {
   BadgeCheck,
   Book,
   MapPin,
+  Newspaper,
 } from 'lucide-react';
 import { SiteLogo } from '@/components/public/SiteLogo';
 import { NavAuthButtons, NavAuthSkeleton } from './NavAuthButtons';
@@ -17,6 +18,7 @@ const NAV_LINKS = [
   { href: '/cursos', label: 'Cursos', Icon: MonitorPlay },
   { href: '/servicios', label: 'Servicios', Icon: Book },
   { href: '/metodologia', label: 'Metodología', Icon: BadgeCheck },
+  { href: '/blog', label: 'Blog', Icon: Newspaper },
   { href: '/about', label: 'Nosotros', Icon: Info },
 ];
 
