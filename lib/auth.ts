@@ -1,6 +1,7 @@
 import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
 import type { Role } from "@prisma/client";
+import { prisma } from "@/lib/prisma";
 
 const SESSION_COOKIE = "session";
 const SESSION_DURATION = 60 * 60 * 24 * 7; // 7 days
@@ -16,6 +17,7 @@ export type SessionPayload = {
   role: Role;
   email: string;
   name: string;
+  tokenVersion: number;
 };
 
 export async function createSession(payload: SessionPayload) {
@@ -42,7 +44,19 @@ export async function getSession(): Promise<SessionPayload | null> {
 
   try {
     const { payload } = await jwtVerify(token, getSecret());
-    return payload as unknown as SessionPayload;
+    const session = payload as unknown as SessionPayload;
+
+    const user = await prisma.user.findUnique({
+      where: { id: session.userId },
+      select: { tokenVersion: true, isActive: true },
+    });
+
+    if (!user || !user.isActive) return null;
+
+    const sessionVersion = session.tokenVersion ?? 0;
+    if (user.tokenVersion !== sessionVersion) return null;
+
+    return session;
   } catch {
     return null;
   }

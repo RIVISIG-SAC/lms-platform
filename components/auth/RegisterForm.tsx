@@ -152,6 +152,40 @@ export function RegisterForm({ next }: Props) {
           </div>
         </div>
 
+        <div className="flex items-start gap-2.5 pt-1">
+          <input
+            id="acceptTerms"
+            name="acceptTerms"
+            type="checkbox"
+            required
+            className="mt-0.5 h-4 w-4 shrink-0 rounded border-muted-foreground/30 text-primary focus:ring-2 focus:ring-primary/40 cursor-pointer"
+          />
+          <label
+            htmlFor="acceptTerms"
+            className="text-[11px] text-muted-foreground leading-snug cursor-pointer select-none"
+          >
+            Acepto los{" "}
+            <Link
+              href="/terminos-y-condiciones"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-primary hover:underline font-medium whitespace-nowrap"
+            >
+              Términos
+            </Link>{" "}
+            y la{" "}
+            <Link
+              href="/politica-de-privacidad"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-primary hover:underline font-medium whitespace-nowrap"
+            >
+              Política de Privacidad
+            </Link>
+            .
+          </label>
+        </div>
+
         {state?.error && (
           <div className="flex items-center gap-2 text-sm text-destructive bg-destructive/5 border border-destructive/10 px-4 py-3 rounded-lg">
             <AlertCircle className="w-4 h-4 shrink-0" aria-hidden="true" />
