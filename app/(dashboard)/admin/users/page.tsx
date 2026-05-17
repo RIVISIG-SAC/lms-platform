@@ -20,6 +20,10 @@ export default async function AdminUsersPage() {
     },
   });
 
+  const activeAdminCount = users.filter(
+    (u) => u.role === "ADMIN" && u.isActive,
+  ).length;
+
   return (
     <div className="max-w-7xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <Breadcrumb>
@@ -50,7 +54,7 @@ export default async function AdminUsersPage() {
         </Button>
       </div>
 
-      <UsersTable users={users} />
+      <UsersTable users={users} activeAdminCount={activeAdminCount} />
     </div>
   );
 }

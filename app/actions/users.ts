@@ -64,6 +64,19 @@ export async function toggleUserActiveAction(userId: string) {
   const user = await prisma.user.findUnique({ where: { id: userId } });
   if (!user) return { error: "Usuario no encontrado." };
 
+  const willDeactivate = user.isActive;
+  if (willDeactivate && user.role === "ADMIN") {
+    const activeAdmins = await prisma.user.count({
+      where: { role: "ADMIN", isActive: true },
+    });
+    if (activeAdmins <= 1) {
+      return {
+        error:
+          "Debe quedar al menos un administrador activo. No puedes desactivar al último.",
+      };
+    }
+  }
+
   await prisma.user.update({
     where: { id: userId },
     data: { isActive: !user.isActive },
