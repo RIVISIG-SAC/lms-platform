@@ -20,6 +20,10 @@ async function cleanDatabase() {
   console.log("Limpiando base de datos...");
 
   await prisma.$transaction([
+    prisma.blogPostTag.deleteMany({}),
+    prisma.blogPost.deleteMany({}),
+    prisma.blogTag.deleteMany({}),
+    prisma.blogCategory.deleteMany({}),
     prisma.certificate.deleteMany({}),
     prisma.examAttempt.deleteMany({}),
     prisma.chapterProgress.deleteMany({}),
@@ -27,6 +31,7 @@ async function cleanDatabase() {
     prisma.enrollment.deleteMany({}),
     prisma.questionOption.deleteMany({}),
     prisma.question.deleteMany({}),
+    prisma.courseFaq.deleteMany({}),
     prisma.chapter.deleteMany({}),
     prisma.module.deleteMany({}),
     prisma.course.deleteMany({}),
@@ -208,6 +213,40 @@ async function seedCourse() {
                 { text: "Trasladar la responsabilidad a los auditores externos.", isCorrect: false },
               ],
             },
+          },
+        ],
+      },
+      faqs: {
+        create: [
+          {
+            order: 0,
+            question: "¿El certificado tiene validez internacional?",
+            answer:
+              "Sí. El certificado se emite con un código verificable único y está alineado a estándares ISO y referencias internacionales reconocidas por consultoras y organizaciones de auditoría.",
+          },
+          {
+            order: 1,
+            question: "¿Cuánto tiempo tengo para completar el curso?",
+            answer:
+              "Tienes 180 días de acceso desde el momento de la inscripción. Puedes avanzar a tu propio ritmo y retomar las clases cuando quieras dentro de ese periodo.",
+          },
+          {
+            order: 2,
+            question: "¿Cómo se obtiene el certificado?",
+            answer:
+              "Debes completar todos los módulos y aprobar la evaluación final. Tienes hasta 2 intentos para mantener la seriedad del proceso. Una vez aprobado, el certificado se genera automáticamente con tu nombre y un código de verificación único.",
+          },
+          {
+            order: 3,
+            question: "¿Qué métodos de pago aceptan?",
+            answer:
+              "Aceptamos pago con tarjeta de crédito o débito mediante una pasarela segura (Culqi). El cobro es único — no hay suscripciones ni renovaciones automáticas.",
+          },
+          {
+            order: 4,
+            question: "¿Puedo acceder desde el celular o tablet?",
+            answer:
+              "Sí. La plataforma es 100% responsive y funciona en navegadores modernos desde computadora, tablet o smartphone. Tu progreso se sincroniza automáticamente entre dispositivos.",
           },
         ],
       },
