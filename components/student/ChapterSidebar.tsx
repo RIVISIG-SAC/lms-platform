@@ -36,7 +36,7 @@ export function ChapterSidebar({
   onClose,
 }: Props) {
   return (
-    <aside className="w-72 shrink-0 border-r border-border bg-card flex flex-col h-full overflow-hidden">
+    <aside className="w-[88vw] max-w-sm md:w-72 shrink-0 border-r border-border bg-card flex flex-col h-full overflow-hidden">
       {/* Progress header */}
       <div className="px-4 py-3 border-b border-border">
         <div className="flex items-center justify-between mb-1.5">
@@ -67,7 +67,7 @@ export function ChapterSidebar({
       <nav className="flex-1 overflow-y-auto py-2">
         {modules.map((mod) => (
           <div key={mod.id}>
-            <p className="px-4 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+            <p className="px-4 py-2 text-[11px] font-semibold text-muted-foreground uppercase tracking-wide">
               {mod.order + 1}. {mod.title}
             </p>
             {mod.chapters.map((ch) => {
@@ -79,7 +79,7 @@ export function ChapterSidebar({
                   key={ch.id}
                   href={`/student/courses/${courseId}?chapter=${ch.id}`}
                   className={cn(
-                    "flex items-center gap-3 px-4 py-2.5 text-sm transition-colors",
+                    "flex items-center gap-3 px-4 py-3 text-sm transition-colors min-h-11",
                     isActive
                       ? "bg-primary/5 text-primary font-medium border-r-2 border-primary"
                       : "text-foreground hover:bg-accent/50"

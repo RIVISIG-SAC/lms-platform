@@ -159,12 +159,12 @@ export default function LandingPage() {
             </div>
 
             {/* === IMAGE SLOT: Hero principal ===
-                Archivo esperado: /public/images/hero.jpg
+                Archivo esperado: /public/images/hero.webp
                 Sugerencia: foto profesional de equipo consultor, sala de capacitación,
                 o auditoría en planta. Ratio 4/3 o 3/4, mínimo 1200px lado mayor. */}
             <div className="relative">
               <ImageSlot
-                src="/images/hero.jpg"
+                src="/images/hero.webp"
                 alt="Equipo RIVISIG en proceso de auditoría"
                 aspect="aspect-[4/5] sm:aspect-[4/3] lg:aspect-[4/5]"
                 rounded="rounded-2xl"
@@ -288,11 +288,11 @@ export default function LandingPage() {
       {/* ── CTA final ────────────────────────────────────── */}
       <section className="relative bg-foreground text-primary-foreground overflow-hidden">
         {/* === IMAGE SLOT: Fondo decorativo CTA (opcional) ===
-            Archivo esperado: /public/images/cta-bg.jpg
+            Archivo esperado: /public/images/cta-bg.webp
             Foto oscura, de ambiente profesional. Se superpone un overlay. */}
         <div className="absolute inset-0 opacity-10">
           <ImageSlot
-            src="/images/cta-bg.jpg"
+            src="/images/cta-bg.webp"
             alt=""
             aspect="h-full"
             rounded="rounded-none"

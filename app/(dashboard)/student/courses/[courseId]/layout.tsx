@@ -30,33 +30,44 @@ export default async function CoursePlayerLayout(props: {
 
   return (
     <div className="flex flex-col h-screen -m-6 bg-[var(--background)]">
-      {/* Top bar */}
-      <header className="h-12 border-b border-[var(--border)] bg-[var(--card)] flex items-center justify-between px-4 flex-shrink-0">
-        <div className="flex items-center gap-3">
-          <Link
-            href="/student/my-courses"
-            className="text-[var(--muted-foreground)] hover:text-[var(--foreground)] transition-colors"
-            title="Volver a mis cursos"
-          >
-            ← Mis Cursos
-          </Link>
-          <span className="text-[var(--border)]">|</span>
-          <h1 className="text-sm font-medium text-[var(--foreground)] truncate max-w-xs">
-            {course.title}
-          </h1>
-        </div>
-        <div className="flex items-center gap-3">
+      <header className="border-b border-[var(--border)] bg-[var(--card)] flex-shrink-0">
+        <div className="h-12 px-3 sm:px-4 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2 min-w-0">
+            <Link
+              href="/student/my-courses"
+              className="text-[13px] font-medium text-[var(--muted-foreground)] hover:text-[var(--foreground)] transition-colors shrink-0"
+              title="Volver a mis cursos"
+            >
+              ← Mis Cursos
+            </Link>
+            <span className="text-[var(--border)]">|</span>
+            <h1 className="text-sm font-medium text-[var(--foreground)] truncate">
+              {course.title}
+            </h1>
+          </div>
+
           {enrollment.status === "COMPLETED" && (
             <Link
               href={`/student/courses/${courseId}/exam`}
-              className="text-xs bg-green-600 text-white px-3 py-1.5 rounded-md hover:opacity-90"
+              className="hidden sm:inline-flex text-xs bg-green-600 text-white px-3 py-1.5 rounded-md hover:opacity-90"
             >
-              Ir a Evaluación
+              Ir a Evaluacion
             </Link>
           )}
-          <span className="text-xs text-[var(--muted-foreground)] hidden sm:block">
+        </div>
+
+        <div className="sm:hidden px-3 pb-2 flex items-center justify-between gap-3">
+          <span className="text-[11px] font-medium text-[var(--muted-foreground)]">
             {Math.round(enrollment.progressPercentage)}% completado
           </span>
+          {enrollment.status === "COMPLETED" && (
+            <Link
+              href={`/student/courses/${courseId}/exam`}
+              className="text-[11px] bg-green-600 text-white px-2.5 py-1 rounded-md hover:opacity-90"
+            >
+              Ir a Evaluacion
+            </Link>
+          )}
         </div>
       </header>
 

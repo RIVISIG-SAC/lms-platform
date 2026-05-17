@@ -1,20 +1,35 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { headers } from "next/headers";
 import bcrypt from "bcryptjs";
 import crypto from "node:crypto";
 import { prisma } from "@/lib/prisma";
 import { registerSchema } from "@/lib/validations/auth";
 import { addDays } from "@/lib/utils";
 import { sendVerificationEmail } from "@/lib/email";
+import { getLegalAcceptanceVersion } from "@/lib/legal/company";
+import { getClientIp } from "@/lib/security/ip";
+import { checkRateLimit } from "@/lib/security/rateLimit";
 
 export async function registerAction(_prev: unknown, formData: FormData) {
+  const headersList = await headers();
+  const ip = getClientIp(headersList);
+
+  const rl = checkRateLimit(ip, "auth:register");
+  if (!rl.allowed) {
+    return {
+      error: `Demasiados registros desde tu IP. Intenta en ${Math.ceil(rl.retryInSeconds! / 60)} min.`,
+    };
+  }
+
   const raw = {
     name: formData.get("name"),
     email: formData.get("email"),
     password: formData.get("password"),
     dni: formData.get("dni") || undefined,
     company: formData.get("company") || undefined,
+    acceptTerms: formData.get("acceptTerms"),
   };
 
   const parsed = registerSchema.safeParse(raw);
@@ -39,6 +54,9 @@ export async function registerAction(_prev: unknown, formData: FormData) {
   const verificationToken = crypto.randomBytes(32).toString("hex");
   const verificationTokenExp = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24h
 
+  const acceptedTermsIp = ip;
+  const acceptedTermsVersion = getLegalAcceptanceVersion();
+
   await prisma.user.create({
     data: {
       name,
@@ -51,6 +69,9 @@ export async function registerAction(_prev: unknown, formData: FormData) {
       verificationTokenExp,
       dni: dni || null,
       company: company || null,
+      acceptedTermsAt: new Date(),
+      acceptedTermsIp,
+      acceptedTermsVersion,
     },
   });
 

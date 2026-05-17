@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { Phone, Mail, Globe, MapPin } from 'lucide-react';
 import { SiteLogo } from '@/components/public/SiteLogo';
 import { SocialLinks } from './SocialLinks';
+import { LEGAL_COMPANY } from '@/lib/legal/company';
 
 const PLATFORM_LINKS = [
   { href: '/cursos', label: 'Cursos' },
@@ -10,6 +11,11 @@ const PLATFORM_LINKS = [
   { href: '/about', label: 'Nosotros' },
   { href: '/verificar', label: 'Verificar Certificado' },
   { href: '/registro', label: 'Crear cuenta' },
+];
+
+const LEGAL_LINKS = [
+  { href: '/terminos-y-condiciones', label: 'Términos y Condiciones' },
+  { href: '/politica-de-privacidad', label: 'Política de Privacidad' },
 ];
 
 export function SiteFooter() {
@@ -72,14 +78,43 @@ export function SiteFooter() {
           </div>
         </div>
 
-        <div className="border-t border-border pt-6 flex flex-col sm:flex-row items-center justify-between gap-2">
-          <p className="text-xs text-muted-foreground">
-            © {new Date().getFullYear()} RIVISIG Consultores. Todos los derechos
-            reservados.
-          </p>
-          <p className="text-xs text-muted-foreground">
-            Plataforma de Capacitación Profesional
-          </p>
+        <div className="border-t border-border pt-6 space-y-4">
+          <nav aria-label="Enlaces legales">
+            <ul className="flex flex-wrap items-center justify-center sm:justify-start gap-x-3 gap-y-1 text-xs text-muted-foreground">
+              {LEGAL_LINKS.map(({ href, label }, idx) => (
+                <li key={href} className="flex items-center gap-3">
+                  <Link
+                    href={href}
+                    className="hover:text-foreground transition-colors"
+                  >
+                    {label}
+                  </Link>
+                  {idx < LEGAL_LINKS.length - 1 && (
+                    <span aria-hidden="true" className="text-border">
+                      ·
+                    </span>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </nav>
+
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-muted-foreground">
+            <p className="text-center sm:text-left">
+              © {new Date().getFullYear()} {LEGAL_COMPANY.razonSocial}
+              <span aria-hidden="true" className="mx-2 text-border">
+                ·
+              </span>
+              RUC {LEGAL_COMPANY.ruc}
+              <span aria-hidden="true" className="mx-2 text-border">
+                ·
+              </span>
+              {LEGAL_COMPANY.ciudad} — {LEGAL_COMPANY.pais}
+            </p>
+            <p className="text-center sm:text-right">
+              Todos los derechos reservados
+            </p>
+          </div>
         </div>
       </div>
     </footer>

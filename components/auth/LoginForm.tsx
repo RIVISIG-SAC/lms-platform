@@ -2,16 +2,16 @@
 
 import { useActionState, useState } from "react";
 import Link from "next/link";
-import { AlertCircle, Mail, Lock, ArrowRight } from "lucide-react";
+import { AlertCircle, CheckCircle2, Mail, Lock, ArrowRight } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { loginAction } from "@/app/actions/auth";
 
 type ActionState = { error?: string } | null;
-type Props = { next?: string };
+type Props = { next?: string; resetOk?: boolean };
 
-export function LoginForm({ next }: Props) {
+export function LoginForm({ next, resetOk }: Props) {
   const [state, action, pending] = useActionState<ActionState, FormData>(loginAction, null);
   const [email, setEmail] = useState("");
 
@@ -28,6 +28,15 @@ export function LoginForm({ next }: Props) {
 
       <form action={action} className="space-y-6">
         {next && <input type="hidden" name="next" value={next} />}
+
+        {resetOk && (
+          <div className="flex items-center gap-2 text-sm text-emerald-700 bg-emerald-50 border border-emerald-200 px-4 py-3 rounded-lg">
+            <CheckCircle2 className="w-4 h-4 shrink-0" aria-hidden="true" />
+            <span>
+              Contraseña restablecida con éxito. Inicia sesión con tu nueva contraseña.
+            </span>
+          </div>
+        )}
 
         <div className="space-y-4">
           <div className="space-y-2">
@@ -51,9 +60,17 @@ export function LoginForm({ next }: Props) {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="password" className="text-xs font-medium text-muted-foreground">
-              Contraseña
-            </Label>
+            <div className="flex items-center justify-between">
+              <Label htmlFor="password" className="text-xs font-medium text-muted-foreground">
+                Contraseña
+              </Label>
+              <Link
+                href="/recuperar"
+                className="text-xs text-muted-foreground hover:text-primary transition-colors"
+              >
+                ¿Olvidaste tu contraseña?
+              </Link>
+            </div>
             <div className="relative">
               <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/50" />
               <Input

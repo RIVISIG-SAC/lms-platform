@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { BookOpen } from "lucide-react";
+import { BookOpen, ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { VimeoPlayer } from "@/components/student/VimeoPlayer";
 import { MarkCompleteButton } from "@/components/student/MarkCompleteButton";
@@ -82,10 +82,10 @@ export function CoursePlayerClient({
 
   return (
     <>
-      {/* Mobile backdrop — starts below the course player header (h-12) */}
+      {/* Mobile backdrop */}
       {sidebarOpen && (
         <div
-          className="fixed inset-x-0 bottom-0 top-12 z-20 bg-black/50 md:hidden"
+          className="fixed inset-x-0 bottom-0 top-[4.5rem] z-20 bg-black/50 md:hidden"
           onClick={() => setSidebarOpen(false)}
           aria-hidden="true"
         />
@@ -94,7 +94,7 @@ export function CoursePlayerClient({
       {/* Chapter sidebar — fixed drawer on mobile, in-flow on desktop */}
       <div
         className={cn(
-          "fixed top-12 bottom-0 left-0 z-30 transition-transform duration-300",
+          "fixed top-[4.5rem] bottom-0 left-0 z-30 transition-transform duration-300",
           "md:static md:top-auto md:bottom-auto md:left-auto md:z-auto md:translate-x-0",
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         )}
@@ -112,21 +112,34 @@ export function CoursePlayerClient({
       {/* Main content */}
       <main className="flex-1 overflow-y-auto">
         {/* Mobile: sticky toggle bar */}
-        <div className="sticky top-0 z-10 flex items-center gap-3 px-4 py-2.5 border-b border-[var(--border)] bg-[var(--card)] md:hidden">
-          <button
-            onClick={() => setSidebarOpen(true)}
-            className="flex items-center gap-2 text-sm text-[var(--muted-foreground)] hover:text-[var(--foreground)] transition-colors"
-            aria-label="Ver temario del curso"
-          >
-            <BookOpen className="size-4 shrink-0" />
-            <span className="truncate max-w-[200px]">{activeChapter.title}</span>
-          </button>
+        <div className="sticky top-0 z-10 border-b border-[var(--border)] bg-[var(--card)] md:hidden">
+          <div className="flex items-center justify-between gap-3 px-3 pt-2 pb-1.5">
+            <button
+              onClick={() => setSidebarOpen(true)}
+              className="flex items-center gap-2 text-sm text-[var(--muted-foreground)] hover:text-[var(--foreground)] transition-colors min-h-10"
+              aria-label="Ver temario del curso"
+            >
+              <BookOpen className="size-4 shrink-0" />
+              <span className="truncate max-w-[210px]">{activeChapter.title}</span>
+            </button>
+            <span className="text-xs font-medium text-[var(--muted-foreground)] shrink-0">
+              {Math.round(progressPercentage)}%
+            </span>
+          </div>
+          <div className="px-3 pb-2">
+            <div className="h-1.5 bg-muted rounded-full overflow-hidden">
+              <div
+                className="h-full bg-primary rounded-full transition-all duration-500"
+                style={{ width: `${progressPercentage}%` }}
+              />
+            </div>
+          </div>
         </div>
 
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 space-y-6">
+        <div className="max-w-4xl mx-auto px-3 sm:px-6 py-4 sm:py-6 space-y-5 sm:space-y-6">
           {/* Enrolled banner */}
           {enrolledBanner && (
-            <div className="bg-green-50 border border-green-200 text-green-700 text-sm px-4 py-3 rounded-lg">
+            <div className="bg-green-50 border border-green-200 text-green-700 text-sm px-3 sm:px-4 py-3 rounded-lg">
               ¡Inscripción exitosa! Ahora tienes acceso completo a este curso por 180 días.
             </div>
           )}
@@ -152,7 +165,7 @@ export function CoursePlayerClient({
               <h2 className="text-xl font-semibold text-[var(--foreground)]">
                 {activeChapter.title}
               </h2>
-              <div className="shrink-0">
+              <div className="shrink-0 w-full sm:w-auto">
                 <MarkCompleteButton
                   chapterId={activeChapter.id}
                   courseId={courseId}
@@ -173,7 +186,7 @@ export function CoursePlayerClient({
                 <h3 className="text-sm font-semibold text-[var(--foreground)]">
                   Recursos descargables
                 </h3>
-                <div className="flex flex-wrap gap-2">
+                <div className="space-y-2">
                   {activeChapter.resources.map((r) => (
                     <a
                       key={r.id}
@@ -181,13 +194,15 @@ export function CoursePlayerClient({
                       target="_blank"
                       rel="noopener noreferrer"
                       download
-                      className="inline-flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-md border border-[var(--border)] hover:bg-slate-50 transition-colors text-[var(--foreground)]"
+                      className="flex items-center justify-between gap-2 text-sm px-3 py-2.5 rounded-md border border-[var(--border)] hover:bg-slate-50 transition-colors text-[var(--foreground)]"
                     >
-                      <span className="text-base">
-                        {r.type === "PDF" ? "📄" : r.type === "PPTX" ? "📊" : r.type === "DOCX" ? "📝" : r.type === "XLSX" ? "📋" : "📎"}
+                      <span className="inline-flex items-center gap-2 min-w-0">
+                        <span className="text-base shrink-0">
+                          {r.type === "PDF" ? "📄" : r.type === "PPTX" ? "📊" : r.type === "DOCX" ? "📝" : r.type === "XLSX" ? "📋" : "📎"}
+                        </span>
+                        <span className="truncate">{r.name}</span>
                       </span>
-                      <span>{r.name}</span>
-                      <span className="text-[10px] uppercase text-[var(--muted-foreground)] font-medium">{r.type}</span>
+                      <span className="text-[10px] uppercase text-[var(--muted-foreground)] font-medium shrink-0">{r.type}</span>
                     </a>
                   ))}
                 </div>
@@ -214,23 +229,25 @@ export function CoursePlayerClient({
           )}
 
           {/* Chapter navigation */}
-          <div className="flex justify-between pt-4 border-t border-[var(--border)]">
+          <div className="grid grid-cols-2 gap-2 pt-4 border-t border-[var(--border)]">
             {activeIndex > 0 ? (
               <a
                 href={`/student/courses/${courseId}?chapter=${allChapters[activeIndex - 1].id}`}
-                className="text-sm text-[var(--muted-foreground)] hover:text-[var(--foreground)] flex items-center gap-1"
+                className="min-h-11 rounded-md border border-border px-3 py-2 text-sm text-[var(--muted-foreground)] hover:text-[var(--foreground)] hover:bg-accent/40 transition-colors flex items-center gap-2"
               >
-                ← {allChapters[activeIndex - 1].title}
+                <ChevronLeft className="size-4 shrink-0" />
+                <span className="truncate">Anterior</span>
               </a>
             ) : (
-              <div />
+              <div className="min-h-11" />
             )}
             {nextChapter && (
               <a
                 href={`/student/courses/${courseId}?chapter=${nextChapter.id}`}
-                className="text-sm text-[var(--primary)] hover:underline flex items-center gap-1"
+                className="min-h-11 rounded-md border border-primary/30 px-3 py-2 text-sm text-[var(--primary)] hover:bg-primary/5 transition-colors flex items-center justify-end gap-2"
               >
-                {nextChapter.title} →
+                <span className="truncate">Siguiente</span>
+                <ChevronRight className="size-4 shrink-0" />
               </a>
             )}
           </div>
