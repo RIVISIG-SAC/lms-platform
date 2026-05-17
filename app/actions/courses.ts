@@ -257,3 +257,90 @@ export async function deleteResource(resourceId: string, courseId: string) {
   await prisma.chapterResource.delete({ where: { id: resourceId } });
   revalidateCourse(courseId);
 }
+
+// ─── Course FAQs ────────────────────────────────────────────────────────────
+
+function parseFaqPayload(formData: FormData) {
+  const question = ((formData.get("question") as string) || "").trim();
+  const answer = ((formData.get("answer") as string) || "").trim();
+  const orderRaw = formData.get("order");
+  const order = orderRaw === null || orderRaw === "" ? 0 : Number(orderRaw);
+  return { question, answer, order };
+}
+
+function validateFaq(data: { question: string; answer: string }) {
+  if (data.question.length < 3) return "La pregunta debe tener al menos 3 caracteres";
+  if (data.question.length > 200) return "La pregunta es demasiado larga (máx. 200)";
+  if (data.answer.length < 3) return "La respuesta debe tener al menos 3 caracteres";
+  if (data.answer.length > 2000) return "La respuesta es demasiado larga (máx. 2000)";
+  return null;
+}
+
+export async function createCourseFaq(_prev: unknown, formData: FormData) {
+  const courseId = formData.get("courseId") as string;
+  try { await assertCourseAccess(courseId); } catch { return { error: "No autorizado" }; }
+
+  const payload = parseFaqPayload(formData);
+  const error = validateFaq(payload);
+  if (error) return { error };
+
+  const lastOrder = await prisma.courseFaq.findFirst({
+    where: { courseId },
+    orderBy: { order: "desc" },
+    select: { order: true },
+  });
+
+  await prisma.courseFaq.create({
+    data: {
+      courseId,
+      question: payload.question,
+      answer: payload.answer,
+      order: lastOrder ? lastOrder.order + 1 : 0,
+    },
+  });
+
+  revalidateCourse(courseId);
+  revalidatePath(`/cursos/${courseId}`);
+  return { success: true };
+}
+
+export async function updateCourseFaq(_prev: unknown, formData: FormData) {
+  const courseId = formData.get("courseId") as string;
+  try { await assertCourseAccess(courseId); } catch { return { error: "No autorizado" }; }
+
+  const id = formData.get("id") as string;
+  const payload = parseFaqPayload(formData);
+  const error = validateFaq(payload);
+  if (error) return { error };
+
+  await prisma.courseFaq.update({
+    where: { id },
+    data: { question: payload.question, answer: payload.answer },
+  });
+
+  revalidateCourse(courseId);
+  revalidatePath(`/cursos/${courseId}`);
+  return { success: true };
+}
+
+export async function deleteCourseFaq(faqId: string, courseId: string) {
+  try { await assertCourseAccess(courseId); } catch { return { error: "No autorizado" }; }
+
+  await prisma.courseFaq.delete({ where: { id: faqId } });
+  revalidateCourse(courseId);
+  revalidatePath(`/cursos/${courseId}`);
+}
+
+export async function reorderCourseFaqs(courseId: string, orderedIds: string[]) {
+  try { await assertCourseAccess(courseId); } catch { return { error: "No autorizado" }; }
+
+  await prisma.$transaction(
+    orderedIds.map((id, index) =>
+      prisma.courseFaq.update({ where: { id }, data: { order: index } }),
+    ),
+  );
+
+  revalidateCourse(courseId);
+  revalidatePath(`/cursos/${courseId}`);
+  return { success: true };
+}
