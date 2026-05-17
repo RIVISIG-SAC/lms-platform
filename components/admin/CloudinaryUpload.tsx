@@ -10,6 +10,7 @@ interface CloudinaryUploadProps {
   resourceType?: "image" | "raw";
   label?: string;
   folder?: string;
+  compact?: boolean;
 }
 
 export function CloudinaryUpload({
@@ -18,6 +19,7 @@ export function CloudinaryUpload({
   resourceType = "image",
   label = "Subir archivo",
   folder,
+  compact = false,
 }: CloudinaryUploadProps) {
   const defaultFolder = resourceType === "image" ? "lms/thumbnails" : "lms/resources";
 
@@ -43,7 +45,7 @@ export function CloudinaryUpload({
       {({ open }) => (
         <div className="space-y-2">
           {value && resourceType === "image" && (
-            <div className="relative rounded-md overflow-hidden border border-border h-44 group">
+            <div className={`relative rounded-md overflow-hidden border border-border group ${compact ? "h-32" : "h-44"}`}>
               <img src={value} alt="Vista previa" className="w-full h-full object-cover" />
               <button
                 type="button"
