@@ -109,11 +109,39 @@ model Course {
   enrollments Enrollment[]
   questions   Question[]
   certificates Certificate[]
+  faqs        CourseFaq[]
 
   @@index([published])
   @@index([category])
   @@index([level])
   @@index([instructorId])
+}
+
+model CourseFaq {
+  id        String   @id @default(cuid())
+  courseId  String
+  question  String
+  answer    String
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@index([courseId, order])
+}
+
+model SystemFaq {
+  id        String   @id @default(cuid())
+  question  String
+  answer    String
+  category  String?
+  order     Int      @default(0)
+  published Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([published, order])
 }
 
 model Module {

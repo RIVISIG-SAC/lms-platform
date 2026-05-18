@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { buttonVariants } from "@/components/ui/button";
+import { SupportResourcesCard } from "@/components/student/SupportResourcesCard";
 
 export default async function StudentHomePage() {
   const session = await getRequiredSession();
@@ -165,25 +166,7 @@ export default async function StudentHomePage() {
             </CardContent>
           </Card>
 
-          <Card className="border border-border shadow-sm bg-card">
-            <CardHeader className="pb-3 px-6">
-              <CardTitle className="text-base font-bold">Soporte y Recursos</CardTitle>
-            </CardHeader>
-            <CardContent className="px-6 pb-6 space-y-2">
-              <Link href="#" className="flex items-center justify-between p-3 rounded-xl hover:bg-accent/50 transition-colors group">
-                <span className="text-sm font-medium">Guía del estudiante</span>
-                <ChevronRight className="size-4 text-muted-foreground group-hover:text-primary" />
-              </Link>
-              <Link href="#" className="flex items-center justify-between p-3 rounded-xl hover:bg-accent/50 transition-colors group">
-                <span className="text-sm font-medium">FAQ y Ayuda</span>
-                <ChevronRight className="size-4 text-muted-foreground group-hover:text-primary" />
-              </Link>
-              <Link href="#" className="flex items-center justify-between p-3 rounded-xl hover:bg-accent/50 transition-colors group">
-                <span className="text-sm font-medium">Contactar tutor</span>
-                <ChevronRight className="size-4 text-muted-foreground group-hover:text-primary" />
-              </Link>
-            </CardContent>
-          </Card>
+          <SupportResourcesCard userEmail={session.email} userName={session.name} />
         </div>
       </div>
     </div>

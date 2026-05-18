@@ -8,10 +8,11 @@ import { AddModuleButton } from "@/components/admin/modules/AddModuleButton";
 import { deleteCourse, updateCourse } from "@/app/actions/courses";
 import { DeleteConfirmDialog } from "@/components/admin/DeleteConfirmDialog";
 import { ExamManager } from "@/components/admin/ExamManager";
+import { FaqManager } from "@/components/admin/FaqManager";
 import { EmptyState } from "@/components/admin/EmptyState";
 import { formatCurrency } from "@/lib/utils";
 import { COURSE_LEVEL_LABELS, type CourseLevelValue } from "@/lib/validations/course";
-import { BookOpen, Clock, FileText, GraduationCap, Layers, Tag } from "lucide-react";
+import { BookOpen, Clock, FileText, GraduationCap, HelpCircle, Layers, Tag } from "lucide-react";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -52,6 +53,7 @@ export default async function EditCoursePage({ params }: Props) {
           orderBy: { order: "asc" },
           include: { options: true },
         },
+        faqs: { orderBy: { order: "asc" } },
       },
     }),
     prisma.instructorProfile.findMany({
@@ -154,6 +156,13 @@ export default async function EditCoursePage({ params }: Props) {
               {course.questions.length}
             </Badge>
           </TabsTrigger>
+          <TabsTrigger value="faqs" className="px-4 gap-2">
+            <HelpCircle className="size-4" />
+            FAQs
+            <Badge variant="outline" className="ml-1 text-[10px] font-semibold">
+              {course.faqs.length}
+            </Badge>
+          </TabsTrigger>
         </TabsList>
 
         {/* ── Info Tab ─────────────────────────────────────── */}
@@ -209,6 +218,15 @@ export default async function EditCoursePage({ params }: Props) {
           <Card>
             <CardContent className="p-6 md:p-8">
               <ExamManager courseId={course.id} questions={course.questions} />
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* ── FAQ Tab ──────────────────────────────────────── */}
+        <TabsContent value="faqs" className="mt-6">
+          <Card>
+            <CardContent className="p-6 md:p-8">
+              <FaqManager courseId={course.id} faqs={course.faqs} />
             </CardContent>
           </Card>
         </TabsContent>

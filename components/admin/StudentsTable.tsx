@@ -5,6 +5,7 @@ import {
   BookOpen,
   Calendar,
   Copy,
+  GraduationCap,
   Mail,
   MoreVertical,
   Search,
@@ -23,6 +24,10 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { EmptyState } from "@/components/admin/EmptyState";
+import {
+  EnrollStudentDialog,
+  type EnrollCourseOption,
+} from "@/components/admin/EnrollStudentDialog";
 
 export type StudentRow = {
   id: string;
@@ -35,10 +40,12 @@ export type StudentRow = {
 
 type Props = {
   students: StudentRow[];
+  courses: EnrollCourseOption[];
 };
 
-export function StudentsTable({ students }: Props) {
+export function StudentsTable({ students, courses }: Props) {
   const [query, setQuery] = useState("");
+  const [enrollStudent, setEnrollStudent] = useState<StudentRow | null>(null);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -186,6 +193,10 @@ export function StudentsTable({ students }: Props) {
                                   Próximamente
                                 </Badge>
                               </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => setEnrollStudent(student)}>
+                                <GraduationCap className="size-4" />
+                                Inscribir en curso
+                              </DropdownMenuItem>
                               <DropdownMenuItem
                                 render={<a href={`mailto:${student.email}`} />}
                               >
@@ -211,6 +222,19 @@ export function StudentsTable({ students }: Props) {
           </div>
         </div>
       )}
+
+      <EnrollStudentDialog
+        courses={courses}
+        prefilledStudent={
+          enrollStudent
+            ? { id: enrollStudent.id, email: enrollStudent.email, name: enrollStudent.name }
+            : null
+        }
+        open={enrollStudent !== null}
+        onOpenChange={(next) => {
+          if (!next) setEnrollStudent(null);
+        }}
+      />
     </div>
   );
 }

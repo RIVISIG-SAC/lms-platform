@@ -61,6 +61,12 @@ export default async function UserDetailPage({
 
   if (!user) notFound();
 
+  const activeAdminCount = await prisma.user.count({
+    where: { role: "ADMIN", isActive: true },
+  });
+  const isLastActiveAdmin =
+    user.role === "ADMIN" && user.isActive && activeAdminCount <= 1;
+
   return (
     <div className="max-w-4xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <Breadcrumb>
@@ -114,7 +120,11 @@ export default async function UserDetailPage({
             <span className="text-xs text-muted-foreground font-medium">
               {user.isActive ? "Cuenta activa" : "Cuenta inactiva"}
             </span>
-            <UserActiveToggle userId={user.id} isActive={user.isActive} />
+            <UserActiveToggle
+              userId={user.id}
+              isActive={user.isActive}
+              isLastActiveAdmin={isLastActiveAdmin}
+            />
           </div>
         </div>
       </div>

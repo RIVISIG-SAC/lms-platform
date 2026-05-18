@@ -8,12 +8,24 @@ import { toggleUserActiveAction } from "@/app/actions/users";
 type Props = {
   userId: string;
   isActive: boolean;
+  isLastActiveAdmin?: boolean;
 };
 
-export function UserActiveToggle({ userId, isActive }: Props) {
+const LAST_ADMIN_MESSAGE =
+  "Debe quedar al menos un administrador activo. No puedes desactivar al último.";
+
+export function UserActiveToggle({
+  userId,
+  isActive,
+  isLastActiveAdmin = false,
+}: Props) {
   const [pending, startTransition] = useTransition();
 
   function handleChange() {
+    if (isLastActiveAdmin) {
+      toast.error(LAST_ADMIN_MESSAGE);
+      return;
+    }
     startTransition(async () => {
       const result = await toggleUserActiveAction(userId);
       if (result?.error) {
@@ -25,11 +37,22 @@ export function UserActiveToggle({ userId, isActive }: Props) {
   }
 
   return (
-    <Switch
-      checked={isActive}
-      onCheckedChange={handleChange}
-      disabled={pending}
-      aria-label={isActive ? "Desactivar cuenta" : "Activar cuenta"}
-    />
+    <span
+      title={isLastActiveAdmin ? LAST_ADMIN_MESSAGE : undefined}
+      className="inline-flex"
+    >
+      <Switch
+        checked={isActive}
+        onCheckedChange={handleChange}
+        disabled={pending || isLastActiveAdmin}
+        aria-label={
+          isLastActiveAdmin
+            ? LAST_ADMIN_MESSAGE
+            : isActive
+              ? "Desactivar cuenta"
+              : "Activar cuenta"
+        }
+      />
+    </span>
   );
 }

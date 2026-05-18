@@ -39,9 +39,10 @@ export type UserRow = {
 
 type Props = {
   users: UserRow[];
+  activeAdminCount: number;
 };
 
-export function UsersTable({ users }: Props) {
+export function UsersTable({ users, activeAdminCount }: Props) {
   const [query, setQuery] = useState("");
 
   const filtered = useMemo(() => {
@@ -139,7 +140,15 @@ export function UsersTable({ users }: Props) {
                       </Badge>
                     </td>
                     <td className="px-4 py-3">
-                      <UserActiveToggle userId={user.id} isActive={user.isActive} />
+                      <UserActiveToggle
+                        userId={user.id}
+                        isActive={user.isActive}
+                        isLastActiveAdmin={
+                          user.role === "ADMIN" &&
+                          user.isActive &&
+                          activeAdminCount <= 1
+                        }
+                      />
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-1.5 text-muted-foreground text-xs font-medium">
