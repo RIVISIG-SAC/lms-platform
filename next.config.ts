@@ -1,5 +1,25 @@
 import type { NextConfig } from "next";
 
+// CSP como segunda capa frente a XSS (el blog usa dangerouslySetInnerHTML, ya
+// saneado con sanitize-html). Los orígenes externos son los realmente usados:
+// Culqi (checkout/pagos), Cloudinary (imágenes/uploads) y Vimeo (player).
+// Sólo se aplica en producción: en dev, HMR/React-Refresh usan eval/inline y
+// una CSP estricta rompería `next dev`.
+const contentSecurityPolicy = [
+  "default-src 'self'",
+  "script-src 'self' 'unsafe-inline' https://checkout.culqi.com https://*.culqi.com",
+  "style-src 'self' 'unsafe-inline'",
+  "img-src 'self' data: blob: https://res.cloudinary.com",
+  "font-src 'self' data:",
+  "connect-src 'self' https://api.culqi.com https://*.culqi.com https://api.cloudinary.com",
+  "frame-src https://checkout.culqi.com https://*.culqi.com https://player.vimeo.com",
+  "object-src 'none'",
+  "base-uri 'self'",
+  "form-action 'self'",
+  "frame-ancestors 'none'",
+  "upgrade-insecure-requests",
+].join("; ");
+
 const securityHeaders = [
   {
     key: "Strict-Transport-Security",
@@ -13,6 +33,9 @@ const securityHeaders = [
     value: "camera=(), microphone=(), geolocation=()",
   },
   { key: "X-DNS-Prefetch-Control", value: "on" },
+  ...(process.env.NODE_ENV === "production"
+    ? [{ key: "Content-Security-Policy", value: contentSecurityPolicy }]
+    : []),
 ];
 
 const nextConfig: NextConfig = {
