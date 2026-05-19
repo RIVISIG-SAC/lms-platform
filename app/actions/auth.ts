@@ -6,8 +6,8 @@ import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { createSession } from "@/lib/auth";
 import { loginSchema } from "@/lib/validations/auth";
-import { checkRateLimit } from "@/lib/security/rateLimit";
-import { getClientIp } from "@/lib/security/ip";
+import { checkRateLimitDb, pruneExpiredRateLimits } from "@/lib/security/rateLimit";
+import { getClientIp, getRateLimitId } from "@/lib/security/ip";
 
 const MAX_FAILED_ATTEMPTS = 3;
 const LOCKOUT_MINUTES = 15;
@@ -19,8 +19,10 @@ function minutesUntil(date: Date): number {
 export async function loginAction(_prev: unknown, formData: FormData) {
   const headersList = await headers();
   const ip = getClientIp(headersList);
+  void pruneExpiredRateLimits();
 
-  const rl = checkRateLimit(ip, "auth:login");
+  const rlId = getRateLimitId(headersList, String(formData.get("email") ?? ""));
+  const rl = await checkRateLimitDb(rlId, "auth:login");
   if (!rl.allowed) {
     return {
       error: `Demasiados intentos desde tu IP. Intenta de nuevo en ${Math.ceil(rl.retryInSeconds! / 60)} min.`,

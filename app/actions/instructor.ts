@@ -10,7 +10,12 @@ export async function updateInstructorProfileAction(_prev: unknown, formData: Fo
     return { error: "No autorizado." };
   }
 
-  const userId = (formData.get("userId") as string) || session.userId;
+  // Anti-IDOR: un INSTRUCTOR sólo puede editar su propio perfil. El `userId`
+  // del formulario se ignora para ese rol; sólo ADMIN puede actuar sobre otro.
+  const userId =
+    session.role === "ADMIN"
+      ? (formData.get("userId") as string) || session.userId
+      : session.userId;
 
   const bio = (formData.get("bio") as string)?.trim() || null;
   const avatarUrl = (formData.get("avatarUrl") as string)?.trim() || null;
