@@ -282,6 +282,20 @@ model Certificate {
   @@index([courseId])
 }
 
+// ─── Seguridad ─────────────────────────────────────────────────────────────
+
+// Contador de rate limiting respaldado por la BD. Necesario en serverless:
+// un Map en memoria no se comparte entre instancias ni sobrevive a cold starts.
+// `key` = `${rateLimitKey}:${identifier}` (p. ej. "auth:login:1.2.3.4").
+model RateLimit {
+  key       String   @id
+  count     Int      @default(0)
+  resetAt   DateTime
+  updatedAt DateTime @updatedAt
+
+  @@index([resetAt])
+}
+
 // ─── Blog ──────────────────────────────────────────────────────────────────
 
 enum PostStatus {
