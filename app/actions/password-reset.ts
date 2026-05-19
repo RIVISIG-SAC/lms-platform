@@ -11,16 +11,19 @@ import {
 } from "@/lib/validations/auth";
 import { addDays } from "@/lib/utils";
 import { sendPasswordResetEmail } from "@/lib/email";
-import { getClientIp } from "@/lib/security/ip";
-import { checkRateLimit } from "@/lib/security/rateLimit";
+import { getRateLimitId } from "@/lib/security/ip";
+import { checkRateLimitDb, pruneExpiredRateLimits } from "@/lib/security/rateLimit";
 
 const RESET_TOKEN_TTL_MS = 60 * 60 * 1000; // 1 hour
 
 export async function requestPasswordResetAction(formData: FormData) {
   const headersList = await headers();
-  const ip = getClientIp(headersList);
+  void pruneExpiredRateLimits();
 
-  const ipLimit = checkRateLimit(ip, "auth:password-reset:request");
+  const ipLimit = await checkRateLimitDb(
+    getRateLimitId(headersList),
+    "auth:password-reset:request",
+  );
   if (!ipLimit.allowed) {
     redirect("/recuperar/verificar");
   }
@@ -35,7 +38,10 @@ export async function requestPasswordResetAction(formData: FormData) {
 
   const { email } = parsed.data;
 
-  const emailLimit = checkRateLimit(email, "auth:password-reset:email");
+  const emailLimit = await checkRateLimitDb(
+    email,
+    "auth:password-reset:email",
+  );
   if (!emailLimit.allowed) {
     redirect("/recuperar/verificar");
   }
@@ -65,9 +71,11 @@ export async function resetPasswordAction(
   formData: FormData,
 ) {
   const headersList = await headers();
-  const ip = getClientIp(headersList);
 
-  const rl = checkRateLimit(ip, "auth:password-reset:confirm");
+  const rl = await checkRateLimitDb(
+    getRateLimitId(headersList),
+    "auth:password-reset:confirm",
+  );
   if (!rl.allowed) {
     return {
       error: `Demasiados intentos. Reintenta en ${Math.ceil(rl.retryInSeconds! / 60)} min.`,
