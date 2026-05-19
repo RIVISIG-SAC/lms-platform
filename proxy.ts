@@ -20,8 +20,17 @@ export async function proxy(request: NextRequest) {
     const { payload } = await jwtVerify(token, getSecret());
     const role = payload.role as string;
 
-    if (role === "STUDENT" && pathname.startsWith("/admin")) {
+    const isAdminPath = pathname.startsWith("/admin");
+    const isInstructorPath = pathname.startsWith("/instructor");
+
+    // STUDENT no entra a áreas de admin ni de instructor.
+    if (role === "STUDENT" && (isAdminPath || isInstructorPath)) {
       return NextResponse.redirect(new URL("/student", request.url));
+    }
+
+    // INSTRUCTOR no entra al área de admin.
+    if (role === "INSTRUCTOR" && isAdminPath) {
+      return NextResponse.redirect(new URL("/instructor", request.url));
     }
 
     return NextResponse.next();
@@ -33,6 +42,6 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/admin/:path*", "/student/:path*"],
+  matcher: ["/admin/:path*", "/student/:path*", "/instructor/:path*"],
   // /verificar/* es público — no requiere sesión
 };
