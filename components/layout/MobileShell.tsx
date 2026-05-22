@@ -37,11 +37,11 @@ export function MobileShell({ sidebarContent, children }: MobileShellProps) {
           />
         )}
 
-        {/* Sidebar wrapper — fixed drawer on mobile, static on desktop */}
+        {/* Sidebar wrapper — fixed drawer on mobile, sticky on desktop */}
         <div
           className={cn(
             "fixed inset-y-0 left-0 z-50 shrink-0 transition-transform duration-300 ease-in-out",
-            "md:static md:z-auto md:translate-x-0",
+            "md:sticky md:inset-y-auto md:top-0 md:h-screen md:z-auto md:translate-x-0",
             isOpen ? "translate-x-0" : "-translate-x-full"
           )}
         >

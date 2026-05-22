@@ -15,9 +15,11 @@ import {
   ShieldCheck,
   HelpCircle,
   LifeBuoy,
+  LogOut,
   X,
 } from 'lucide-react';
 import { useSidebarContext } from './MobileShell';
+import { logoutAction } from '@/app/actions/auth';
 
 type NavItem = {
   label: string;
@@ -136,7 +138,7 @@ export function Sidebar({ role }: SidebarProps) {
     '/student';
 
   return (
-    <aside className="w-64 shrink-0 bg-sidebar-bg text-sidebar-text flex flex-col min-h-screen relative">
+    <aside className="w-64 shrink-0 bg-sidebar-bg text-sidebar-text flex flex-col h-full relative">
       <div className="px-6 py-8 border-b border-border/50">
         <div className="flex items-center justify-between gap-2 mb-1">
           <img src="/images/logo.png" alt="logo rivisig" className="h-10 w-auto" />
@@ -201,7 +203,22 @@ export function Sidebar({ role }: SidebarProps) {
         ))}
       </nav>
 
-      <div className="px-6 py-6 border-t border-border/50">
+      <div className="px-3 pt-3 pb-2 border-t border-border/50">
+        <form action={logoutAction}>
+          <button
+            type="submit"
+            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors duration-200 group cursor-pointer"
+          >
+            <LogOut
+              aria-hidden="true"
+              className="size-4 text-muted-foreground group-hover:text-destructive transition-colors duration-200"
+            />
+            Cerrar sesión
+          </button>
+        </form>
+      </div>
+
+      <div className="px-6 py-4 border-t border-border/50">
         <div className="flex items-center justify-between text-[10px] text-muted-foreground font-medium">
           <span>v1.0.0</span>
           <span>© {new Date().getFullYear()}</span>
