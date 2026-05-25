@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
 import { createCharge, toCents } from "@/lib/culqi";
 import { checkRateLimit } from "@/lib/security/rateLimit";
+import { notifyCertificateIssued, notifyPaymentReceived } from "@/lib/notifications";
 
 export async function POST(request: NextRequest) {
   const session = await getSession();
@@ -70,6 +71,26 @@ export async function POST(request: NextRequest) {
   const updated = await prisma.certificate.update({
     where: { id: enrollment.certificate.id },
     data: { status: "ACTIVE", certificatePaidAt: new Date() },
+  });
+
+  await notifyPaymentReceived({
+    userId: session.userId,
+    userName: session.name,
+    userEmail: session.email,
+    amount: Number(enrollment.course.certificateFee),
+    kind: "certificate",
+    resourceTitle: enrollment.course.title,
+    resourceLink: "/student/certificates",
+    notifyAdminsAlso: true,
+  });
+
+  await notifyCertificateIssued({
+    userId: session.userId,
+    userName: session.name,
+    userEmail: session.email,
+    courseTitle: enrollment.course.title,
+    verificationCode: updated.verificationCode,
+    notifyAdminsAlso: true,
   });
 
   return NextResponse.json({

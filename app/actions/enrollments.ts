@@ -8,6 +8,7 @@ import { prisma } from "@/lib/prisma";
 import { getRequiredSession } from "@/lib/auth";
 import { addDays } from "@/lib/utils";
 import { sendAdminEnrollmentEmail } from "@/lib/email";
+import { notifyEnrollmentConfirmed } from "@/lib/notifications";
 
 export async function enrollFree(courseId: string, _formData: FormData): Promise<void> {
   const session = await getRequiredSession();
@@ -41,6 +42,15 @@ export async function enrollFree(courseId: string, _formData: FormData): Promise
     where: { userId_courseId: { userId: session.userId, courseId } },
     create: { userId: session.userId, courseId, status: "PAID", startDate, endDate },
     update: { status: "PAID", startDate, endDate, progressPercentage: 0 },
+  });
+
+  await notifyEnrollmentConfirmed({
+    userId: session.userId,
+    userName: session.name,
+    userEmail: session.email,
+    courseId: course.id,
+    courseTitle: course.title,
+    notifyAdminsAlso: true,
   });
 
   redirect(`/student/courses/${courseId}?enrolled=1`);
@@ -150,6 +160,16 @@ export async function adminEnrollUserAction(
   } catch (err) {
     console.error("[adminEnrollUserAction] Error enviando email:", err);
   }
+
+  // Notificación in-app para el estudiante (no notificamos al admin actor de su propia acción)
+  await notifyEnrollmentConfirmed({
+    userId: user.id,
+    userName: user.name,
+    userEmail: user.email,
+    courseId: course.id,
+    courseTitle: course.title,
+    notifyAdminsAlso: false,
+  });
 
   revalidatePath("/admin/students");
   revalidatePath(`/admin/courses/${courseId}`);

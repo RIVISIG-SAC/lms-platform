@@ -255,6 +255,206 @@ export async function sendSupportEmail({
   });
 }
 
+export async function sendCertificateIssuedEmail(
+  email: string,
+  name: string,
+  courseTitle: string,
+  verificationCode: string,
+) {
+  const certificatesUrl = `${getAppUrl()}/student/certificates`;
+  const verifyUrl = `${getAppUrl()}/verificar/${verificationCode}`;
+  const safeCourse = escapeHtml(courseTitle);
+  const safeName = escapeHtml(name);
+  const safeCode = escapeHtml(verificationCode);
+
+  await resend.emails.send({
+    from: 'RIVISIG Consultores <onboarding@resend.dev>',
+    to: email,
+    subject: `Certificado emitido: ${courseTitle} — RIVISIG`,
+    html: `
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Certificado emitido</title>
+</head>
+<body style="margin:0;padding:0;background:#f4f4f5;font-family:system-ui,-apple-system,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f5;padding:40px 16px;">
+    <tr>
+      <td align="center">
+        <table width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;background:#ffffff;border-radius:12px;overflow:hidden;border:1px solid #e4e4e7;">
+          <tr>
+            <td style="padding:32px 40px 24px;border-bottom:1px solid #f4f4f5;">
+              <span style="font-size:20px;font-weight:800;color:#18181b;letter-spacing:-0.5px;">RIV</span><span style="font-size:20px;font-weight:800;color:#2563eb;letter-spacing:-0.5px;">ISIG</span>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:32px 40px;">
+              <h1 style="margin:0 0 8px;font-size:22px;font-weight:700;color:#18181b;">Hola, ${safeName}</h1>
+              <p style="margin:0 0 24px;font-size:15px;color:#52525b;line-height:1.6;">
+                Te confirmamos que tu certificado del curso <strong>${safeCourse}</strong> ha sido emitido y ya está disponible en tu panel.
+              </p>
+              <div style="margin:0 0 24px;padding:16px 20px;background:#f4f4f5;border:1px solid #e4e4e7;border-radius:10px;">
+                <p style="margin:0 0 8px;font-size:12px;font-weight:700;color:#71717a;text-transform:uppercase;letter-spacing:0.5px;">
+                  Código de verificación
+                </p>
+                <p style="margin:0;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:16px;font-weight:600;color:#18181b;letter-spacing:1px;">
+                  ${safeCode}
+                </p>
+              </div>
+              <a href="${certificatesUrl}" style="display:inline-block;background:#2563eb;color:#ffffff;font-size:15px;font-weight:600;text-decoration:none;padding:12px 28px;border-radius:8px;margin-bottom:24px;">
+                Ver mi certificado
+              </a>
+              <p style="margin:0 0 8px;font-size:13px;color:#71717a;">
+                Cualquier persona puede verificar la autenticidad del certificado en:
+              </p>
+              <p style="margin:0;font-size:13px;color:#2563eb;word-break:break-all;">
+                ${verifyUrl}
+              </p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:20px 40px;background:#fafafa;border-top:1px solid #f4f4f5;">
+              <p style="margin:0;font-size:12px;color:#a1a1aa;">
+                &copy; ${new Date().getFullYear()} RIVISIG Consultores. Todos los derechos reservados.
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+    `.trim(),
+  });
+}
+
+export async function sendAccessExpiringEmail(
+  email: string,
+  name: string,
+  courseTitle: string,
+  daysLeft: number,
+) {
+  const courseUrl = `${getAppUrl()}/student/my-courses`;
+  const safeCourse = escapeHtml(courseTitle);
+  const safeName = escapeHtml(name);
+
+  await resend.emails.send({
+    from: 'RIVISIG Consultores <onboarding@resend.dev>',
+    to: email,
+    subject: `Tu acceso al curso vence en ${daysLeft} día(s) — RIVISIG`,
+    html: `
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Acceso por vencer</title>
+</head>
+<body style="margin:0;padding:0;background:#f4f4f5;font-family:system-ui,-apple-system,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f5;padding:40px 16px;">
+    <tr>
+      <td align="center">
+        <table width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;background:#ffffff;border-radius:12px;overflow:hidden;border:1px solid #e4e4e7;">
+          <tr>
+            <td style="padding:32px 40px 24px;border-bottom:1px solid #f4f4f5;">
+              <span style="font-size:20px;font-weight:800;color:#18181b;letter-spacing:-0.5px;">RIV</span><span style="font-size:20px;font-weight:800;color:#2563eb;letter-spacing:-0.5px;">ISIG</span>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:32px 40px;">
+              <h1 style="margin:0 0 8px;font-size:22px;font-weight:700;color:#18181b;">Hola, ${safeName}</h1>
+              <p style="margin:0 0 24px;font-size:15px;color:#52525b;line-height:1.6;">
+                Te recordamos que tu período de acceso al curso <strong>${safeCourse}</strong> vence en <strong>${daysLeft} día(s)</strong>. Una vez expirado, perderás el acceso al contenido y deberás recomprarlo si deseas continuar.
+              </p>
+              <a href="${courseUrl}" style="display:inline-block;background:#2563eb;color:#ffffff;font-size:15px;font-weight:600;text-decoration:none;padding:12px 28px;border-radius:8px;margin-bottom:24px;">
+                Continuar el curso
+              </a>
+              <p style="margin:0;font-size:13px;color:#a1a1aa;">
+                Si ya completaste el curso y aprobaste la evaluación, este aviso no afectará tu certificado.
+              </p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:20px 40px;background:#fafafa;border-top:1px solid #f4f4f5;">
+              <p style="margin:0;font-size:12px;color:#a1a1aa;">
+                &copy; ${new Date().getFullYear()} RIVISIG Consultores. Todos los derechos reservados.
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+    `.trim(),
+  });
+}
+
+export async function sendPasswordExpiringEmail(
+  email: string,
+  name: string,
+  daysLeft: number,
+) {
+  const profileUrl = `${getAppUrl()}/student/profile`;
+  const safeName = escapeHtml(name);
+
+  await resend.emails.send({
+    from: 'RIVISIG Consultores <onboarding@resend.dev>',
+    to: email,
+    subject: `Tu contraseña vence en ${daysLeft} día(s) — RIVISIG`,
+    html: `
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Contraseña por vencer</title>
+</head>
+<body style="margin:0;padding:0;background:#f4f4f5;font-family:system-ui,-apple-system,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f5;padding:40px 16px;">
+    <tr>
+      <td align="center">
+        <table width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;background:#ffffff;border-radius:12px;overflow:hidden;border:1px solid #e4e4e7;">
+          <tr>
+            <td style="padding:32px 40px 24px;border-bottom:1px solid #f4f4f5;">
+              <span style="font-size:20px;font-weight:800;color:#18181b;letter-spacing:-0.5px;">RIV</span><span style="font-size:20px;font-weight:800;color:#2563eb;letter-spacing:-0.5px;">ISIG</span>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:32px 40px;">
+              <h1 style="margin:0 0 8px;font-size:22px;font-weight:700;color:#18181b;">Hola, ${safeName}</h1>
+              <p style="margin:0 0 24px;font-size:15px;color:#52525b;line-height:1.6;">
+                Por seguridad, las contraseñas en nuestra plataforma vencen periódicamente. La tuya expira en <strong>${daysLeft} día(s)</strong>. Te recomendamos actualizarla cuanto antes para no perder el acceso a tu cuenta.
+              </p>
+              <a href="${profileUrl}" style="display:inline-block;background:#2563eb;color:#ffffff;font-size:15px;font-weight:600;text-decoration:none;padding:12px 28px;border-radius:8px;margin-bottom:24px;">
+                Cambiar mi contraseña
+              </a>
+              <p style="margin:0;font-size:13px;color:#a1a1aa;">
+                Si no actualizas tu contraseña a tiempo, deberás restablecerla usando la opción "Olvidé mi contraseña" en el login.
+              </p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:20px 40px;background:#fafafa;border-top:1px solid #f4f4f5;">
+              <p style="margin:0;font-size:12px;color:#a1a1aa;">
+                &copy; ${new Date().getFullYear()} RIVISIG Consultores. Todos los derechos reservados.
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+    `.trim(),
+  });
+}
+
 export async function sendPasswordResetEmail(
   email: string,
   name: string,

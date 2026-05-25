@@ -467,7 +467,9 @@ export function BlogPostForm({ action, post, categories, tags }: Props) {
                 onValueChange={(v) => setCategoryId(typeof v === "string" && v !== "__none__" ? v : "")}
               >
                 <SelectTrigger className={`${controlClassName} w-full`}>
-                  <SelectValue placeholder="Sin categoría" />
+                  <SelectValue placeholder="Sin categoría">
+                    {categoryId && categories.find((c) => c.id === categoryId)?.name}
+                  </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="__none__">Sin categoría</SelectItem>

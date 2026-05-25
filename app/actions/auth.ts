@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { headers } from "next/headers";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
-import { createSession } from "@/lib/auth";
+import { createSession, deleteSession } from "@/lib/auth";
 import { loginSchema } from "@/lib/validations/auth";
 import { checkRateLimitDb, pruneExpiredRateLimits } from "@/lib/security/rateLimit";
 import { getClientIp, getRateLimitId } from "@/lib/security/ip";
@@ -113,4 +113,9 @@ export async function loginAction(_prev: unknown, formData: FormData) {
   if (user.role === "ADMIN") redirect("/admin");
   if (user.role === "INSTRUCTOR") redirect("/instructor");
   redirect("/student");
+}
+
+export async function logoutAction() {
+  await deleteSession();
+  redirect("/login");
 }

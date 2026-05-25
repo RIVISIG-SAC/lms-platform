@@ -33,6 +33,21 @@ enum CourseLevel {
   ADVANCED
 }
 
+enum NotificationType {
+  // Estudiante
+  CERTIFICATE_ISSUED
+  PAYMENT_RECEIVED
+  ENROLLMENT_CONFIRMED
+  ACCESS_EXPIRING
+  ACCESS_EXPIRED
+  PASSWORD_EXPIRING
+
+  // Admin
+  ADMIN_NEW_ENROLLMENT
+  ADMIN_NEW_PAYMENT
+  ADMIN_CERTIFICATE_ISSUED
+}
+
 model User {
   id                    String    @id @default(cuid())
   name                  String
@@ -62,6 +77,7 @@ model User {
   enrollments       Enrollment[]
   instructorProfile InstructorProfile?
   blogPosts         BlogPost[]
+  notifications     Notification[]
 
   @@index([email])
   @@index([verificationToken])
@@ -280,6 +296,25 @@ model Certificate {
 
   @@index([verificationCode])
   @@index([courseId])
+}
+
+// ─── Notificaciones ────────────────────────────────────────────────────────
+
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String
+  type      NotificationType
+  title     String
+  message   String
+  link      String?
+  read      Boolean          @default(false)
+  readAt    DateTime?
+  createdAt DateTime         @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, read, createdAt(sort: Desc)])
+  @@index([userId, type, createdAt(sort: Desc)])
 }
 
 // ─── Seguridad ─────────────────────────────────────────────────────────────

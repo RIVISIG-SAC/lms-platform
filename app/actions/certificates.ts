@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { getRequiredSession } from "@/lib/auth";
 import { manualCertificateSchema } from "@/lib/validations/certificate";
+import { notifyCertificateIssued } from "@/lib/notifications";
 
 function generateVerificationCode(): string {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
@@ -21,7 +22,11 @@ export async function issueCertificateAction(enrollmentId: string) {
 
   const enrollment = await prisma.enrollment.findUnique({
     where: { id: enrollmentId },
-    include: { certificate: true },
+    include: {
+      certificate: true,
+      user: { select: { id: true, name: true, email: true } },
+      course: { select: { title: true } },
+    },
   });
 
   if (!enrollment) return { error: "Inscripción no encontrada." };
@@ -31,6 +36,7 @@ export async function issueCertificateAction(enrollmentId: string) {
   }
 
   const verificationCode = enrollment.certificate?.verificationCode ?? generateVerificationCode();
+  const wasAlreadyActive = enrollment.certificate?.status === "ACTIVE";
 
   await prisma.certificate.upsert({
     where: { enrollmentId },
@@ -45,6 +51,17 @@ export async function issueCertificateAction(enrollmentId: string) {
       issueDate: new Date(),
     },
   });
+
+  if (!wasAlreadyActive) {
+    await notifyCertificateIssued({
+      userId: enrollment.user.id,
+      userName: enrollment.user.name,
+      userEmail: enrollment.user.email,
+      courseTitle: enrollment.course?.title ?? "tu curso",
+      verificationCode,
+      notifyAdminsAlso: false, // emitido por admin: no se notifica a sí mismo
+    });
+  }
 
   revalidatePath(`/admin/users/${enrollment.userId}`);
   return { success: true };

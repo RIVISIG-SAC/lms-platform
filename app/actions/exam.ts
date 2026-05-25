@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { getRequiredSession } from "@/lib/auth";
 import { addDays } from "@/lib/utils";
+import { notifyCertificateIssued } from "@/lib/notifications";
 
 // ─── Admin: gestión de preguntas ────────────────────────────────────────────
 
@@ -112,7 +113,7 @@ export async function submitExam(
 
   const enrollment = await prisma.enrollment.findUnique({
     where: { userId_courseId: { userId: session.userId, courseId } },
-    include: { course: { select: { isFree: true, certificateValidityDays: true } } },
+    include: { course: { select: { title: true, isFree: true, certificateValidityDays: true } } },
   });
 
   if (!enrollment || enrollment.status !== "COMPLETED") {
@@ -169,6 +170,20 @@ export async function submitExam(
       create: { enrollmentId: enrollment.id, verificationCode, status: certStatus, issueDate, expiresAt },
       update: { status: certStatus, expiresAt },
     });
+
+    // Solo notificar cuando el certificado ya queda emitido (curso de pago).
+    // Para cursos gratuitos queda PENDING_PAYMENT — la notificación se dispara
+    // recién al completar el pago del certificado.
+    if (certStatus === "ACTIVE") {
+      await notifyCertificateIssued({
+        userId: session.userId,
+        userName: session.name,
+        userEmail: session.email,
+        courseTitle: enrollment.course.title,
+        verificationCode,
+        notifyAdminsAlso: true,
+      });
+    }
   } else if (attemptCount + 1 >= 2) {
     // Agotó intentos sin aprobar
     await prisma.enrollment.update({

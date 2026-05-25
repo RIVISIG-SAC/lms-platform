@@ -16,6 +16,12 @@ import {
 } from "@/components/ui/select";
 import { createUserAction } from "@/app/actions/users";
 
+const ROLE_LABELS: Record<string, string> = {
+  STUDENT: "Estudiante",
+  INSTRUCTOR: "Instructor",
+  ADMIN: "Administrador",
+};
+
 export function CreateUserForm() {
   const router = useRouter();
   const [role, setRole] = useState("STUDENT");
@@ -57,7 +63,9 @@ export function CreateUserForm() {
             <input type="hidden" name="role" value={role} />
             <Select value={role} onValueChange={(v) => setRole(v ?? "STUDENT")}>
               <SelectTrigger id="role">
-                <SelectValue placeholder="Seleccionar rol" />
+                <SelectValue placeholder="Seleccionar rol">
+                  {ROLE_LABELS[role]}
+                </SelectValue>
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="STUDENT">Estudiante</SelectItem>

@@ -4,6 +4,7 @@ import { getSession } from "@/lib/auth";
 import { createCharge, toCents } from "@/lib/culqi";
 import { addDays } from "@/lib/utils";
 import { checkRateLimit } from "@/lib/security/rateLimit";
+import { notifyPaymentReceived } from "@/lib/notifications";
 
 export async function POST(request: NextRequest) {
   const session = await getSession();
@@ -88,6 +89,17 @@ export async function POST(request: NextRequest) {
       endDate,
       progressPercentage: 0,
     },
+  });
+
+  await notifyPaymentReceived({
+    userId: session.userId,
+    userName: session.name,
+    userEmail: session.email,
+    amount: Number(course.price),
+    kind: "course",
+    resourceTitle: course.title,
+    resourceLink: `/student/courses/${courseId}`,
+    notifyAdminsAlso: true,
   });
 
   return NextResponse.json({
