@@ -53,10 +53,6 @@ export default function PoliticaDePrivacidadPage() {
             <strong>RUC:</strong> {LEGAL_COMPANY.ruc}
           </li>
           <li>
-            <strong>Domicilio fiscal:</strong> {LEGAL_COMPANY.domicilioFiscal},{" "}
-            {LEGAL_COMPANY.ciudad} &mdash; {LEGAL_COMPANY.pais}
-          </li>
-          <li>
             <strong>Canal de contacto para protección de datos:</strong>{" "}
             <a href={`mailto:${LEGAL_COMPANY.emailDatos}`}>
               {LEGAL_COMPANY.emailDatos}

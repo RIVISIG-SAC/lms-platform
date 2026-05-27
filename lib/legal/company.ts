@@ -2,7 +2,7 @@ export const LEGAL_COMPANY = {
   razonSocial: "RIVISIG CONSULTORES S.A.C.",
   marca: "RIVISIG Consultores",
   ruc: "20614925621",
-  domicilioFiscal: "[Domicilio fiscal por completar]",
+
   ciudad: "Lima",
   pais: "Perú",
   email: "info@rivisig.com",
