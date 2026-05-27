@@ -54,10 +54,6 @@ export default function TerminosYCondicionesPage() {
             <strong>RUC:</strong> {LEGAL_COMPANY.ruc}
           </li>
           <li>
-            <strong>Domicilio fiscal:</strong> {LEGAL_COMPANY.domicilioFiscal},{" "}
-            {LEGAL_COMPANY.ciudad} &mdash; {LEGAL_COMPANY.pais}
-          </li>
-          <li>
             <strong>Correo electrónico:</strong>{" "}
             <a href={`mailto:${LEGAL_COMPANY.email}`}>{LEGAL_COMPANY.email}</a>
           </li>
