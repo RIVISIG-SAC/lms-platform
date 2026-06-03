@@ -16,9 +16,10 @@ import {
 } from 'lucide-react';
 
 export const metadata = {
-  title: 'Quiénes somos — RIVISIG Consultores',
+  title: { absolute: 'Quiénes Somos | RIVISIG Consultores' },
   description:
     'Consultora especializada en implementación, certificación y soporte de Sistemas de Gestión ISO orientada a empresas que requieren cumplimiento normativo real.',
+  alternates: { canonical: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://rivisig.com'}/about` },
 };
 
 const problemas = [

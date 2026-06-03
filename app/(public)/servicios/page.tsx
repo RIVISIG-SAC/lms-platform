@@ -4,9 +4,10 @@ import { ImageSlot } from "@/components/public/ImageSlot";
 import { Award, Users, Leaf, CheckCircle2 } from "lucide-react";
 
 export const metadata = {
-  title: "Servicios — RIVISIG Consultores",
+  title: { absolute: "Servicios de Consultoría ISO | RIVISIG" },
   description:
     "Implementación y certificación ISO 9001, 14001, 45001, 27001, 37001, 21001, 22000, 50001. Homologaciones, SST y auditorías técnicas.",
+  alternates: { canonical: `${process.env.NEXT_PUBLIC_SITE_URL || "https://rivisig.com"}/servicios` },
 };
 
 const normas = [

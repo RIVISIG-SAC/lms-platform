@@ -3,9 +3,10 @@ import { CertificateSearchForm } from "@/components/public/CertificateSearchForm
 import { Badge } from "@/components/ui/badge";
 
 export const metadata = {
-  title: "Verificar Certificado | RIVISIG Consultores",
+  title: { absolute: "Verificar Certificado | RIVISIG Consultores" },
   description:
     "Verifica la autenticidad de cualquier certificado emitido por RIVISIG Consultores ingresando el código de verificación.",
+  alternates: { canonical: `${process.env.NEXT_PUBLIC_SITE_URL || "https://rivisig.com"}/verificar` },
 };
 
 const HOW_IT_WORKS = [

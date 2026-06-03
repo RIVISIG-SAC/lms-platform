@@ -15,11 +15,15 @@ import {
   Mail,
 } from 'lucide-react';
 import { getFeaturedCourses } from '@/lib/queries/courses';
+import { COMPANY_SOCIALS, LEGAL_COMPANY } from '@/lib/legal/company';
+
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://rivisig.com';
 
 export const metadata = {
-  title: 'RIVISIG Consultores — Capacitación en Sistemas de Gestión ISO',
+  title: { absolute: 'RIVISIG Consultores — Capacitación en Sistemas de Gestión ISO' },
   description:
     'Consultora especializada en implementación, certificación y soporte de Sistemas de Gestión. ISO 9001, 14001, 45001, 27001 y más.',
+  alternates: { canonical: SITE_URL },
 };
 
 async function FeaturedCourses() {
@@ -90,8 +94,76 @@ function CoursesSkeleton() {
 }
 
 export default function LandingPage() {
+  const organizationLd = {
+    '@context': 'https://schema.org',
+    '@type': 'Organization',
+    '@id': `${SITE_URL}/#organization`,
+    name: LEGAL_COMPANY.marca,
+    legalName: LEGAL_COMPANY.razonSocial,
+    taxID: LEGAL_COMPANY.ruc,
+    url: SITE_URL,
+    logo: {
+      '@type': 'ImageObject',
+      url: `${SITE_URL}/images/logo.png`,
+      width: 512,
+      height: 512,
+    },
+    description:
+      'Consultora especializada en implementación, certificación y soporte de Sistemas de Gestión ISO 9001, 14001, 45001, 27001 y más.',
+    foundingLocation: {
+      '@type': 'Place',
+      address: {
+        '@type': 'PostalAddress',
+        addressLocality: LEGAL_COMPANY.ciudad,
+        addressCountry: 'PE',
+      },
+    },
+    address: {
+      '@type': 'PostalAddress',
+      addressLocality: LEGAL_COMPANY.ciudad,
+      addressCountry: 'PE',
+    },
+    contactPoint: [
+      {
+        '@type': 'ContactPoint',
+        telephone: LEGAL_COMPANY.telefonoTel,
+        contactType: 'customer service',
+        email: LEGAL_COMPANY.email,
+        areaServed: 'PE',
+        availableLanguage: ['Spanish'],
+      },
+      {
+        '@type': 'ContactPoint',
+        telephone: LEGAL_COMPANY.telefonoTel,
+        contactType: 'sales',
+        email: LEGAL_COMPANY.email,
+        areaServed: 'PE',
+        availableLanguage: ['Spanish'],
+      },
+    ],
+    sameAs: [...COMPANY_SOCIALS],
+  };
+
+  const websiteLd = {
+    '@context': 'https://schema.org',
+    '@type': 'WebSite',
+    '@id': `${SITE_URL}/#website`,
+    url: SITE_URL,
+    name: LEGAL_COMPANY.marca,
+    inLanguage: 'es-PE',
+    publisher: { '@id': `${SITE_URL}/#organization` },
+  };
+
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationLd) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteLd) }}
+      />
       {/* ── Hero ─────────────────────────────────────────── */}
       <section className="bg-linear-to-b from-white to-muted/40 border-b border-border">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 lg:py-24">

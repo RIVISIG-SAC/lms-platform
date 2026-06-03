@@ -6,9 +6,10 @@ import { BlogPostCard } from "@/components/public/BlogPostCard";
 import { getBlogCategories, getPublishedBlogPosts } from "@/lib/queries/blog";
 
 export const metadata = {
-  title: "Blog — RIVISIG Consultores",
+  title: { absolute: "Blog | RIVISIG Consultores" },
   description:
     "Artículos técnicos, casos prácticos y novedades sobre sistemas de gestión, ISO y certificación corporativa.",
+  alternates: { canonical: `${process.env.NEXT_PUBLIC_SITE_URL || "https://rivisig.com"}/blog` },
 };
 
 async function BlogList({ category }: { category?: string }) {

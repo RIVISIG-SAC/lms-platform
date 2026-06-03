@@ -8,7 +8,7 @@ const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://rivisig.com";
 export const dynamic = "force-static";
 
 export const metadata: Metadata = {
-  title: "Términos y Condiciones | RIVISIG Consultores",
+  title: { absolute: "Términos y Condiciones | RIVISIG Consultores" },
   description:
     "Términos y condiciones de uso de la plataforma de capacitación de RIVISIG Consultores. Acceso a cursos, evaluaciones, certificación y pagos.",
   alternates: { canonical: `${SITE_URL}/terminos-y-condiciones` },
@@ -23,6 +23,22 @@ export const metadata: Metadata = {
 };
 
 export default function TerminosYCondicionesPage() {
+  const pageUrl = `${SITE_URL}/terminos-y-condiciones`;
+  const webPageLd = {
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    "@id": pageUrl,
+    url: pageUrl,
+    name: "Términos y Condiciones",
+    description:
+      "Términos y condiciones de uso de la plataforma de capacitación de RIVISIG Consultores.",
+    inLanguage: "es-PE",
+    isPartOf: { "@id": `${SITE_URL}/#website` },
+    publisher: { "@id": `${SITE_URL}/#organization` },
+    dateModified: LEGAL_LAST_UPDATED.terminos,
+    lastReviewed: LEGAL_LAST_UPDATED.terminos,
+  };
+
   return (
     <LegalPageLayout
       eyebrow="Documento Legal"
@@ -31,6 +47,11 @@ export default function TerminosYCondicionesPage() {
       lastUpdatedIso={LEGAL_LAST_UPDATED.terminos}
       documentTitle="Términos y Condiciones"
     >
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(webPageLd) }}
+      />
+
       <p>
         Los presentes Términos y Condiciones (en adelante, los{" "}
         <strong>&ldquo;Términos&rdquo;</strong>) regulan el acceso y uso de la

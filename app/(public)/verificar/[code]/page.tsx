@@ -8,7 +8,17 @@ import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 export const metadata = {
-  title: "Resultado de verificación | RIVISIG Consultores",
+  title: { absolute: "Resultado de verificación | RIVISIG Consultores" },
+  robots: {
+    index: false,
+    follow: false,
+    nocache: true,
+    googleBot: {
+      index: false,
+      follow: false,
+      noimageindex: true,
+    },
+  },
 };
 
 type Props = { params: Promise<{ code: string }> };

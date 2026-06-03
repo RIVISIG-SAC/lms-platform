@@ -12,6 +12,14 @@ export const LEGAL_COMPANY = {
   sitio: "https://rivisig.com",
 } as const;
 
+export const COMPANY_SOCIALS = [
+  "https://pe.linkedin.com/company/rivisig-sac",
+  "https://www.facebook.com/RIVISIG.SAC",
+  "https://www.instagram.com/rvgestion/",
+  "https://www.tiktok.com/@rivisig",
+  "https://www.youtube.com/@rivisig",
+] as const;
+
 export const LEGAL_LAST_UPDATED = {
   terminos: "2026-05-15",
   privacidad: "2026-05-15",
