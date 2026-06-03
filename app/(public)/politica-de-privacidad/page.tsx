@@ -8,7 +8,7 @@ const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://rivisig.com";
 export const dynamic = "force-static";
 
 export const metadata: Metadata = {
-  title: "Política de Privacidad | RIVISIG Consultores",
+  title: { absolute: "Política de Privacidad | RIVISIG Consultores" },
   description:
     "Cómo protegemos y tratamos tus datos personales conforme a la Ley N° 29733 del Perú. Información sobre datos recopilados, finalidades, derechos ARCO y cookies.",
   alternates: { canonical: `${SITE_URL}/politica-de-privacidad` },
@@ -23,6 +23,22 @@ export const metadata: Metadata = {
 };
 
 export default function PoliticaDePrivacidadPage() {
+  const pageUrl = `${SITE_URL}/politica-de-privacidad`;
+  const webPageLd = {
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    "@id": pageUrl,
+    url: pageUrl,
+    name: "Política de Privacidad",
+    description:
+      "Información sobre cómo RIVISIG Consultores recopila, utiliza, comparte y protege tus datos personales.",
+    inLanguage: "es-PE",
+    isPartOf: { "@id": `${SITE_URL}/#website` },
+    publisher: { "@id": `${SITE_URL}/#organization` },
+    dateModified: LEGAL_LAST_UPDATED.privacidad,
+    lastReviewed: LEGAL_LAST_UPDATED.privacidad,
+  };
+
   return (
     <LegalPageLayout
       eyebrow="Documento Legal"
@@ -31,6 +47,11 @@ export default function PoliticaDePrivacidadPage() {
       lastUpdatedIso={LEGAL_LAST_UPDATED.privacidad}
       documentTitle="Política de Privacidad"
     >
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(webPageLd) }}
+      />
+
       <p>
         En {LEGAL_COMPANY.razonSocial} valoramos tu privacidad. La presente
         Política de Privacidad describe los datos personales que recopilamos a
@@ -300,15 +321,6 @@ export default function PoliticaDePrivacidadPage() {
         <p>
           <strong>Cookies usadas:</strong>
         </p>
-        <ul>
-          <li>
-            <code>session</code> &mdash; cookie de sesión cifrada (JWT) con
-            atributos <code>httpOnly</code>, <code>Secure</code> y{" "}
-            <code>SameSite=Lax</code>. Tiene una vigencia máxima de 7 días y
-            permite mantener al Usuario autenticado. Base legal: ejecución del
-            contrato.
-          </li>
-        </ul>
         <p>
           Dado que únicamente empleamos cookies estrictamente necesarias, no se
           requiere un banner de consentimiento previo conforme a la normativa

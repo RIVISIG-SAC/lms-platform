@@ -6,8 +6,9 @@ import Link from "next/link";
 import { getPublishedCourses } from "@/lib/queries/courses";
 
 export const metadata = {
-  title: "Cursos — RIVISIG Consultores",
+  title: { absolute: "Cursos de Sistemas de Gestión ISO | RIVISIG" },
   description: "Capacitación certificada en sistemas de gestión ISO y cumplimiento normativo.",
+  alternates: { canonical: `${process.env.NEXT_PUBLIC_SITE_URL || "https://rivisig.com"}/cursos` },
 };
 
 async function CoursesList() {

@@ -1,21 +1,71 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { Globe, ExternalLink, BookOpen, User } from "lucide-react";
+import { LEGAL_COMPANY } from "@/lib/legal/company";
+
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://rivisig.com";
 
 export async function generateMetadata({
   params,
 }: {
   params: Promise<{ instructorId: string }>;
-}) {
+}): Promise<Metadata> {
   const { instructorId } = await params;
   const profile = await prisma.instructorProfile.findUnique({
     where: { id: instructorId },
-    include: { user: { select: { name: true } } },
+    include: {
+      user: { select: { name: true } },
+      courses: {
+        where: { published: true },
+        select: { id: true },
+      },
+    },
   });
   if (!profile) return { title: "Instructor no encontrado" };
-  return { title: `${profile.user.name} | Instructor` };
+
+  const canonical = `${SITE_URL}/instructores/${profile.id}`;
+  const descriptionBase = profile.bio
+    ? profile.bio.replace(/\s+/g, " ").trim()
+    : `${profile.user.name} es instructor en ${LEGAL_COMPANY.marca}. ${profile.title ?? "Cursos especializados en Sistemas de Gestión ISO."}`;
+  const description = descriptionBase.length > 160
+    ? `${descriptionBase.slice(0, 157).trimEnd()}…`
+    : descriptionBase;
+  const ogImage = profile.avatarUrl ?? "/opengraph-image";
+
+  return {
+    title: { absolute: `${profile.user.name} — Instructor` },
+    description,
+    alternates: { canonical },
+    openGraph: {
+      type: "profile",
+      url: canonical,
+      title: `${profile.user.name} — Instructor en ${LEGAL_COMPANY.marca}`,
+      description,
+      siteName: LEGAL_COMPANY.marca,
+      locale: "es_PE",
+      images: [
+        {
+          url: ogImage,
+          width: 1200,
+          height: 630,
+          alt: profile.user.name,
+        },
+      ],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: `${profile.user.name} — Instructor en ${LEGAL_COMPANY.marca}`,
+      description,
+      images: [ogImage],
+    },
+    robots: {
+      index: profile.courses.length > 0,
+      follow: true,
+    },
+  };
 }
 
 export default async function InstructorPublicPage({
@@ -45,9 +95,61 @@ export default async function InstructorPublicPage({
   if (!profile) notFound();
 
   const { user, courses } = profile;
+  const profileUrl = `${SITE_URL}/instructores/${profile.id}`;
+
+  const personLd = {
+    "@context": "https://schema.org",
+    "@type": "Person",
+    "@id": profileUrl,
+    name: user.name,
+    url: profileUrl,
+    jobTitle: profile.title ?? "Instructor",
+    description: profile.bio ?? undefined,
+    image: profile.avatarUrl ?? undefined,
+    worksFor: {
+      "@type": "Organization",
+      name: LEGAL_COMPANY.marca,
+      url: SITE_URL,
+    },
+    knowsAbout: profile.specialization
+      ? [profile.specialization, "Sistemas de Gestión ISO"]
+      : ["Sistemas de Gestión ISO"],
+    sameAs: [profile.linkedin, profile.website].filter(
+      (url): url is string => Boolean(url),
+    ),
+  };
+
+  const breadcrumbLd = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "Inicio", item: SITE_URL },
+      {
+        "@type": "ListItem",
+        position: 2,
+        name: "Instructores",
+        item: `${SITE_URL}/instructores`,
+      },
+      {
+        "@type": "ListItem",
+        position: 3,
+        name: user.name,
+        item: profileUrl,
+      },
+    ],
+  };
 
   return (
     <main className="min-h-screen bg-background">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(personLd) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbLd) }}
+      />
+
       <div className="max-w-3xl mx-auto px-4 py-16 space-y-10">
         {/* Header */}
         <div className="flex gap-6 items-start">

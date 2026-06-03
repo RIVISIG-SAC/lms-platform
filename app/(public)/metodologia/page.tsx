@@ -7,9 +7,10 @@ import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 export const metadata = {
-  title: "Metodología — RIVISIG Consultores",
+  title: { absolute: "Metodología de Implementación ISO | RIVISIG" },
   description:
     "Conoce el proceso de trabajo de RIVISIG: desde el diagnóstico inicial hasta el soporte postcertificación.",
+  alternates: { canonical: `${process.env.NEXT_PUBLIC_SITE_URL || "https://rivisig.com"}/metodologia` },
 };
 
 const pasos = [

@@ -25,7 +25,7 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
   const canonical = post.canonicalUrl || `${SITE_URL}/blog/${post.slug}`;
 
   return {
-    title: `${title} — Blog RIVISIG`,
+    title: { absolute: title },
     description,
     alternates: { canonical },
     openGraph: {
@@ -76,11 +76,57 @@ export default async function BlogPostPage({ params }: { params: Params }) {
     },
   };
 
+  const breadcrumbLd = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      {
+        "@type": "ListItem",
+        position: 1,
+        name: "Inicio",
+        item: SITE_URL,
+      },
+      {
+        "@type": "ListItem",
+        position: 2,
+        name: "Blog",
+        item: `${SITE_URL}/blog`,
+      },
+      ...(post.category
+        ? [
+            {
+              "@type": "ListItem",
+              position: 3,
+              name: post.category.name,
+              item: `${SITE_URL}/blog?cat=${post.category.slug}`,
+            },
+            {
+              "@type": "ListItem",
+              position: 4,
+              name: post.title,
+              item: `${SITE_URL}/blog/${post.slug}`,
+            },
+          ]
+        : [
+            {
+              "@type": "ListItem",
+              position: 3,
+              name: post.title,
+              item: `${SITE_URL}/blog/${post.slug}`,
+            },
+          ]),
+    ],
+  };
+
   return (
     <article className="pb-20">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbLd) }}
       />
 
       {/* Header */}
