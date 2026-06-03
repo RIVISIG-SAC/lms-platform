@@ -14,7 +14,7 @@ export async function sendVerificationEmail(
   const verifyUrl = `${getAppUrl()}/verify-email?token=${token}`;
 
   await resend.emails.send({
-    from: 'RIVISIG Consultores <onboarding@resend.dev>',
+    from: 'RIVISIG Consultores <info@rivisig.com>',
     to: email,
     subject: 'Verifica tu correo electrónico — RIVISIG',
     html: `
@@ -33,7 +33,7 @@ export async function sendVerificationEmail(
           <!-- Header -->
           <tr>
             <td style="padding:32px 40px 24px;border-bottom:1px solid #f4f4f5;">
-              <span style="font-size:20px;font-weight:800;color:#18181b;letter-spacing:-0.5px;">RIV</span><span style="font-size:20px;font-weight:800;color:#2563eb;letter-spacing:-0.5px;">ISIG</span>
+              <img src="${getAppUrl()}/images/logo.png" alt="RIVISIG Consultores" width="160" style="display:block;max-width:160px;height:auto;" />
             </td>
           </tr>
           <!-- Body -->
@@ -101,14 +101,14 @@ export async function sendAdminEnrollmentEmail(
               <p style="margin:0 0 24px;font-size:13px;color:#71717a;">
                 Por seguridad, te recomendamos cambiar tu contraseña al iniciar sesión.
               </p>`
-    : "";
+    : '';
 
   const intro = isNewAccount
     ? `Nuestro equipo ha creado una cuenta para ti y te ha inscrito en el curso <strong>${courseTitle}</strong>. Ya puedes ingresar a la plataforma con las credenciales que aparecen a continuación.`
     : `Te confirmamos que has sido inscrito en el curso <strong>${courseTitle}</strong>. Ya puedes acceder al contenido desde tu panel de estudiante.`;
 
   await resend.emails.send({
-    from: 'RIVISIG Consultores <onboarding@resend.dev>',
+    from: 'RIVISIG Consultores <info@rivisig.com>',
     to: email,
     subject: `Has sido inscrito en ${courseTitle} — RIVISIG`,
     html: `
@@ -127,7 +127,7 @@ export async function sendAdminEnrollmentEmail(
           <!-- Header -->
           <tr>
             <td style="padding:32px 40px 24px;border-bottom:1px solid #f4f4f5;">
-              <span style="font-size:20px;font-weight:800;color:#18181b;letter-spacing:-0.5px;">RIV</span><span style="font-size:20px;font-weight:800;color:#2563eb;letter-spacing:-0.5px;">ISIG</span>
+              <img src="${getAppUrl()}/images/logo.png" alt="RIVISIG Consultores" width="160" style="display:block;max-width:160px;height:auto;" />
             </td>
           </tr>
           <!-- Body -->
@@ -168,7 +168,7 @@ export async function sendAdminEnrollmentEmail(
 }
 
 function getSupportEmail() {
-  return process.env.SUPPORT_EMAIL ?? 'soporte@rivisig.com';
+  return process.env.SUPPORT_EMAIL ?? 'info@rivisig.com';
 }
 
 function escapeHtml(value: string) {
@@ -197,7 +197,7 @@ export async function sendSupportEmail({
   const safeMessage = escapeHtml(message).replace(/\n/g, '<br />');
 
   await resend.emails.send({
-    from: 'RIVISIG Consultores <onboarding@resend.dev>',
+    from: 'RIVISIG Consultores <info@rivisig.com>',
     to: getSupportEmail(),
     replyTo: fromEmail,
     subject: `[Soporte] ${subject} — ${fromName}`,
@@ -216,7 +216,7 @@ export async function sendSupportEmail({
         <table width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background:#ffffff;border-radius:12px;overflow:hidden;border:1px solid #e4e4e7;">
           <tr>
             <td style="padding:32px 40px 24px;border-bottom:1px solid #f4f4f5;">
-              <span style="font-size:20px;font-weight:800;color:#18181b;letter-spacing:-0.5px;">RIV</span><span style="font-size:20px;font-weight:800;color:#2563eb;letter-spacing:-0.5px;">ISIG</span>
+              <img src="${getAppUrl()}/images/logo.png" alt="RIVISIG Consultores" width="160" style="display:block;max-width:160px;height:auto;" />
               <p style="margin:8px 0 0;font-size:12px;font-weight:600;color:#71717a;text-transform:uppercase;letter-spacing:0.5px;">Nuevo mensaje de soporte</p>
             </td>
           </tr>
@@ -268,7 +268,7 @@ export async function sendCertificateIssuedEmail(
   const safeCode = escapeHtml(verificationCode);
 
   await resend.emails.send({
-    from: 'RIVISIG Consultores <onboarding@resend.dev>',
+    from: 'RIVISIG Consultores <info@rivisig.com>',
     to: email,
     subject: `Certificado emitido: ${courseTitle} — RIVISIG`,
     html: `
@@ -286,7 +286,7 @@ export async function sendCertificateIssuedEmail(
         <table width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;background:#ffffff;border-radius:12px;overflow:hidden;border:1px solid #e4e4e7;">
           <tr>
             <td style="padding:32px 40px 24px;border-bottom:1px solid #f4f4f5;">
-              <span style="font-size:20px;font-weight:800;color:#18181b;letter-spacing:-0.5px;">RIV</span><span style="font-size:20px;font-weight:800;color:#2563eb;letter-spacing:-0.5px;">ISIG</span>
+              <img src="${getAppUrl()}/images/logo.png" alt="RIVISIG Consultores" width="160" style="display:block;max-width:160px;height:auto;" />
             </td>
           </tr>
           <tr>
@@ -342,7 +342,7 @@ export async function sendAccessExpiringEmail(
   const safeName = escapeHtml(name);
 
   await resend.emails.send({
-    from: 'RIVISIG Consultores <onboarding@resend.dev>',
+    from: 'RIVISIG Consultores <info@rivisig.com>',
     to: email,
     subject: `Tu acceso al curso vence en ${daysLeft} día(s) — RIVISIG`,
     html: `
@@ -360,7 +360,7 @@ export async function sendAccessExpiringEmail(
         <table width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;background:#ffffff;border-radius:12px;overflow:hidden;border:1px solid #e4e4e7;">
           <tr>
             <td style="padding:32px 40px 24px;border-bottom:1px solid #f4f4f5;">
-              <span style="font-size:20px;font-weight:800;color:#18181b;letter-spacing:-0.5px;">RIV</span><span style="font-size:20px;font-weight:800;color:#2563eb;letter-spacing:-0.5px;">ISIG</span>
+              <img src="${getAppUrl()}/images/logo.png" alt="RIVISIG Consultores" width="160" style="display:block;max-width:160px;height:auto;" />
             </td>
           </tr>
           <tr>
@@ -403,7 +403,7 @@ export async function sendPasswordExpiringEmail(
   const safeName = escapeHtml(name);
 
   await resend.emails.send({
-    from: 'RIVISIG Consultores <onboarding@resend.dev>',
+    from: 'RIVISIG Consultores <info@rivisig.com>',
     to: email,
     subject: `Tu contraseña vence en ${daysLeft} día(s) — RIVISIG`,
     html: `
@@ -421,7 +421,7 @@ export async function sendPasswordExpiringEmail(
         <table width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;background:#ffffff;border-radius:12px;overflow:hidden;border:1px solid #e4e4e7;">
           <tr>
             <td style="padding:32px 40px 24px;border-bottom:1px solid #f4f4f5;">
-              <span style="font-size:20px;font-weight:800;color:#18181b;letter-spacing:-0.5px;">RIV</span><span style="font-size:20px;font-weight:800;color:#2563eb;letter-spacing:-0.5px;">ISIG</span>
+              <img src="${getAppUrl()}/images/logo.png" alt="RIVISIG Consultores" width="160" style="display:block;max-width:160px;height:auto;" />
             </td>
           </tr>
           <tr>
@@ -463,7 +463,7 @@ export async function sendPasswordResetEmail(
   const resetUrl = `${getAppUrl()}/recuperar/${token}`;
 
   await resend.emails.send({
-    from: 'RIVISIG Consultores <onboarding@resend.dev>',
+    from: 'RIVISIG Consultores <info@rivisig.com>',
     to: email,
     subject: 'Restablece tu contraseña — RIVISIG',
     html: `
@@ -482,7 +482,7 @@ export async function sendPasswordResetEmail(
           <!-- Header -->
           <tr>
             <td style="padding:32px 40px 24px;border-bottom:1px solid #f4f4f5;">
-              <span style="font-size:20px;font-weight:800;color:#18181b;letter-spacing:-0.5px;">RIV</span><span style="font-size:20px;font-weight:800;color:#2563eb;letter-spacing:-0.5px;">ISIG</span>
+              <img src="${getAppUrl()}/images/logo.png" alt="RIVISIG Consultores" width="160" style="display:block;max-width:160px;height:auto;" />
             </td>
           </tr>
           <!-- Body -->
