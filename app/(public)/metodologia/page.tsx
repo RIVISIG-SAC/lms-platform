@@ -164,10 +164,10 @@ export default function MetodologiaPage() {
           </div>
 
           {/* === IMAGE SLOT: Resultado / certificado entregado ===
-              Archivo esperado: /public/images/metodologia/certificacion.jpg
+              Archivo esperado: /public/images/metodologia/certificacion.webp
               Sugerencia: foto de entrega de certificado, reconocimiento, o handshake empresarial. */}
           <ImageSlot
-            src="/images/metodologia/certificacion.png"
+            src="/images/metodologia/certificacion.webp"
             alt="Entrega de certificación a empresa cliente"
             aspect="aspect-[4/5]"
             rounded="rounded-2xl"
