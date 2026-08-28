@@ -86,7 +86,7 @@ export default async function AdminCertificatesPage() {
               <thead className="bg-muted/40 border-b border-border text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                 <tr>
                   <th className="text-left px-4 py-3">Titular</th>
-                  <th className="text-left px-4 py-3">Curso</th>
+                  <th className="text-left px-4 py-3">Título</th>
                   <th className="text-left px-4 py-3">Emitido</th>
                   <th className="text-left px-4 py-3">Estado</th>
                   <th className="text-left px-4 py-3">Tipo</th>
@@ -102,7 +102,7 @@ export default async function AdminCertificatesPage() {
                   const empresa =
                     cert.enrollment?.user.company ?? cert.holderCompany ?? null;
                   const curso =
-                    cert.enrollment?.course.title ?? cert.course?.title ?? "—";
+                    cert.enrollment?.course.title ?? cert.certificateTitle ?? cert.course?.title ?? "—";
                   const effectiveStatus = getCertificateEffectiveStatus(
                     cert.status,
                     cert.expiresAt,

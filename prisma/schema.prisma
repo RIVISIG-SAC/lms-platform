@@ -286,6 +286,7 @@ model Certificate {
   expiresAt         DateTime?
 
   // Snapshot for manual certificates issued to people without a User account
+  certificateTitle  String?
   holderName        String?
   holderDni         String?
   holderCompany     String?

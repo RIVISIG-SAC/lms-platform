@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { prisma } from "@/lib/prisma";
 import { ManualCertificateForm } from "@/components/admin/ManualCertificateForm";
 import { createManualCertificate } from "@/app/actions/certificates";
 import { Award } from "lucide-react";
@@ -16,17 +15,6 @@ import {
 export const metadata = { title: "Nuevo certificado manual | Admin" };
 
 export default async function NewManualCertificatePage() {
-  const courses = await prisma.course.findMany({
-    where: { published: true },
-    select: {
-      id: true,
-      title: true,
-      certificateDescription: true,
-      certificateValidityDays: true,
-    },
-    orderBy: { title: "asc" },
-  });
-
   return (
     <div className="max-w-3xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <Breadcrumb>
@@ -54,8 +42,8 @@ export default async function NewManualCertificatePage() {
             Crear certificado manual
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Emite un certificado para una persona externa (sin cuenta en la plataforma). El PDF mostrará la
-            empresa, el nombre y el DNI ingresados.
+            Emite un certificado sin depender de cursos registrados. El PDF mostrará el título, la
+            empresa, el nombre, el DNI y la vigencia que definas.
           </p>
         </div>
       </div>
@@ -63,7 +51,6 @@ export default async function NewManualCertificatePage() {
       <Card>
         <CardContent className="p-6 md:p-8">
           <ManualCertificateForm
-            courses={courses}
             action={createManualCertificate}
           />
         </CardContent>

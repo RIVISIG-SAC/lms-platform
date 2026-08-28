@@ -72,33 +72,36 @@ export async function createManualCertificate(_prev: unknown, formData: FormData
   if (session.role !== "ADMIN") return { error: "No autorizado." };
 
   const parsed = manualCertificateSchema.safeParse({
-    courseId: formData.get("courseId"),
+    certificateTitle: formData.get("certificateTitle"),
     holderName: formData.get("holderName"),
     holderDni: formData.get("holderDni") ?? "",
     holderCompany: formData.get("holderCompany") ?? "",
     customDescription: formData.get("customDescription") ?? "",
+    certificateValidityDays: formData.get("certificateValidityDays"),
   });
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? "Datos inválidos" };
   }
 
-  const { courseId, holderName, holderDni, holderCompany, customDescription } = parsed.data;
-
-  const course = await prisma.course.findUnique({
-    where: { id: courseId },
-    select: { id: true, certificateValidityDays: true },
-  });
-  if (!course) return { error: "Curso no encontrado." };
+  const {
+    certificateTitle,
+    holderName,
+    holderDni,
+    holderCompany,
+    customDescription,
+    certificateValidityDays,
+  } = parsed.data;
 
   const issueDate = new Date();
-  const expiresAt = course.certificateValidityDays
-    ? new Date(issueDate.getTime() + course.certificateValidityDays * 24 * 60 * 60 * 1000)
+  const expiresAt = certificateValidityDays
+    ? new Date(issueDate.getTime() + certificateValidityDays * 24 * 60 * 60 * 1000)
     : null;
 
   await prisma.certificate.create({
     data: {
       enrollmentId: null,
-      courseId: course.id,
+      courseId: null,
+      certificateTitle,
       verificationCode: generateVerificationCode(),
       status: "ACTIVE",
       issueDate,
