@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Geist } from "next/font/google";
+import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 
 const geist = Geist({
@@ -118,7 +119,10 @@ export default function RootLayout({
         <link rel="preconnect" href="https://checkout.culqi.com" crossOrigin="" />
         <link rel="dns-prefetch" href="https://checkout.culqi.com" />
       </head>
-      <body className="min-h-full bg-background text-foreground">{children}</body>
+      <body className="min-h-full bg-background text-foreground">
+        {children}
+        <Analytics />
+      </body>
     </html>
   );
 }
