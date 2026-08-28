@@ -1,7 +1,11 @@
 import { z } from "zod";
 
 export const manualCertificateSchema = z.object({
-  courseId: z.string().min(1, { error: "Selecciona un curso" }),
+  certificateTitle: z
+    .string()
+    .trim()
+    .min(3, { error: "El título debe tener al menos 3 caracteres" })
+    .max(160, { error: "Máximo 160 caracteres" }),
   holderName: z
     .string()
     .trim()
@@ -25,6 +29,12 @@ export const manualCertificateSchema = z.object({
     .max(400, { error: "Máximo 400 caracteres" })
     .optional()
     .or(z.literal("")),
+  certificateValidityDays: z
+    .preprocess((value) => {
+      if (value == null || value === "") return undefined;
+      const parsed = Number(value);
+      return Number.isFinite(parsed) ? parsed : value;
+    }, z.number({ error: "Días de validez inválidos" }).int().min(1, { error: "La validez mínima es 1 día" }).max(3650, { error: "La validez máxima es 10 años" }).optional()),
 });
 
 export type ManualCertificateInput = z.infer<typeof manualCertificateSchema>;

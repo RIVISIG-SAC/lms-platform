@@ -1,9 +1,17 @@
 "use client";
 
-import { useActionState, useEffect, useMemo, useState } from "react";
+import { useActionState, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Building2, BookOpen, IdCard, Loader2, Save, User as UserIcon, FileText } from "lucide-react";
+import {
+  Building2,
+  CalendarDays,
+  FileText,
+  IdCard,
+  Loader2,
+  Save,
+  User as UserIcon,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -15,19 +23,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-
-type CourseOption = {
-  id: string;
-  title: string;
-  certificateDescription: string | null;
-  certificateValidityDays: number | null;
-};
+import { Switch } from "@/components/ui/switch";
+import { VALIDITY_OPTIONS } from "@/lib/validations/course";
 
 type ActionState = { error?: string; success?: boolean } | null;
 type Action = (prev: ActionState, formData: FormData) => Promise<ActionState>;
 
 type Props = {
-  courses: CourseOption[];
   action: Action;
 };
 
@@ -38,23 +40,14 @@ const sectionCardClassName =
 const controlClassName =
   "h-12 rounded-xl border-border/80 bg-background text-[15px]";
 
-export function ManualCertificateForm({ courses, action }: Props) {
+export function ManualCertificateForm({ action }: Props) {
   const router = useRouter();
   const [state, formAction, pending] = useActionState<ActionState, FormData>(action, null);
-  const [courseId, setCourseId] = useState<string>("");
+  const [hasCertExpiry, setHasCertExpiry] = useState(false);
+  const [validityDays, setValidityDays] = useState<number | "custom">(365);
+  const [customDays, setCustomDays] = useState<string>("");
+  const [title, setTitle] = useState("");
   const [description, setDescription] = useState<string>("");
-  const [descriptionTouched, setDescriptionTouched] = useState(false);
-
-  const selectedCourse = useMemo(
-    () => courses.find((c) => c.id === courseId) ?? null,
-    [courses, courseId],
-  );
-
-  useEffect(() => {
-    if (!descriptionTouched) {
-      setDescription(selectedCourse?.certificateDescription ?? "");
-    }
-  }, [selectedCourse, descriptionTouched]);
 
   useEffect(() => {
     if (!state) return;
@@ -64,15 +57,6 @@ export function ManualCertificateForm({ courses, action }: Props) {
       router.push("/admin/certificates");
     }
   }, [state, router]);
-
-  if (courses.length === 0) {
-    return (
-      <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
-        No hay cursos publicados. Publica al menos un curso antes de emitir certificados
-        manuales.
-      </div>
-    );
-  }
 
   return (
     <form action={formAction} className="space-y-6">
@@ -140,49 +124,36 @@ export function ManualCertificateForm({ courses, action }: Props) {
         </div>
       </section>
 
-      {/* ── Sección 2: Curso y descripción ────────────────────── */}
+      {/* ── Sección 2: Título y descripción ───────────────────── */}
       <section className={sectionCardClassName}>
         <div className="flex items-start gap-3">
           <div className="size-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
-            <BookOpen className="size-4 text-primary" />
+            <FileText className="size-4 text-primary" />
           </div>
           <div>
-            <h3 className="text-sm font-semibold text-foreground">Curso y descripción</h3>
+            <h3 className="text-sm font-semibold text-foreground">Título y descripción</h3>
             <p className="text-xs text-muted-foreground mt-0.5">
-              La descripción se autocompleta con la del curso. Puedes editarla solo para este certificado.
+              Redacta el título del certificado y el texto que aparecerá en el PDF.
             </p>
           </div>
         </div>
 
         <div className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="courseId" className={fieldLabelClassName}>
-              Curso <span className="text-destructive">*</span>
+            <Label htmlFor="certificateTitle" className={fieldLabelClassName}>
+              Título del certificado <span className="text-destructive">*</span>
             </Label>
-            <input type="hidden" name="courseId" value={courseId} />
-            <Select value={courseId} onValueChange={(v) => setCourseId(v ?? "")}>
-              <SelectTrigger id="courseId" className={`${controlClassName} w-full`}>
-                <SelectValue placeholder="Selecciona un curso">
-                  {(value) => {
-                    if (!value) return "Selecciona un curso";
-                    const c = courses.find((x) => x.id === value);
-                    return c?.title ?? String(value);
-                  }}
-                </SelectValue>
-              </SelectTrigger>
-              <SelectContent>
-                {courses.map((c) => (
-                  <SelectItem key={c.id} value={c.id}>
-                    {c.title}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {selectedCourse?.certificateValidityDays != null && (
-              <p className="text-xs text-muted-foreground">
-                Vigencia del certificado: {selectedCourse.certificateValidityDays} días desde la emisión.
-              </p>
-            )}
+            <Input
+              id="certificateTitle"
+              name="certificateTitle"
+              required
+              minLength={3}
+              maxLength={160}
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="Ej. Certificado de Auditor Interno ISO 9001"
+              className={controlClassName}
+            />
           </div>
 
           <div className="space-y-2">
@@ -196,13 +167,10 @@ export function ManualCertificateForm({ courses, action }: Props) {
               maxLength={400}
               value={description}
               onChange={(e) => {
-                setDescriptionTouched(true);
                 setDescription(e.target.value);
               }}
               placeholder={
-                selectedCourse
-                  ? "Texto que aparecerá bajo el título del curso en el PDF"
-                  : "Selecciona un curso para autocompletar"
+                "Texto que aparecerá bajo el título en el PDF"
               }
               className="resize-none rounded-xl border-border/80 bg-background text-[15px]"
             />
@@ -213,10 +181,112 @@ export function ManualCertificateForm({ courses, action }: Props) {
         </div>
       </section>
 
+      {/* ── Sección 3: Vigencia ─────────────────────────────── */}
+      <section className={sectionCardClassName}>
+        <div className="flex items-start gap-3">
+          <div className="size-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
+            <CalendarDays className="size-4 text-primary" />
+          </div>
+          <div>
+            <h3 className="text-sm font-semibold text-foreground">Vigencia del certificado</h3>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Define si el certificado tendrá vencimiento.
+            </p>
+          </div>
+        </div>
+
+        <input
+          type="hidden"
+          name="certificateValidityDays"
+          value={hasCertExpiry ? (validityDays === "custom" ? customDays : String(validityDays)) : ""}
+        />
+
+        <div className="space-y-4">
+          <div className="h-12 flex items-center gap-3 rounded-xl border border-input bg-accent/30 px-4">
+            <Switch
+              id="hasCertExpiry"
+              checked={hasCertExpiry}
+              onCheckedChange={setHasCertExpiry}
+            />
+            <Label htmlFor="hasCertExpiry" className="flex items-center gap-2 cursor-pointer text-sm font-medium">
+              {hasCertExpiry ? (
+                <>
+                  <CalendarDays className="size-3.5 text-primary" />
+                  Con vencimiento
+                </>
+              ) : (
+                <>
+                  <CalendarDays className="size-3.5 text-muted-foreground" />
+                  Sin vencimiento
+                </>
+              )}
+            </Label>
+          </div>
+
+          {hasCertExpiry && (
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="validitySelect" className={fieldLabelClassName}>
+                  Duración de la vigencia
+                </Label>
+                <Select
+                  value={String(validityDays)}
+                  onValueChange={(v) => setValidityDays(v === "custom" ? "custom" : Number(v))}
+                >
+                  <SelectTrigger id="validitySelect" className={`${controlClassName} w-full`}>
+                    <SelectValue placeholder="Selecciona una opción">
+                      {(value) => {
+                        if (!value) return "Selecciona una opción";
+                        if (value === "custom") return "Días personalizados";
+                        const option = VALIDITY_OPTIONS.find((o) => String(o.value) === String(value));
+                        return option?.label ?? String(value);
+                      }}
+                    </SelectValue>
+                  </SelectTrigger>
+                  <SelectContent>
+                    {VALIDITY_OPTIONS.map((o) => (
+                      <SelectItem key={o.value} value={String(o.value)}>
+                        {o.label}
+                      </SelectItem>
+                    ))}
+                    <SelectItem value="custom">Días personalizados</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {validityDays === "custom" && (
+                <div className="space-y-2">
+                  <Label htmlFor="customDays" className={fieldLabelClassName}>
+                    Días de validez
+                  </Label>
+                  <div className="relative">
+                    <Input
+                      id="customDays"
+                      type="number"
+                      min="1"
+                      max="3650"
+                      step="1"
+                      value={customDays}
+                      onChange={(e) => setCustomDays(e.target.value)}
+                      placeholder="Ej. 545"
+                      className={`${controlClassName} pr-14`}
+                    />
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-semibold text-muted-foreground">
+                      días
+                    </span>
+                  </div>
+                  <p className="text-xs text-muted-foreground">Entre 1 y 3650 días.</p>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      </section>
+
       <div className="flex items-center justify-end gap-3 pt-2 border-t border-border/60">
         <Button
           type="submit"
-          disabled={pending || !courseId}
+          disabled={pending || title.trim().length < 3}
           className="h-12 rounded-xl px-7 text-[15px] font-semibold"
         >
           {pending ? (

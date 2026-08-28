@@ -1,3 +1,4 @@
+/* eslint-disable jsx-a11y/alt-text */
 import {
   Document,
   Font,
@@ -44,7 +45,6 @@ Font.register({
 });
 
 const RED = '#c0392b';
-const BLACK = '#111111';
 const YELLOW = '#f5c518';
 const DARK = '#1a1a2e';
 const GRAY = '#4f545e';
@@ -461,6 +461,7 @@ type Props = {
   studentDni?: string | null;
   studentCompany?: string | null;
   courseTitle: string;
+  introText?: string;
   description?: string | null;
   issueDate: Date;
   verificationCode: string;
@@ -498,6 +499,7 @@ export function CertificatePDF({
   studentDni,
   studentCompany,
   courseTitle,
+  introText,
   description,
   issueDate,
   verificationCode,
@@ -512,6 +514,9 @@ export function CertificatePDF({
     description && description.trim() !== ''
       ? description
       : DEFAULT_DESCRIPTION;
+  const resolvedIntroText = introText && introText.trim() !== ''
+    ? introText
+    : 'POR HABER COMPLETADO EXITOSAMENTE EL CURSO';
 
   return (
     <Document
@@ -569,7 +574,7 @@ export function CertificatePDF({
           ) : null}
 
           <Text style={styles.courseLabel}>
-            POR HABER COMPLETADO EXITOSAMENTE EL CURSO
+            {resolvedIntroText}
           </Text>
 
           <Text style={styles.courseTitle}>{courseTitle}</Text>

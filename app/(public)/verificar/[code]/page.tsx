@@ -57,9 +57,10 @@ export default async function VerifyCertificateResultPage({ params }: Props) {
   const holderName = enrollment?.user.name ?? certificate?.holderName ?? "—";
   const holderDni = enrollment?.user.dni ?? certificate?.holderDni ?? null;
   const holderCompany = enrollment?.user.company ?? certificate?.holderCompany ?? null;
-  const courseTitle = enrollment?.course.title ?? certificate?.course?.title ?? "—";
+  const courseTitle = enrollment?.course.title ?? certificate?.certificateTitle ?? certificate?.course?.title ?? "—";
   const courseCategory =
     enrollment?.course.category ?? certificate?.course?.category ?? null;
+  const subjectLabel = enrollment ? "Curso" : "Certificado";
   const score = enrollment?.examAttempts[0]?.score ?? null;
 
   return (
@@ -118,7 +119,7 @@ export default async function VerifyCertificateResultPage({ params }: Props) {
                     ...(holderDni
                       ? [{ icon: IdCard, label: "DNI", value: holderDni }]
                       : []),
-                    { icon: BookOpen, label: "Curso", value: courseTitle },
+                    { icon: BookOpen, label: subjectLabel, value: courseTitle },
                     ...(courseCategory
                       ? [{ icon: Award, label: "Categoría", value: courseCategory }]
                       : []),
@@ -181,7 +182,7 @@ export default async function VerifyCertificateResultPage({ params }: Props) {
                     ...(holderDni
                       ? [{ icon: IdCard, label: "DNI", value: holderDni }]
                       : []),
-                    { icon: BookOpen, label: "Curso", value: courseTitle },
+                    { icon: BookOpen, label: subjectLabel, value: courseTitle },
                     { icon: CalendarDays, label: "Fecha de emisión", value: formatDate(certificate!.issueDate) },
                     { icon: CalendarDays, label: "Venció el", value: formatDate(certificate!.expiresAt!) },
                     { icon: Hash, label: "Código de verificación", value: certificate!.verificationCode },

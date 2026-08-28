@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { renderToBuffer } from '@react-pdf/renderer';
-import { createElement } from 'react';
+import { createElement, type ReactElement } from 'react';
+import type { DocumentProps } from '@react-pdf/renderer';
 import fs from 'fs';
 import path from 'path';
 import QRCode from 'qrcode';
@@ -81,6 +82,8 @@ export async function GET(
     enrollment?.user.company ?? certificate.holderCompany ?? null;
   const courseTitle =
     enrollment?.course.title ?? certificate.course?.title ?? '—';
+  const certificateTitle =
+    certificate.certificateTitle ?? courseTitle;
   const description =
     certificate.customDescription
     ?? enrollment?.course.certificateDescription
@@ -107,13 +110,12 @@ export async function GET(
     Promise.resolve(readImageAsBase64('icon.png')),
   ]);
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const pdfBuffer = await renderToBuffer(
-    createElement(CertificatePDF as any, {
+  const pdfElement = createElement(CertificatePDF, {
       studentName,
       studentDni,
       studentCompany,
-      courseTitle,
+      courseTitle: certificateTitle,
+      introText: enrollment ? 'POR HABER COMPLETADO EXITOSAMENTE EL CURSO' : 'POR SU PARTICIPACIÓN EN',
       description,
       issueDate: certificate.issueDate,
       verificationCode: certificate.verificationCode,
@@ -123,8 +125,9 @@ export async function GET(
       selloBase64,
       qrCodeBase64,
       iconBase64,
-    }) as any,
-  );
+    }) as ReactElement<DocumentProps>;
+
+  const pdfBuffer = await renderToBuffer(pdfElement);
 
   const filename = `certificado-${certificate.verificationCode}.pdf`;
 
