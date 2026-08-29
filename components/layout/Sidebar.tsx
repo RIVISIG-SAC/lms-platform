@@ -12,6 +12,7 @@ import {
   UserCircle,
   Award,
   NotebookPen,
+  Building2,
   ShieldCheck,
   HelpCircle,
   LifeBuoy,
@@ -50,6 +51,7 @@ const adminNav: NavSection[] = [
     title: 'Contenido',
     items: [
       { label: 'Blog', href: '/admin/blog', icon: NotebookPen },
+      { label: 'Empresas', href: '/admin/empresas', icon: Building2 },
       { label: 'FAQ Global', href: '/admin/faq', icon: HelpCircle },
     ],
   },

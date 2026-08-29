@@ -1,5 +1,6 @@
 import type { MetadataRoute } from "next";
 import { getBlogSitemapEntries } from "@/lib/queries/blog";
+import { getCompaniesSitemapEntries } from "@/lib/queries/empresas";
 import { prisma } from "@/lib/prisma";
 import { unstable_cache } from "next/cache";
 
@@ -12,6 +13,7 @@ const STATIC_ROUTES: { path: string; changeFrequency: MetadataRoute.Sitemap[numb
   { path: "/metodologia", changeFrequency: "monthly", priority: 0.7 },
   { path: "/about", changeFrequency: "monthly", priority: 0.6 },
   { path: "/blog", changeFrequency: "daily", priority: 0.9 },
+  { path: "/empresas", changeFrequency: "monthly", priority: 0.8 },
   { path: "/verificar", changeFrequency: "yearly", priority: 0.4 },
   { path: "/terminos-y-condiciones", changeFrequency: "yearly", priority: 0.3 },
   { path: "/politica-de-privacidad", changeFrequency: "yearly", priority: 0.3 },
@@ -64,11 +66,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: r.priority,
   }));
 
-  const [posts, courses, categories, instructors] = await Promise.all([
+  const [posts, courses, categories, instructors, companies] = await Promise.all([
     getBlogSitemapEntries(),
     getPublishedCoursesForSitemap(),
     getBlogCategoriesForSitemap(),
     getInstructorsForSitemap(),
+    getCompaniesSitemapEntries(),
   ]);
 
   const blogEntries: MetadataRoute.Sitemap = posts.map((p) => ({
@@ -99,11 +102,19 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.5,
   }));
 
+  const companyEntries: MetadataRoute.Sitemap = companies.map((c) => ({
+    url: `${SITE_URL}/empresas/${c.slug}`,
+    lastModified: c.updatedAt ?? c.publishedAt ?? now,
+    changeFrequency: "monthly",
+    priority: 0.7,
+  }));
+
   return [
     ...staticEntries,
     ...courseEntries,
     ...blogEntries,
     ...categoryEntries,
     ...instructorEntries,
+    ...companyEntries,
   ];
 }
