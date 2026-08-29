@@ -99,19 +99,12 @@ export function SiteFooter() {
             </ul>
           </nav>
 
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-muted-foreground">
+          <div className="flex flex-col sm:flex-row items-center justify-center text-xs text-muted-foreground">
             <p className="text-center sm:text-left">
               © {new Date().getFullYear()} {LEGAL_COMPANY.razonSocial}
               <span aria-hidden="true" className="mx-2 text-border">
                 ·
               </span>
-              RUC {LEGAL_COMPANY.ruc}
-              <span aria-hidden="true" className="mx-2 text-border">
-                ·
-              </span>
-              {LEGAL_COMPANY.ciudad} — {LEGAL_COMPANY.pais}
-            </p>
-            <p className="text-center sm:text-right">
               Todos los derechos reservados
             </p>
           </div>

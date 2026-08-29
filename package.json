@@ -10,7 +10,8 @@
     "postinstall": "prisma generate",
     "db:seed": "dotenv -e .env -- tsx prisma/seed.ts",
     "db:reset-demo": "dotenv -e .env -- tsx prisma/reset-demo.ts",
-    "db:studio": "prisma studio"
+    "db:studio": "prisma studio",
+    "cloudinary:audit": "dotenv -e .env -- tsx scripts/cloudinary-audit.ts"
   },
   "engines": {
     "node": ">=20"

@@ -236,13 +236,11 @@ export default function LandingPage() {
                 o auditoría en planta. Ratio 4/3 o 3/4, mínimo 1200px lado mayor. */}
             <div className="relative">
               <ImageSlot
-                src="/images/hero.webp"
+                src="/images/hero.png"
                 alt="Equipo RIVISIG en proceso de auditoría"
                 aspect="aspect-[4/5] sm:aspect-[4/3] lg:aspect-[4/5]"
                 rounded="rounded-2xl"
                 priority
-                hint="Foto hero: equipo consultor, sala de auditoría o capacitación corporativa."
-                className="shadow-xl"
               />
               {/* Card flotante con sello de confianza */}
               <div className="hidden sm:flex absolute -bottom-6 -left-6 bg-white rounded-xl border border-border shadow-lg p-4 items-center gap-3 max-w-xs">
@@ -264,15 +262,11 @@ export default function LandingPage() {
       </section>
 
       {/* ── Clientes / Logos de confianza ────────────────── */}
-      <section className="border-b border-border bg-white">
+      {/* <section className="border-b border-border bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
           <p className="text-center text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-8">
             Empresas que confían en nosotros
           </p>
-          {/* === IMAGE SLOTS: Logos de clientes ===
-              Archivos esperados: /public/images/clients/cliente-1.png … cliente-6.png
-              Formato: PNG con fondo transparente, en escala de grises o monocromo.
-              Tamaño sugerido: 240 × 80 px. */}
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-6 items-center">
             {[1, 2, 3, 4, 5, 6].map((i) => (
               <ImageSlot
@@ -288,7 +282,7 @@ export default function LandingPage() {
             ))}
           </div>
         </div>
-      </section>
+      </section>  */}
 
       {/* ── Cursos destacados ────────────────────────────── */}
 
