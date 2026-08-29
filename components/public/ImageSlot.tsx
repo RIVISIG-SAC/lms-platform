@@ -36,7 +36,7 @@ export function ImageSlot({
   return (
     <div
       className={cn(
-        "relative overflow-hidden border border-border bg-muted/40",
+        "relative overflow-hidden bg-muted/40",
         aspect,
         rounded,
         className
