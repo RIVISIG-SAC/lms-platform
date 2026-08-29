@@ -1,26 +1,10 @@
 import { Suspense } from 'react';
-import Link from 'next/link';
-import {
-  Phone,
-  Mail,
-  MonitorPlay,
-  Info,
-  BadgeCheck,
-  Book,
-  MapPin,
-  Newspaper,
-} from 'lucide-react';
+import { Phone, Mail, MapPin } from 'lucide-react';
 import { SiteLogo } from '@/components/public/SiteLogo';
 import { NavAuthButtons, NavAuthSkeleton } from './NavAuthButtons';
 import { SocialLinks } from './SocialLinks';
-
-const NAV_LINKS = [
-  { href: '/cursos', label: 'Cursos', Icon: MonitorPlay },
-  { href: '/servicios', label: 'Servicios', Icon: Book },
-  { href: '/metodologia', label: 'Metodología', Icon: BadgeCheck },
-  { href: '/blog', label: 'Blog', Icon: Newspaper },
-  { href: '/about', label: 'Nosotros', Icon: Info },
-];
+import { MobileNav } from './MobileNav';
+import { DesktopNavLinks } from './DesktopNavLinks';
 
 export function SiteNavbar() {
   return (
@@ -60,23 +44,13 @@ export function SiteNavbar() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-18 flex items-center justify-between">
           <SiteLogo />
 
-          <nav className="hidden md:flex items-center gap-6 text-sm text-muted-foreground">
-            {NAV_LINKS.map(({ href, label, Icon }) => (
-              <Link
-                key={href}
-                href={href}
-                className="flex items-center gap-2 hover:text-foreground transition-colors"
-              >
-                <Icon className="h-4 w-4" aria-hidden="true" />
-                {label}
-              </Link>
-            ))}
-          </nav>
+          <DesktopNavLinks />
 
           <div className="flex items-center gap-3">
             <Suspense fallback={<NavAuthSkeleton />}>
               <NavAuthButtons />
             </Suspense>
+            <MobileNav />
           </div>
         </div>
       </header>
