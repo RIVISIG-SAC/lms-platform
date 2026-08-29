@@ -7,12 +7,13 @@ import type { NextConfig } from "next";
 // una CSP estricta rompería `next dev`.
 const contentSecurityPolicy = [
   "default-src 'self'",
-  "script-src 'self' 'unsafe-inline' https://checkout.culqi.com https://*.culqi.com",
+  "script-src 'self' 'unsafe-inline' https://checkout.culqi.com https://*.culqi.com https://upload-widget.cloudinary.com",
   "style-src 'self' 'unsafe-inline'",
-  "img-src 'self' data: blob: https://res.cloudinary.com",
+  "img-src 'self' data: blob: https://res.cloudinary.com https://upload-widget.cloudinary.com",
   "font-src 'self' data:",
-  "connect-src 'self' https://api.culqi.com https://*.culqi.com https://api.cloudinary.com",
-  "frame-src https://checkout.culqi.com https://*.culqi.com https://player.vimeo.com",
+  "worker-src 'self' blob:",
+  "connect-src 'self' https://api.culqi.com https://*.culqi.com https://api.cloudinary.com https://res.cloudinary.com https://upload-widget.cloudinary.com",
+  "frame-src https://checkout.culqi.com https://*.culqi.com https://player.vimeo.com https://upload-widget.cloudinary.com",
   "object-src 'none'",
   "base-uri 'self'",
   "form-action 'self'",
