@@ -7,6 +7,7 @@ const buckets = new Map<string, Bucket>();
 const LIMITS = {
   "blog:mutation":       { max: 30, windowMs: 60_000 },
   "blog:upload":         { max: 10, windowMs: 60_000 },
+  "empresas:mutation":   { max: 30, windowMs: 60_000 },
   "auth:login":          { max: 10, windowMs: 5 * 60_000 },
   "auth:register":       { max: 5,  windowMs: 60 * 60_000 },
   "payment:culqi":       { max: 5,  windowMs: 60_000 },
