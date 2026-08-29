@@ -405,3 +405,152 @@ model BlogPostTag {
   @@id([postId, tagId])
   @@index([tagId])
 }
+
+enum CompanyImageSection {
+  ABOUT
+  GALLERY
+}
+
+model Company {
+  id      String  @id @default(cuid())
+  name    String
+  slug    String  @unique
+  sector  String?
+  logoUrl String?
+
+  status      PostStatus @default(DRAFT)
+  publishedAt DateTime?
+
+  // Hero
+  heroTitle     String
+  heroHighlight String?
+  heroSubtitle  String?
+  heroImageUrl  String?
+
+  // ¿Quién es?
+  aboutContent String
+  fullAddress  String?
+
+  // El reto / Compromiso Alta Dirección / Trabajo en equipo — trío fijo
+  challengeText      String?
+  challengeImageUrl  String?
+  leadershipText     String?
+  leadershipImageUrl String?
+  teamworkText       String?
+  teamworkImageUrl   String?
+
+  // Testimonio (bloque opcional)
+  testimonialVimeoId    String?
+  testimonialQuote      String?
+  testimonialAuthorName String?
+  testimonialAuthorRole String?
+
+  // Ficha del Proyecto
+  fichaLocation          String?
+  fichaClientName        String?
+  fichaRuc               String?
+  fichaProjectScope      String?
+  fichaCertificationYear String?
+  fichaProjectStatus     String?
+  fichaAccompaniment     String?
+
+  // Cierre / reconocimiento institucional (opcional)
+  closingMessage   String?
+  closingImageUrl  String?
+
+  // SEO
+  seoTitle       String?
+  seoDescription String?
+  ogImageUrl     String?
+  canonicalUrl   String?
+  noIndex        Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  facts          CompanyFact[]
+  services       CompanyService[]
+  achievements   CompanyAchievement[]
+  awards         CompanyAward[]
+  certifications CompanyCertification[]
+  images         CompanyImage[]
+
+  @@index([slug])
+  @@index([status, publishedAt])
+}
+
+model CompanyFact {
+  id        String @id @default(cuid())
+  companyId String
+  icon      String
+  label     String
+  value     String?
+  order     Int    @default(0)
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@index([companyId, order])
+}
+
+model CompanyService {
+  id          String  @id @default(cuid())
+  companyId   String
+  title       String
+  description String?
+  order       Int     @default(0)
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@index([companyId, order])
+}
+
+model CompanyAchievement {
+  id        String @id @default(cuid())
+  companyId String
+  text      String
+  order     Int    @default(0)
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@index([companyId, order])
+}
+
+model CompanyAward {
+  id          String  @id @default(cuid())
+  companyId   String
+  title       String
+  description String?
+  imageUrl    String?
+  order       Int     @default(0)
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@index([companyId, order])
+}
+
+model CompanyCertification {
+  id        String  @id @default(cuid())
+  companyId String
+  standard  String
+  label     String
+  icon      String?
+  order     Int     @default(0)
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@index([companyId, order])
+}
+
+model CompanyImage {
+  id        String              @id @default(cuid())
+  companyId String
+  section   CompanyImageSection
+  url       String
+  alt       String
+  caption   String?
+  order     Int                 @default(0)
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@index([companyId, section, order])
+}
