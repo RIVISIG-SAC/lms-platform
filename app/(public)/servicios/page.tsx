@@ -1,7 +1,7 @@
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { ImageSlot } from "@/components/public/ImageSlot";
-import { Award, Users, Leaf, CheckCircle2 } from "lucide-react";
+import { Award, Users, Leaf, CheckCircle2, ShieldCheck, Layers } from "lucide-react";
 
 export const metadata = {
   title: { absolute: "Servicios de Consultoría ISO | RIVISIG" },
@@ -62,9 +62,12 @@ export default function ServiciosPage() {
   return (
     <>
       {/* Hero con banner */}
-      <section className="relative border-b border-border bg-muted/30">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 lg:py-20">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+      <section className="relative overflow-hidden border-b border-border bg-linear-to-b from-white via-muted/35 to-white">
+        <div className="absolute -top-28 -right-20 size-80 rounded-full bg-primary/10 blur-3xl" />
+        <div className="absolute -bottom-24 -left-16 size-72 rounded-full bg-primary/5 blur-3xl" />
+
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-14 pb-16 lg:pt-20 lg:pb-20 relative">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
             <div>
               <Badge
                 variant="outline"
@@ -72,26 +75,54 @@ export default function ServiciosPage() {
               >
                 Servicios
               </Badge>
-              <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-foreground leading-tight mb-5">
+              <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black text-foreground leading-[1.05] tracking-tight mb-5">
                 Implementación y certificación ISO
               </h1>
-              <p className="text-muted-foreground leading-relaxed max-w-xl">
+              <p className="text-muted-foreground leading-relaxed max-w-xl mb-7">
                 Trabajamos con los principales estándares internacionales de sistemas de gestión,
                 de forma individual o integrada (multinorma). Acompañamiento total desde el
                 diagnóstico hasta la auditoría externa.
               </p>
+
+              <div className="flex flex-wrap items-center gap-x-6 gap-y-2.5 rounded-xl border border-border bg-white/70 px-4 py-3.5 text-sm max-w-xl">
+                <span className="inline-flex items-center gap-1.5 text-foreground/80">
+                  <Layers className="size-4 text-primary" />
+                  <span className="font-semibold text-foreground">{normas.length}</span> normas ISO
+                </span>
+                <span className="inline-flex items-center gap-1.5 text-foreground/80">
+                  <ShieldCheck className="size-4 text-primary" />
+                  Enfoque <span className="font-semibold text-foreground">multinorma</span>
+                </span>
+                <span className="inline-flex items-center gap-1.5 text-foreground/80">
+                  <Award className="size-4 text-primary" />
+                  Acompañamiento hasta la <span className="font-semibold text-foreground">auditoría externa</span>
+                </span>
+              </div>
             </div>
 
             {/* === IMAGE SLOT: Banner de servicios ===
                 Archivo esperado: /public/images/servicios/banner.webp
                 Sugerencia: foto de consultoría en planta, sala de reuniones o capacitación corporativa. */}
-            <ImageSlot
-              src="/images/servicios/banner.webp"
-              alt="Consultoría RIVISIG en sitio"
-              aspect="aspect-[4/3]"
-              rounded="rounded-2xl"
-              hint="Banner página de servicios."
-            />
+            <div className="relative">
+              <div className="absolute -inset-4 -z-10 rounded-[2rem] bg-linear-to-br from-primary/15 via-primary/5 to-transparent blur-2xl" />
+              <ImageSlot
+                src="/images/servicios/banner.webp"
+                alt="Consultoría RIVISIG en sitio"
+                aspect="aspect-[4/3]"
+                rounded="rounded-2xl"
+                className="border border-border shadow-xl shadow-black/10"
+                hint="Banner página de servicios."
+              />
+              <div className="absolute -bottom-5 -left-5 hidden sm:flex items-center gap-3 rounded-xl border border-border bg-white px-4 py-3 shadow-lg">
+                <span className="inline-flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10">
+                  <Award className="size-4 text-primary" />
+                </span>
+                <span className="text-xs leading-snug text-foreground/85">
+                  <span className="block font-bold text-foreground">{normas.length} estándares</span>
+                  implementados por RIVISIG
+                </span>
+              </div>
+            </div>
           </div>
         </div>
       </section>

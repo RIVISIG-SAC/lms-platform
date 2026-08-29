@@ -1,7 +1,7 @@
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { ImageSlot } from "@/components/public/ImageSlot";
-import { ArrowRight, CheckCircle2 } from "lucide-react";
+import { ArrowRight, CheckCircle2, Layers, RefreshCcw, ShieldCheck } from "lucide-react";
 import Link from "next/link";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -57,9 +57,12 @@ export default function MetodologiaPage() {
   return (
     <>
       {/* Hero */}
-      <section className="relative border-b border-border bg-muted/30">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 lg:py-20">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+      <section className="relative overflow-hidden border-b border-border bg-linear-to-b from-white via-muted/35 to-white">
+        <div className="absolute -top-28 -right-20 size-80 rounded-full bg-primary/10 blur-3xl" />
+        <div className="absolute -bottom-24 -left-16 size-72 rounded-full bg-primary/5 blur-3xl" />
+
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-14 pb-16 lg:pt-20 lg:pb-20 relative">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
             <div>
               <Badge
                 variant="outline"
@@ -67,26 +70,54 @@ export default function MetodologiaPage() {
               >
                 Metodología
               </Badge>
-              <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-foreground leading-tight mb-5">
+              <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black text-foreground leading-[1.05] tracking-tight mb-5">
                 Un proceso claro, de principio a fin
               </h1>
-              <p className="text-muted-foreground leading-relaxed max-w-xl">
+              <p className="text-muted-foreground leading-relaxed max-w-xl mb-7">
                 Acompañamos a tu empresa en cada etapa: desde el primer diagnóstico hasta
                 mantener el sistema funcionando mucho después de obtener la certificación.
               </p>
+
+              <div className="flex flex-wrap items-center gap-x-6 gap-y-2.5 rounded-xl border border-border bg-white/70 px-4 py-3.5 text-sm max-w-xl">
+                <span className="inline-flex items-center gap-1.5 text-foreground/80">
+                  <Layers className="size-4 text-primary" />
+                  <span className="font-semibold text-foreground">{pasos.length}</span> etapas
+                </span>
+                <span className="inline-flex items-center gap-1.5 text-foreground/80">
+                  <ShieldCheck className="size-4 text-primary" />
+                  Proceso <span className="font-semibold text-foreground">a medida</span>
+                </span>
+                <span className="inline-flex items-center gap-1.5 text-foreground/80">
+                  <RefreshCcw className="size-4 text-primary" />
+                  Soporte <span className="font-semibold text-foreground">postcertificación</span>
+                </span>
+              </div>
             </div>
 
             {/* === IMAGE SLOT: Visual de proceso / metodología ===
                 Archivo esperado: /public/images/metodologia/proceso.jpg
                 Sugerencia: foto de consultor presentando plan a cliente, pizarra con flujo,
                 o infografía del proceso de certificación. */}
-            <ImageSlot
-              src="/images/metodologia/proceso.webp"
-              alt="Proceso metodológico RIVISIG"
-              aspect="aspect-[4/3]"
-              rounded="rounded-2xl"
-              hint="Visual de metodología: pizarra, diagrama o consultor explicando."
-            />
+            <div className="relative">
+              <div className="absolute -inset-4 -z-10 rounded-[2rem] bg-linear-to-br from-primary/15 via-primary/5 to-transparent blur-2xl" />
+              <ImageSlot
+                src="/images/metodologia/proceso.webp"
+                alt="Proceso metodológico RIVISIG"
+                aspect="aspect-[4/3]"
+                rounded="rounded-2xl"
+                className="border border-border shadow-xl shadow-black/10"
+                hint="Visual de metodología: pizarra, diagrama o consultor explicando."
+              />
+              <div className="absolute -bottom-5 -left-5 hidden sm:flex items-center gap-3 rounded-xl border border-border bg-white px-4 py-3 shadow-lg">
+                <span className="inline-flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10">
+                  <Layers className="size-4 text-primary" />
+                </span>
+                <span className="text-xs leading-snug text-foreground/85">
+                  <span className="block font-bold text-foreground">{pasos.length} etapas</span>
+                  de principio a fin
+                </span>
+              </div>
+            </div>
           </div>
         </div>
       </section>
