@@ -18,6 +18,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { getCompanyBySlug } from "@/lib/queries/empresas";
 import { getCompanyIcon } from "@/lib/empresas/icons";
+import { splitHighlight } from "@/lib/empresas/highlight";
 import { CompanyGallery } from "@/components/public/CompanyGallery";
 import { ImageCarousel } from "@/components/public/ImageCarousel";
 import { TestimonialVideo } from "@/components/public/TestimonialVideo";
@@ -72,13 +73,13 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
 }
 
 function renderHeroTitle(heroTitle: string, highlight: string | null) {
-  if (!highlight || !heroTitle.includes(highlight)) return heroTitle;
-  const [before, after] = heroTitle.split(highlight);
+  const parts = splitHighlight(heroTitle, highlight);
+  if (!parts) return heroTitle;
   return (
     <>
-      {before}
-      <span className="text-primary">{highlight}</span>
-      {after}
+      {parts.before}
+      <span className="text-primary">{parts.match}</span>
+      {parts.after}
     </>
   );
 }
