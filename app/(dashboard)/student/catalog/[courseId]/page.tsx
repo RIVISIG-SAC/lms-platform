@@ -186,9 +186,14 @@ export default async function CourseCatalogDetailPage({ params }: Props) {
               />
             )}
 
-            {enrollment?.status === "FAILED" && (
-              <p className="text-xs text-center text-amber-600 bg-amber-50 border border-amber-200 px-3 py-2 rounded">
-                Tu intento anterior no fue aprobado. Puedes volver a inscribirte.
+            {(enrollment?.status === "FAILED" ||
+              enrollment?.status === "EXPIRED") && (
+              <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5 text-xs leading-relaxed text-amber-800">
+                {enrollment.status === "FAILED"
+                  ? "No aprobaste la evaluación en tus 2 intentos y perdiste el acceso al curso."
+                  : "Tu acceso anterior a este curso expiró."}{" "}
+                Al volver a inscribirte empezarás desde cero: se reinician tu
+                progreso y tus intentos de evaluación.
               </p>
             )}
           </div>
