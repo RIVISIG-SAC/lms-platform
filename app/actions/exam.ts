@@ -184,15 +184,25 @@ export async function submitExam(
         notifyAdminsAlso: true,
       });
     }
+
+    revalidatePath(`/student/courses/${courseId}/exam`);
+    revalidatePath("/student/my-courses");
+    revalidatePath("/student");
   } else if (attemptCount + 1 >= 2) {
-    // Agotó intentos sin aprobar
+    // Agotó los 2 intentos: se retira el acceso al curso. La inscripción se
+    // conserva en estado FAILED para que siga visible en el historial; el
+    // progreso y los intentos se reinician recién al volver a inscribirse.
     await prisma.enrollment.update({
       where: { id: enrollment.id },
       data: { status: "FAILED" },
     });
+    // Ojo: aquí NO se revalida la ruta del examen. Hacerlo refresca el router,
+    // el layout detecta el estado FAILED y redirige antes de que el estudiante
+    // alcance a ver su resultado. Sale por el botón "Ir a mis cursos".
+  } else {
+    revalidatePath(`/student/courses/${courseId}/exam`);
   }
 
-  revalidatePath(`/student/courses/${courseId}/exam`);
   return { score, passed, requiresCertPayment: passed && enrollment.course.isFree };
 }
 
