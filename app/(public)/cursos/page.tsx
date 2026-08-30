@@ -81,13 +81,10 @@ export default function CursosPage() {
         <div className="absolute -top-28 -right-20 size-80 rounded-full bg-primary/8 blur-3xl" />
         <div className="absolute -bottom-36 -left-16 size-80 rounded-full bg-foreground/5 blur-3xl" />
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-14 pb-12 md:pt-18 md:pb-16 relative motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-2 motion-safe:duration-700">
-          <Badge variant="outline" className="mb-5 border-primary/30 bg-primary/5 text-primary">
-            Capacitacion profesional con respaldo tecnico
-          </Badge>
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-end">
             <div className="lg:col-span-8">
               <h1 className="text-4xl sm:text-5xl font-black tracking-tight text-foreground leading-[1.02]">
-                Catalogo de cursos para cumplir normas, auditar procesos y certificar equipos
+                Catalogo de cursos
               </h1>
               <p className="text-muted-foreground mt-5 text-base max-w-2xl leading-relaxed">
                 Programas disenados para convertir requisitos normativos en capacidades reales de trabajo, con evaluacion y evidencia de aprendizaje.

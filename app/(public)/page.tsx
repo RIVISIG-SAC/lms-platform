@@ -170,13 +170,6 @@ export default function LandingPage() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
             {/* Copy */}
             <div>
-              <Badge
-                variant="outline"
-                className="mb-6 border-primary/30 text-primary bg-primary/5 text-xs font-medium px-3 py-1"
-              >
-                Implementación · Certificación · Soporte ISO
-              </Badge>
-
               <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-foreground leading-[1.05] tracking-tight">
                 Solidez, confianza y{' '}
                 <span className="text-primary">respaldo real</span> en sistemas
@@ -204,7 +197,7 @@ export default function LandingPage() {
                   href="/registro"
                   className={cn(
                     buttonVariants({ variant: 'outline', size: 'lg' }),
-                    'px-8 text-base h-12',
+                    'px-8 text-base h-12 hover:bg-primary/5 hover:text-primary transition-colors',
                   )}
                 >
                   Crear cuenta gratis
@@ -218,7 +211,7 @@ export default function LandingPage() {
                   { value: '100%', label: 'Cursos con certificado' },
                   { value: 'Verificable', label: 'Código único por diploma' },
                 ].map((s) => (
-                  <div key={s.label}>
+                  <div key={s.label} className="flex flex-col items-center">
                     <p className="text-2xl sm:text-3xl font-bold text-primary">
                       {s.value}
                     </p>
@@ -260,29 +253,6 @@ export default function LandingPage() {
           </div>
         </div>
       </section>
-
-      {/* ── Clientes / Logos de confianza ────────────────── */}
-      {/* <section className="border-b border-border bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-          <p className="text-center text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-8">
-            Empresas que confían en nosotros
-          </p>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-6 items-center">
-            {[1, 2, 3, 4, 5, 6].map((i) => (
-              <ImageSlot
-                key={i}
-                src={`/images/clients/cliente-${i}.webp`}
-                alt={`Cliente ${i}`}
-                aspect="aspect-[2/1]"
-                rounded="rounded-md"
-                cover={false}
-                className="bg-transparent border-dashed grayscale opacity-70 hover:opacity-100 hover:grayscale-0 transition-all"
-                hint={`Logo cliente ${i}`}
-              />
-            ))}
-          </div>
-        </div>
-      </section>  */}
 
       {/* ── Cursos destacados ────────────────────────────── */}
 
@@ -399,6 +369,29 @@ export default function LandingPage() {
               <Mail className="h-4 w-4" />
               info@rivisig.com
             </a>
+          </div>
+        </div>
+      </section>
+
+      {/* ── Clientes / Logos de confianza ────────────────── */}
+       <section className="border-b border-border bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+          <p className="text-center text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-8">
+            Empresas que confían en nosotros
+          </p>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-6 items-center">
+            {[1, 2, 3, 4, 5, 6].map((i) => (
+              <ImageSlot
+                key={i}
+                src={`/images/clients/cliente-${i}.webp`}
+                alt={`Cliente ${i}`}
+                aspect="aspect-[2/1]"
+                rounded="rounded-md"
+                cover={false}
+                className="bg-transparent border-dashed grayscale opacity-70 hover:opacity-100 hover:grayscale-0 transition-all"
+                hint={`Logo cliente ${i}`}
+              />
+            ))}
           </div>
         </div>
       </section>
