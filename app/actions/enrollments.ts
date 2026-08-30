@@ -9,6 +9,10 @@ import { getRequiredSession } from "@/lib/auth";
 import { addDays } from "@/lib/utils";
 import { sendAdminEnrollmentEmail } from "@/lib/email";
 import { notifyEnrollmentConfirmed } from "@/lib/notifications";
+import {
+  REENROLLABLE_STATUSES,
+  resetEnrollmentProgress,
+} from "@/lib/enrollments";
 
 export async function enrollFree(courseId: string, _formData: FormData): Promise<void> {
   const session = await getRequiredSession();
@@ -27,12 +31,8 @@ export async function enrollFree(courseId: string, _formData: FormData): Promise
     redirect(`/student/courses/${courseId}`);
   }
 
-  if (existing && ["FAILED", "EXPIRED"].includes(existing.status)) {
-    await prisma.$transaction([
-      prisma.examAttempt.deleteMany({ where: { enrollmentId: existing.id } }),
-      prisma.chapterProgress.deleteMany({ where: { enrollmentId: existing.id } }),
-      prisma.certificate.deleteMany({ where: { enrollmentId: existing.id } }),
-    ]);
+  if (existing && REENROLLABLE_STATUSES.includes(existing.status as never)) {
+    await resetEnrollmentProgress(existing.id);
   }
 
   const startDate = new Date();
@@ -138,12 +138,8 @@ export async function adminEnrollUserAction(
     return { error: "El usuario ya está inscrito en este curso." };
   }
 
-  if (existing && ["FAILED", "EXPIRED"].includes(existing.status)) {
-    await prisma.$transaction([
-      prisma.examAttempt.deleteMany({ where: { enrollmentId: existing.id } }),
-      prisma.chapterProgress.deleteMany({ where: { enrollmentId: existing.id } }),
-      prisma.certificate.deleteMany({ where: { enrollmentId: existing.id } }),
-    ]);
+  if (existing && REENROLLABLE_STATUSES.includes(existing.status as never)) {
+    await resetEnrollmentProgress(existing.id);
   }
 
   const startDate = new Date();
