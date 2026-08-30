@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { cn } from "@/lib/utils";
-import { CheckCircle2, PlayCircle, Circle } from "lucide-react";
+import { CheckCircle2, PlayCircle, Circle, X } from "lucide-react";
 
 type Chapter = {
   id: string;
@@ -35,41 +35,71 @@ export function ChapterSidebar({
   progressPercentage,
   onClose,
 }: Props) {
+  // Numeración global de clases (1..N) a lo largo de todos los módulos
+  const numeroDeClase = new Map<string, number>();
+  let contador = 0;
+  let completadas = 0;
+
+  for (const mod of modules) {
+    for (const ch of mod.chapters) {
+      numeroDeClase.set(ch.id, ++contador);
+      if (completedIds.has(ch.id)) completadas++;
+    }
+  }
+
+  const total = contador;
+  const progreso = Math.round(progressPercentage);
+
   return (
-    <aside className="w-[88vw] max-w-sm md:w-72 shrink-0 border-r border-border bg-card flex flex-col h-full overflow-hidden">
-      {/* Progress header */}
-      <div className="px-4 py-3 border-b border-border">
-        <div className="flex items-center justify-between mb-1.5">
-          <div className="flex items-center justify-between flex-1 text-xs text-muted-foreground">
-            <span>Progreso del curso</span>
-            <span className="font-medium">{Math.round(progressPercentage)}%</span>
-          </div>
-          {/* Close button — mobile only */}
+    <aside className="w-[88vw] max-w-sm md:w-80 shrink-0 border-l border-border bg-card flex flex-col h-full overflow-hidden">
+      {/* Progreso del curso */}
+      <div className="shrink-0 border-b border-border px-4 py-3.5">
+        <div className="flex items-center justify-between gap-2">
+          <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
+            Temario
+          </p>
           {onClose && (
             <button
               onClick={onClose}
-              className="md:hidden ml-3 p-1 rounded text-muted-foreground hover:text-foreground transition-colors"
+              className="md:hidden -mr-1 rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
               aria-label="Cerrar temario"
             >
-              ✕
+              <X className="size-4" />
             </button>
           )}
         </div>
-        <div className="h-1.5 bg-muted rounded-full overflow-hidden">
+
+        <div className="mt-2.5 flex items-baseline justify-between gap-2">
+          <span className="text-sm font-semibold text-foreground">
+            {completadas} de {total} {total === 1 ? "clase" : "clases"}
+          </span>
+          <span className="text-sm font-black tabular-nums text-primary">
+            {progreso}%
+          </span>
+        </div>
+
+        <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-muted">
           <div
-            className="h-full bg-primary rounded-full transition-all duration-500"
-            style={{ width: `${progressPercentage}%` }}
+            className="h-full rounded-full bg-primary transition-all duration-500"
+            style={{ width: `${progreso}%` }}
           />
         </div>
       </div>
 
-      {/* Chapter list */}
-      <nav className="flex-1 overflow-y-auto py-2">
+      {/* Lista de capítulos */}
+      <nav className="flex-1 overflow-y-auto">
         {modules.map((mod) => (
-          <div key={mod.id}>
-            <p className="px-4 py-2 text-[11px] font-semibold text-muted-foreground uppercase tracking-wide">
-              {mod.order + 1}. {mod.title}
-            </p>
+          <div key={mod.id} className="border-b border-border/60 last:border-b-0">
+            <div className="sticky top-0 z-10 border-b border-border/60 bg-card/95 px-4 py-2.5 backdrop-blur-sm">
+              <p className="text-[11px] font-bold uppercase leading-snug tracking-wide text-foreground/70">
+                {mod.title}
+              </p>
+              <p className="mt-0.5 text-[11px] text-muted-foreground">
+                {mod.chapters.length}{" "}
+                {mod.chapters.length === 1 ? "clase" : "clases"}
+              </p>
+            </div>
+
             {mod.chapters.map((ch) => {
               const isActive = ch.id === currentChapterId;
               const isDone = completedIds.has(ch.id);
@@ -78,25 +108,43 @@ export function ChapterSidebar({
                 <Link
                   key={ch.id}
                   href={`/student/courses/${courseId}?chapter=${ch.id}`}
+                  aria-current={isActive ? "page" : undefined}
                   className={cn(
-                    "flex items-center gap-3 px-4 py-3 text-sm transition-colors min-h-11",
-                    isActive
-                      ? "bg-primary/5 text-primary font-medium border-r-2 border-primary"
-                      : "text-foreground hover:bg-accent/50"
+                    "relative flex items-start gap-3 py-3 pl-4 pr-3 transition-colors min-h-11",
+                    isActive ? "bg-primary/5" : "hover:bg-accent/50",
                   )}
                 >
-                  {/* Status icon */}
+                  {isActive && (
+                    <span
+                      className="absolute inset-y-0 right-0 w-0.5 bg-primary"
+                      aria-hidden="true"
+                    />
+                  )}
+
                   {isDone ? (
-                    <CheckCircle2 className="shrink-0 size-5 text-green-600" />
+                    <CheckCircle2 className="mt-0.5 size-5 shrink-0 text-emerald-600" />
                   ) : isActive ? (
-                    <PlayCircle className="shrink-0 size-5 text-primary" />
+                    <PlayCircle className="mt-0.5 size-5 shrink-0 text-primary" />
                   ) : (
-                    <Circle className="shrink-0 size-5 text-border" />
+                    <Circle className="mt-0.5 size-5 shrink-0 text-border" />
                   )}
-                  <span className="flex-1 leading-snug line-clamp-2">{ch.title}</span>
-                  {ch.vimeoVideoId && !isActive && !isDone && (
-                    <span className="shrink-0 text-[10px] text-muted-foreground font-medium">▶</span>
-                  )}
+
+                  <span className="min-w-0 flex-1">
+                    <span
+                      className={cn(
+                        "block text-sm leading-snug line-clamp-2",
+                        isActive
+                          ? "font-semibold text-primary"
+                          : "text-foreground",
+                      )}
+                    >
+                      {ch.title}
+                    </span>
+                    <span className="mt-0.5 block text-[11px] text-muted-foreground">
+                      Clase {numeroDeClase.get(ch.id)}
+                      {isDone && " · Completada"}
+                    </span>
+                  </span>
                 </Link>
               );
             })}
