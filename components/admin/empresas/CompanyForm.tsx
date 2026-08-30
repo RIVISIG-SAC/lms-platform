@@ -32,18 +32,13 @@ import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CloudinaryUpload } from "@/components/admin/CloudinaryUpload";
 import { RichTextEditor } from "@/components/admin/blog/RichTextEditor";
 import { RepeaterField } from "@/components/admin/empresas/RepeaterField";
-import { COMPANY_ICON_OPTIONS } from "@/lib/empresas/icons";
+import { IconSelect } from "@/components/admin/empresas/IconSelect";
+import { CompanyIcon } from "@/components/admin/empresas/CompanyIcon";
+import { splitHighlight } from "@/lib/empresas/highlight";
 import {
   POST_STATUSES,
   POST_STATUS_LABELS,
@@ -121,6 +116,73 @@ function toLocalDateTimeInput(date?: Date | null): string {
   const d = new Date(date);
   const tzOffset = d.getTimezoneOffset() * 60_000;
   return new Date(d.getTime() - tzOffset).toISOString().slice(0, 16);
+}
+
+/** Campo con etiqueta propia dentro de un repetidor, para que cada casilla se entienda sin adivinar. */
+function MiniField({
+  htmlFor,
+  label,
+  hint,
+  children,
+}: {
+  htmlFor: string;
+  label: string;
+  hint: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="space-y-1.5">
+      <Label htmlFor={htmlFor} className="text-[11px] font-semibold text-foreground">
+        {label}
+      </Label>
+      {children}
+      <p className="text-[11px] leading-snug text-muted-foreground">{hint}</p>
+    </div>
+  );
+}
+
+/** Marco de "así se verá en la landing", para los repetidores con ícono. */
+function PreviewFrame({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="rounded-lg border border-dashed border-border/70 bg-muted/30 p-3">
+      <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-2">
+        Así se verá en la landing
+      </p>
+      {children}
+    </div>
+  );
+}
+
+function FactPreview({ icon, label, value }: FactItem) {
+  return (
+    <PreviewFrame>
+      <div className="flex items-start gap-3 rounded-xl border border-border bg-card p-4 max-w-xs">
+        <div className="size-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+          <CompanyIcon name={icon} className="size-4 text-primary" />
+        </div>
+        <div className="min-w-0">
+          <p className="text-sm font-semibold text-foreground truncate">{label || "Título del dato"}</p>
+          {value && <p className="text-xs text-muted-foreground mt-0.5 truncate">{value}</p>}
+        </div>
+      </div>
+    </PreviewFrame>
+  );
+}
+
+function CertificationPreview({ standard, label, icon }: CertificationItem) {
+  return (
+    <PreviewFrame>
+      <div className="rounded-xl bg-foreground p-4 max-w-[10rem]">
+        <div className="flex flex-col items-center text-center gap-2 rounded-xl bg-background/10 p-4">
+          <CompanyIcon name={icon} className="size-6 text-primary" />
+          <div className="min-w-0">
+            <p className="text-sm font-semibold text-background truncate">{standard || "ISO 9001:2015"}</p>
+            <p className="text-xs text-background/60 truncate">{label || "Calidad"}</p>
+          </div>
+        </div>
+      </div>
+    </PreviewFrame>
+  );
 }
 
 function SectionHeader({ icon: Icon, title, description }: { icon: React.ElementType; title: string; description: string }) {
@@ -201,6 +263,12 @@ export function CompanyForm({ action, company }: Props) {
     setSlug(value);
     setSlugManuallyEdited(value.length > 0);
   };
+
+  // Mismo cálculo que usa la landing, para avisar en el acto si la frase no coincide.
+  const heroHighlightParts = useMemo(
+    () => splitHighlight(heroTitle, heroHighlight),
+    [heroTitle, heroHighlight],
+  );
 
   const submitLabel = useMemo(() => {
     if (pending) return "Guardando…";
@@ -395,8 +463,25 @@ export function CompanyForm({ action, company }: Props) {
                   maxLength={120}
                 />
                 <p className="text-xs text-muted-foreground">
-                  Debe ser un fragmento textual del título de arriba; se resalta con el rojo de RIVISIG.
+                  Debe ser un fragmento del título de arriba; se resalta con el rojo de RIVISIG. No importan
+                  las mayúsculas ni las tildes.
                 </p>
+                {heroHighlight.trim() &&
+                  (heroHighlightParts ? (
+                    <p className="text-sm text-foreground">
+                      <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mr-2">
+                        Vista previa
+                      </span>
+                      {heroHighlightParts.before}
+                      <span className="text-primary font-semibold">{heroHighlightParts.match}</span>
+                      {heroHighlightParts.after}
+                    </p>
+                  ) : (
+                    <p className="text-xs text-destructive">
+                      Esa frase no aparece en el título, así que no se resaltará nada. Cópiala del título de
+                      arriba.
+                    </p>
+                  ))}
               </div>
 
               <div className="space-y-2">
@@ -451,42 +536,64 @@ export function CompanyForm({ action, company }: Props) {
                 />
               </div>
 
-              <div className="space-y-2">
-                <Label className={fieldLabelClassName}>Datos rápidos</Label>
+              <div className="space-y-3">
+                <div className="space-y-1">
+                  <Label className={fieldLabelClassName}>Datos rápidos</Label>
+                  <p className="text-xs text-muted-foreground leading-relaxed">
+                    Tarjetitas que aparecen a la derecha del bloque «¿Quién es {name || "la empresa"}?» en la
+                    landing. Resumen la empresa de un vistazo: especialidad, años de experiencia, tamaño del
+                    equipo, sedes… Cada dato tiene un ícono, un título en negrita y un detalle opcional debajo.
+                  </p>
+                </div>
                 <RepeaterField<FactItem>
                   name="facts"
                   items={factsInitial}
                   emptyItem={{ icon: "shield", label: "", value: "" }}
                   addLabel="Agregar dato"
                   emptyMessage="Sin datos rápidos aún."
-                  renderItem={(item, _i, update) => (
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                      <Select value={item.icon} onValueChange={(v) => update({ icon: v ?? "shield" })}>
-                        <SelectTrigger className={`${controlClassName} w-full`}>
-                          <SelectValue placeholder="Ícono">
-                            {COMPANY_ICON_OPTIONS.find((opt) => opt.key === item.icon)?.label}
-                          </SelectValue>
-                        </SelectTrigger>
-                        <SelectContent>
-                          {COMPANY_ICON_OPTIONS.map((opt) => (
-                            <SelectItem key={opt.key} value={opt.key}>
-                              {opt.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <Input
-                        value={item.label}
-                        onChange={(e) => update({ label: e.target.value })}
-                        placeholder="Especialidad"
-                        className={controlClassName}
-                      />
-                      <Input
-                        value={item.value}
-                        onChange={(e) => update({ value: e.target.value })}
-                        placeholder="Salud Ocupacional (opcional)"
-                        className={controlClassName}
-                      />
+                  renderItem={(item, i, update) => (
+                    <div className="space-y-3">
+                      <div className="grid grid-cols-1 sm:grid-cols-[minmax(0,12rem)_minmax(0,1fr)_minmax(0,1fr)] gap-3">
+                        <MiniField
+                          htmlFor={`fact-icon-${i}`}
+                          label="Ícono"
+                          hint="Dibujo que va en el cuadrito rojo."
+                        >
+                          <IconSelect
+                            id={`fact-icon-${i}`}
+                            value={item.icon}
+                            onChange={(icon) => update({ icon })}
+                            className={`${controlClassName} w-full`}
+                          />
+                        </MiniField>
+                        <MiniField
+                          htmlFor={`fact-label-${i}`}
+                          label="Título del dato"
+                          hint="Texto en negrita. Ej.: «Especialidad»."
+                        >
+                          <Input
+                            id={`fact-label-${i}`}
+                            value={item.label}
+                            onChange={(e) => update({ label: e.target.value })}
+                            placeholder="Especialidad"
+                            className={controlClassName}
+                          />
+                        </MiniField>
+                        <MiniField
+                          htmlFor={`fact-value-${i}`}
+                          label="Detalle (opcional)"
+                          hint="Línea gris debajo del título. Ej.: «Salud ocupacional»."
+                        >
+                          <Input
+                            id={`fact-value-${i}`}
+                            value={item.value}
+                            onChange={(e) => update({ value: e.target.value })}
+                            placeholder="Salud ocupacional"
+                            className={controlClassName}
+                          />
+                        </MiniField>
+                      </div>
+                      <FactPreview {...item} />
                     </div>
                   )}
                 />
@@ -689,41 +796,60 @@ export function CompanyForm({ action, company }: Props) {
 
           {/* Normas certificadas */}
           <section className={sectionCardClassName}>
-            <SectionHeader icon={ShieldCheck} title="Normas certificadas" description="Se usan en el hero y en la Ficha del Proyecto." />
+            <SectionHeader
+              icon={ShieldCheck}
+              title="Normas certificadas"
+              description="Bloque oscuro «Un Sistema de Gestión alineado con estándares internacionales». Una tarjeta por norma."
+            />
             <RepeaterField<CertificationItem>
               name="certifications"
               items={certificationsInitial}
               emptyItem={{ standard: "", label: "", icon: "shield" }}
               addLabel="Agregar norma"
               emptyMessage="Sin normas aún."
-              renderItem={(item, _i, update) => (
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                  <Input
-                    value={item.standard}
-                    onChange={(e) => update({ standard: e.target.value })}
-                    placeholder="ISO 9001:2015"
-                    className={controlClassName}
-                  />
-                  <Input
-                    value={item.label}
-                    onChange={(e) => update({ label: e.target.value })}
-                    placeholder="Calidad"
-                    className={controlClassName}
-                  />
-                  <Select value={item.icon} onValueChange={(v) => update({ icon: v ?? "shield" })}>
-                    <SelectTrigger className={`${controlClassName} w-full`}>
-                      <SelectValue placeholder="Ícono">
-                        {COMPANY_ICON_OPTIONS.find((opt) => opt.key === item.icon)?.label}
-                      </SelectValue>
-                    </SelectTrigger>
-                    <SelectContent>
-                      {COMPANY_ICON_OPTIONS.map((opt) => (
-                        <SelectItem key={opt.key} value={opt.key}>
-                          {opt.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+              renderItem={(item, i, update) => (
+                <div className="space-y-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,12rem)] gap-3">
+                    <MiniField
+                      htmlFor={`cert-standard-${i}`}
+                      label="Norma"
+                      hint="Código y año, tal cual se certificó."
+                    >
+                      <Input
+                        id={`cert-standard-${i}`}
+                        value={item.standard}
+                        onChange={(e) => update({ standard: e.target.value })}
+                        placeholder="ISO 9001:2015"
+                        className={controlClassName}
+                      />
+                    </MiniField>
+                    <MiniField
+                      htmlFor={`cert-label-${i}`}
+                      label="Tema de la norma"
+                      hint="De qué trata, en una o dos palabras. Ej.: «Calidad»."
+                    >
+                      <Input
+                        id={`cert-label-${i}`}
+                        value={item.label}
+                        onChange={(e) => update({ label: e.target.value })}
+                        placeholder="Calidad"
+                        className={controlClassName}
+                      />
+                    </MiniField>
+                    <MiniField
+                      htmlFor={`cert-icon-${i}`}
+                      label="Ícono"
+                      hint="Dibujo sobre el nombre de la norma."
+                    >
+                      <IconSelect
+                        id={`cert-icon-${i}`}
+                        value={item.icon}
+                        onChange={(icon) => update({ icon })}
+                        className={`${controlClassName} w-full`}
+                      />
+                    </MiniField>
+                  </div>
+                  <CertificationPreview {...item} />
                 </div>
               )}
             />
