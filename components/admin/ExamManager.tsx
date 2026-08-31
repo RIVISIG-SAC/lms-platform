@@ -3,20 +3,22 @@
 import { useActionState, useEffect, useState } from "react";
 import {
   Check,
-  Circle,
   GraduationCap,
   Loader2,
   Pencil,
   Plus,
   Save,
+  Target,
   Trash2,
 } from "lucide-react";
 import { toast } from "sonner";
-import { createQuestion, deleteQuestion, updateQuestion } from "@/app/actions/exam";
-import { Badge } from "@/components/ui/badge";
+import {
+  createQuestion,
+  deleteQuestion,
+  updateQuestion,
+} from "@/app/actions/exam";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
   Dialog,
@@ -28,7 +30,15 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { DeleteConfirmDialog } from "@/components/admin/DeleteConfirmDialog";
-import { EmptyState } from "@/components/admin/EmptyState";
+import {
+  AdminAlert,
+  AdminChips,
+  AdminField,
+  AdminHint,
+  DialogIcon,
+} from "@/components/admin/AdminField";
+import { AREA_ADMIN, CONTROL_ADMIN } from "@/components/admin/form-styles";
+import { cn } from "@/lib/utils";
 
 type Option = { id: string; text: string; isCorrect: boolean };
 type Question = { id: string; text: string; order: number; options: Option[] };
@@ -37,10 +47,10 @@ type ActionState = { error?: string; success?: boolean } | null;
 type DraftOption = { text: string; isCorrect: boolean };
 type QuestionType = "multiple" | "boolean";
 
-const TF_OPTIONS: DraftOption[] = [
-  { text: "Verdadero", isCorrect: true },
-  { text: "Falso", isCorrect: false },
-];
+const PUNTAJE_MINIMO = 70;
+const MAX_OPCIONES = 6;
+const MIN_OPCIONES = 2;
+const LETRAS = "ABCDEF";
 
 const DEFAULT_MC_OPTIONS: DraftOption[] = [
   { text: "", isCorrect: true },
@@ -52,7 +62,9 @@ const DEFAULT_MC_OPTIONS: DraftOption[] = [
 function detectType(options: Option[]): QuestionType {
   if (options.length !== 2) return "multiple";
   const texts = options.map((o) => o.text.trim().toLowerCase()).sort();
-  return texts[0] === "falso" && texts[1] === "verdadero" ? "boolean" : "multiple";
+  return texts[0] === "falso" && texts[1] === "verdadero"
+    ? "boolean"
+    : "multiple";
 }
 
 function QuestionDialog({
@@ -68,7 +80,9 @@ function QuestionDialog({
   nextOrder?: number;
   trigger: React.ReactElement;
 }) {
-  const initialType: QuestionType = question ? detectType(question.options) : "multiple";
+  const initialType: QuestionType = question
+    ? detectType(question.options)
+    : "multiple";
   const initialOptions: DraftOption[] = question
     ? question.options.map((o) => ({ text: o.text, isCorrect: o.isCorrect }))
     : DEFAULT_MC_OPTIONS;
@@ -80,19 +94,24 @@ function QuestionDialog({
   const [options, setOptions] = useState<DraftOption[]>(initialOptions);
 
   const action = mode === "create" ? createQuestion : updateQuestion;
-  const [state, formAction, pending] = useActionState<ActionState, FormData>(action, null);
+  const [state, formAction, pending] = useActionState<ActionState, FormData>(
+    action,
+    null,
+  );
 
   useEffect(() => {
     if (!state) return;
     if (state.error) {
       toast.error(state.error);
     } else if (state.success) {
-      toast.success(mode === "create" ? "Pregunta añadida" : "Pregunta actualizada");
+      toast.success(
+        mode === "create" ? "Pregunta añadida" : "Pregunta actualizada",
+      );
       setOpen(false);
     }
   }, [state, mode]);
 
-  // Reset form state on open (so edits don't leak between sessions)
+  // Al abrir reiniciamos el borrador para que no se filtre entre ediciones
   useEffect(() => {
     if (open) {
       setType(initialType);
@@ -106,7 +125,7 @@ function QuestionDialog({
     if (next === type) return;
     setType(next);
     if (next === "boolean") {
-      // Preserve which side was correct if possible
+      // Conservamos qué lado era el correcto si se puede
       const wasTrueCorrect = options[0]?.isCorrect ?? true;
       setOptions([
         { text: "Verdadero", isCorrect: wasTrueCorrect },
@@ -122,16 +141,18 @@ function QuestionDialog({
   }
 
   function setOptionText(idx: number, value: string) {
-    setOptions((prev) => prev.map((o, i) => (i === idx ? { ...o, text: value } : o)));
+    setOptions((prev) =>
+      prev.map((o, i) => (i === idx ? { ...o, text: value } : o)),
+    );
   }
 
   function addOption() {
-    if (options.length >= 6) return;
+    if (options.length >= MAX_OPCIONES) return;
     setOptions((prev) => [...prev, { text: "", isCorrect: false }]);
   }
 
   function removeOption(idx: number) {
-    if (options.length <= 2) return;
+    if (options.length <= MIN_OPCIONES) return;
     setOptions((prev) => {
       const removed = prev[idx];
       const next = prev.filter((_, i) => i !== idx);
@@ -144,17 +165,21 @@ function QuestionDialog({
   }
 
   const isBoolean = type === "boolean";
+  const vacias = options.filter((o) => !o.text.trim()).length;
+  const listo = text.trim().length >= 3 && vacias === 0;
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger render={trigger} />
       <DialogContent className="sm:max-w-xl">
         <DialogHeader>
-          <DialogTitle>
+          <DialogIcon icon={mode === "create" ? Plus : Pencil} />
+          <DialogTitle className="text-lg">
             {mode === "create" ? "Nueva pregunta" : "Editar pregunta"}
           </DialogTitle>
-          <DialogDescription>
-            Marca la opción correcta. Los estudiantes necesitan 70% para aprobar la evaluación.
+          <DialogDescription className="leading-relaxed">
+            Marca la opción correcta. Los estudiantes necesitan{" "}
+            {PUNTAJE_MINIMO}% para aprobar y tienen 2 intentos.
           </DialogDescription>
         </DialogHeader>
 
@@ -166,58 +191,29 @@ function QuestionDialog({
             });
             formAction(fd);
           }}
-          className="space-y-4 py-1"
+          className="space-y-4"
         >
+          <input type="hidden" name="courseId" value={courseId} />
           {mode === "create" ? (
-            <>
-              <input type="hidden" name="courseId" value={courseId} />
-              <input type="hidden" name="order" value={nextOrder ?? 0} />
-            </>
+            <input type="hidden" name="order" value={nextOrder ?? 0} />
           ) : (
-            <>
-              <input type="hidden" name="courseId" value={courseId} />
-              <input type="hidden" name="questionId" value={question!.id} />
-            </>
+            <input type="hidden" name="questionId" value={question!.id} />
           )}
 
-          {/* Selector de tipo de pregunta */}
-          <div className="space-y-1.5">
-            <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-              Tipo de pregunta
-            </Label>
-            <div className="inline-flex rounded-lg border border-border bg-muted/40 p-1">
-              <button
-                type="button"
-                onClick={() => switchType("multiple")}
-                className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-colors ${
-                  type === "multiple"
-                    ? "bg-background text-foreground shadow-sm"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                Opción múltiple
-              </button>
-              <button
-                type="button"
-                onClick={() => switchType("boolean")}
-                className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-colors ${
-                  type === "boolean"
-                    ? "bg-background text-foreground shadow-sm"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                Verdadero / Falso
-              </button>
-            </div>
-          </div>
+          <AdminField label="Tipo de pregunta">
+            <AdminChips
+              legend="Tipo de pregunta"
+              name="question-type-ui"
+              value={type}
+              onChange={switchType}
+              options={[
+                { value: "multiple" as QuestionType, label: "Opción múltiple" },
+                { value: "boolean" as QuestionType, label: "Verdadero / Falso" },
+              ]}
+            />
+          </AdminField>
 
-          <div className="space-y-1.5">
-            <Label
-              htmlFor="question-text"
-              className="text-xs font-semibold uppercase tracking-wider text-muted-foreground"
-            >
-              Pregunta <span className="text-destructive">*</span>
-            </Label>
+          <AdminField id="question-text" label="Enunciado">
             <Textarea
               id="question-text"
               name="text"
@@ -227,75 +223,114 @@ function QuestionDialog({
               value={text}
               onChange={(e) => setText(e.target.value)}
               placeholder="Escribe la pregunta..."
-              className="resize-none"
+              className={cn(AREA_ADMIN, "min-h-20")}
             />
-          </div>
+          </AdminField>
 
-          <div className="space-y-2">
-            <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-              {isBoolean ? "Marca la respuesta correcta" : "Opciones — selecciona la correcta"}
-            </Label>
+          <AdminField
+            label={
+              isBoolean ? "Respuesta correcta" : "Opciones de respuesta"
+            }
+            hint={
+              <AdminHint>
+                {isBoolean
+                  ? "Elige cuál de las dos afirmaciones es la verdadera."
+                  : `Pulsa el círculo para marcar la correcta. Entre ${MIN_OPCIONES} y ${MAX_OPCIONES} opciones.`}
+              </AdminHint>
+            }
+          >
             <div className="space-y-2">
               {options.map((opt, i) => (
-                <div key={i} className="flex items-center gap-2">
+                <div
+                  key={i}
+                  className={cn(
+                    "flex items-center gap-2.5 rounded-xl border px-3 py-2 transition-colors",
+                    opt.isCorrect
+                      ? "border-emerald-300 bg-emerald-50/60"
+                      : "border-border",
+                  )}
+                >
                   <button
                     type="button"
                     onClick={() => setCorrect(i)}
-                    aria-label={`Marcar opción ${i + 1} como correcta`}
-                    className={`shrink-0 size-5 rounded-full border-2 flex items-center justify-center transition-colors ${
+                    aria-label={`Marcar la opción ${LETRAS[i]} como correcta`}
+                    aria-pressed={opt.isCorrect}
+                    className={cn(
+                      "flex size-5 shrink-0 items-center justify-center rounded-full border-2 transition-colors",
                       opt.isCorrect
-                        ? "border-primary bg-primary text-primary-foreground"
-                        : "border-input hover:border-foreground/40"
-                    }`}
+                        ? "border-emerald-600 bg-emerald-600 text-white"
+                        : "border-input hover:border-foreground/40",
+                    )}
                   >
                     {opt.isCorrect && <Check className="size-3" />}
                   </button>
+                  <span
+                    className={cn(
+                      "shrink-0 text-xs font-bold",
+                      opt.isCorrect
+                        ? "text-emerald-700"
+                        : "text-muted-foreground",
+                    )}
+                  >
+                    {LETRAS[i]}
+                  </span>
                   <Input
                     value={opt.text}
                     onChange={(e) => setOptionText(i, e.target.value)}
-                    placeholder={`Opción ${i + 1}`}
-                    className="flex-1"
+                    placeholder={`Opción ${LETRAS[i]}`}
+                    className={cn(
+                      CONTROL_ADMIN,
+                      "h-9 flex-1 border-0 bg-transparent px-0 focus-visible:ring-0",
+                    )}
                     disabled={isBoolean}
                     readOnly={isBoolean}
                   />
-                  {!isBoolean && options.length > 2 && (
+                  {!isBoolean && options.length > MIN_OPCIONES && (
                     <Button
                       type="button"
                       variant="ghost"
-                      size="icon"
+                      size="icon-sm"
                       onClick={() => removeOption(i)}
-                      aria-label={`Eliminar opción ${i + 1}`}
-                      className="size-8 shrink-0 text-muted-foreground hover:text-destructive"
+                      aria-label={`Eliminar la opción ${LETRAS[i]}`}
+                      className="shrink-0 text-muted-foreground hover:text-destructive"
                     >
-                      <Trash2 className="size-4" />
+                      <Trash2 className="size-3.5" />
                     </Button>
                   )}
                 </div>
               ))}
             </div>
-            {!isBoolean && options.length < 6 && (
+
+            {!isBoolean && options.length < MAX_OPCIONES && (
               <Button
                 type="button"
                 variant="ghost"
                 size="sm"
                 onClick={addOption}
-                className="h-7 text-xs text-primary hover:text-primary"
+                className="mt-2 font-semibold text-primary hover:bg-primary/10 hover:text-primary"
               >
                 <Plus className="size-3.5" /> Añadir opción
               </Button>
             )}
-          </div>
+          </AdminField>
 
-          <DialogFooter>
+          {state?.error && <AdminAlert>{state.error}</AdminAlert>}
+
+          <DialogFooter className="flex-col-reverse gap-2 sm:flex-row sm:justify-end">
             <Button
               type="button"
               variant="outline"
               onClick={() => setOpen(false)}
               disabled={pending}
+              className="w-full font-semibold sm:w-auto"
             >
               Cancelar
             </Button>
-            <Button type="submit" disabled={pending}>
+            <Button
+              type="submit"
+              disabled={pending || !listo}
+              className="w-full gap-2 font-semibold sm:w-auto"
+            >
               {pending ? (
                 <>
                   <Loader2 className="size-4 animate-spin" />
@@ -315,17 +350,25 @@ function QuestionDialog({
   );
 }
 
-function QuestionCard({ question, courseId }: { question: Question; courseId: string }) {
+function QuestionCard({
+  question,
+  numero,
+  courseId,
+}: {
+  question: Question;
+  numero: number;
+  courseId: string;
+}) {
   return (
-    <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
-      <div className="flex items-start justify-between gap-3 mb-3">
-        <div className="flex items-start gap-3 min-w-0">
-          <span className="shrink-0 size-7 rounded-md bg-primary/10 text-primary text-xs font-bold flex items-center justify-center">
-            {question.order + 1}
-          </span>
-          <p className="text-sm font-medium text-foreground leading-snug">{question.text}</p>
-        </div>
-        <div className="flex items-center gap-1 shrink-0">
+    <div className="rounded-2xl border border-border bg-card p-4 sm:p-5">
+      <div className="flex items-start gap-3">
+        <span className="inline-flex size-7 shrink-0 items-center justify-center rounded-lg bg-primary text-xs font-black tabular-nums text-primary-foreground">
+          {numero}
+        </span>
+        <p className="min-w-0 flex-1 text-sm font-semibold leading-relaxed text-foreground">
+          {question.text}
+        </p>
+        <div className="flex shrink-0 items-center gap-0.5">
           <QuestionDialog
             courseId={courseId}
             mode="edit"
@@ -334,11 +377,11 @@ function QuestionCard({ question, courseId }: { question: Question; courseId: st
               <Button
                 type="button"
                 variant="ghost"
-                size="icon"
-                className="size-8 text-muted-foreground hover:text-foreground"
+                size="icon-sm"
+                className="text-muted-foreground hover:text-foreground"
                 aria-label="Editar pregunta"
               >
-                <Pencil className="size-4" />
+                <Pencil className="size-3.5" />
               </Button>
             }
           />
@@ -352,22 +395,30 @@ function QuestionCard({ question, courseId }: { question: Question; courseId: st
           />
         </div>
       </div>
-      <ul className="space-y-1.5 ml-10">
-        {question.options.map((opt) => (
+
+      <ul className="mt-3 space-y-1.5 sm:pl-10">
+        {question.options.map((opt, i) => (
           <li
             key={opt.id}
-            className={`flex items-center gap-2 text-sm ${
-              opt.isCorrect ? "text-foreground font-semibold" : "text-muted-foreground"
-            }`}
-          >
-            {opt.isCorrect ? (
-              <span className="size-4 rounded-full bg-primary/15 text-primary flex items-center justify-center">
-                <Check className="size-2.5" />
-              </span>
-            ) : (
-              <Circle className="size-4 text-muted-foreground/40" />
+            className={cn(
+              "flex items-center gap-2.5 rounded-lg px-3 py-1.5 text-sm",
+              opt.isCorrect
+                ? "bg-emerald-50/70 font-semibold text-emerald-800"
+                : "text-muted-foreground",
             )}
-            <span>{opt.text}</span>
+          >
+            <span
+              className={cn(
+                "flex size-4 shrink-0 items-center justify-center rounded-full",
+                opt.isCorrect
+                  ? "bg-emerald-600 text-white"
+                  : "border border-muted-foreground/30",
+              )}
+            >
+              {opt.isCorrect && <Check className="size-2.5" />}
+            </span>
+            <span className="text-xs font-bold">{LETRAS[i]}</span>
+            <span className="min-w-0 flex-1">{opt.text}</span>
           </li>
         ))}
       </ul>
@@ -382,44 +433,96 @@ export function ExamManager({
   courseId: string;
   questions: Question[];
 }) {
+  const total = questions.length;
+  // Con menos de 4 preguntas, un solo fallo ya baja del 70% exigido
+  const pocasPreguntas = total > 0 && total < 4;
+
   return (
     <section className="space-y-5">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
         <div>
-          <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
-            Evaluación final
+          <h2 className="text-lg font-bold text-foreground">Evaluación final</h2>
+          <p className="mt-0.5 text-sm text-muted-foreground">
+            El estudiante debe aprobarla para obtener su certificado.
           </p>
-          <div className="flex items-center gap-2 mt-1">
-            <Badge variant="outline" className="font-semibold">
-              {questions.length} pregunta{questions.length === 1 ? "" : "s"}
-            </Badge>
-            <Badge variant="secondary" className="font-semibold">
-              Aprobación ≥ 70%
-            </Badge>
-          </div>
         </div>
         <QuestionDialog
           courseId={courseId}
           mode="create"
-          nextOrder={questions.length}
+          nextOrder={total}
           trigger={
-            <Button type="button" className="h-10 font-semibold">
+            <Button type="button" className="min-h-10 gap-2 font-semibold">
               <Plus className="size-4" /> Nueva pregunta
             </Button>
           }
         />
       </div>
 
-      {questions.length === 0 ? (
-        <EmptyState
-          icon={GraduationCap}
-          title="Sin preguntas todavía"
-          description="Los estudiantes necesitan aprobar la evaluación para obtener el certificado. Añade la primera pregunta para empezar."
-        />
+      {total > 0 && (
+        <div className="grid grid-cols-3 gap-3">
+          {[
+            { label: "Preguntas", value: String(total) },
+            { label: "Para aprobar", value: `${PUNTAJE_MINIMO}%` },
+            { label: "Intentos", value: "2" },
+          ].map(({ label, value }) => (
+            <div
+              key={label}
+              className="rounded-xl border border-border bg-card p-3 sm:p-4"
+            >
+              <p className="text-xl font-black tabular-nums text-foreground sm:text-2xl">
+                {value}
+              </p>
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                {label}
+              </p>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {pocasPreguntas && (
+        <p className="flex items-start gap-2.5 rounded-xl border border-amber-200 bg-amber-50/70 px-4 py-3 text-xs leading-relaxed text-amber-800">
+          <Target className="mt-0.5 size-4 shrink-0" />
+          Con solo {total} {total === 1 ? "pregunta" : "preguntas"}, un único
+          error deja al estudiante por debajo del {PUNTAJE_MINIMO}%. Añade al
+          menos 4 para que la nota sea representativa.
+        </p>
+      )}
+
+      {total === 0 ? (
+        <div className="rounded-2xl border border-dashed border-border bg-card p-8 text-center sm:p-12">
+          <span className="mx-auto inline-flex size-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
+            <GraduationCap className="size-6" />
+          </span>
+          <h3 className="mt-4 text-base font-bold text-foreground">
+            La evaluación está vacía
+          </h3>
+          <p className="mx-auto mt-2 max-w-sm text-sm leading-relaxed text-muted-foreground">
+            Sin preguntas los estudiantes no pueden obtener el certificado,
+            aunque completen todas las clases.
+          </p>
+          <div className="mt-6 flex justify-center">
+            <QuestionDialog
+              courseId={courseId}
+              mode="create"
+              nextOrder={0}
+              trigger={
+                <Button type="button" className="gap-2 font-bold">
+                  <Plus className="size-4" /> Crear la primera pregunta
+                </Button>
+              }
+            />
+          </div>
+        </div>
       ) : (
         <div className="space-y-3">
-          {questions.map((q) => (
-            <QuestionCard key={q.id} question={q} courseId={courseId} />
+          {questions.map((q, i) => (
+            <QuestionCard
+              key={q.id}
+              question={q}
+              numero={i + 1}
+              courseId={courseId}
+            />
           ))}
         </div>
       )}
