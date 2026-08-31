@@ -1,9 +1,20 @@
 import Link from "next/link";
 import Image from "next/image";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardFooter } from "@/components/ui/card";
-import { formatCurrency } from "@/lib/utils";
-import { ArrowUpRight, BookOpen, User } from "lucide-react";
+import {
+  ArrowUpRight,
+  BookOpen,
+  Clock,
+  Layers,
+  PlayCircle,
+  User,
+} from "lucide-react";
+import { cn, formatCurrency } from "@/lib/utils";
+import {
+  COURSE_LEVEL_LABELS,
+  type CourseLevelValue,
+} from "@/lib/validations/course";
+
+type Precio = number | string | { toNumber(): number };
 
 type InstructorInfo = {
   id: string;
@@ -15,90 +26,174 @@ type Props = {
   id: string;
   title: string;
   description: string;
-  price: number | string | { toNumber(): number };
+  price: Precio;
+  isFree?: boolean;
+  certificateFee?: Precio | null;
   thumbnailUrl?: string | null;
+  category?: string | null;
+  level?: string | null;
+  durationHours?: number | null;
   moduleCount: number;
   chapterCount: number;
   instructor?: InstructorInfo | null;
 };
 
-export function LandingCourseCard({ id, title, description, price, thumbnailUrl, moduleCount, chapterCount, instructor }: Props) {
+/** Días de acceso que concede la inscripción (ver lib/enrollments). */
+const DIAS_ACCESO = 180;
+
+function aNumero(valor: Precio) {
+  if (typeof valor === "object" && "toNumber" in valor) return valor.toNumber();
+  return Number(valor);
+}
+
+function Meta({
+  icon: Icon,
+  children,
+}: {
+  icon: typeof Layers;
+  children: React.ReactNode;
+}) {
+  return (
+    <span className="inline-flex items-center gap-1.5">
+      <Icon className="size-3.5 text-primary" />
+      {children}
+    </span>
+  );
+}
+
+export function LandingCourseCard({
+  id,
+  title,
+  description,
+  price,
+  isFree = false,
+  certificateFee,
+  thumbnailUrl,
+  category,
+  level,
+  durationHours,
+  moduleCount,
+  chapterCount,
+  instructor,
+}: Props) {
+  const levelLabel = level
+    ? COURSE_LEVEL_LABELS[level as CourseLevelValue]
+    : null;
+
+  // Un curso marcado como gratuito, o cuyo precio es 0, no se cobra.
+  // Solo el modelo `isFree` cobra el certificado aparte.
+  const gratuito = isFree || aNumero(price) <= 0;
+
   return (
     <Link
       href={`/cursos/${id}`}
-      className="group block rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2"
+      className="group flex h-full flex-col overflow-hidden rounded-2xl border border-border bg-card transition-all duration-300 hover:-translate-y-1 hover:border-primary/30 hover:shadow-xl hover:shadow-black/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2"
     >
-      <Card className="h-full overflow-hidden border-border/80 bg-white transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl hover:shadow-black/10 gap-0 py-0 rounded-2xl">
-        <div className="aspect-video overflow-hidden bg-muted relative">
-          {thumbnailUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={thumbnailUrl}
-              alt={title}
-              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-            />
-          ) : (
-            <div className="w-full h-full bg-linear-to-br from-primary/90 via-primary to-foreground flex items-center justify-center">
-              <BookOpen className="h-12 w-12 text-white/25" />
-            </div>
+      {/* Portada, sin superposiciones: muchas imágenes ya traen texto */}
+      <div className="relative aspect-video overflow-hidden bg-muted">
+        {thumbnailUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={thumbnailUrl}
+            alt=""
+            className="size-full object-cover transition-transform duration-700 group-hover:scale-105"
+          />
+        ) : (
+          <div className="flex size-full items-center justify-center bg-primary/5">
+            <BookOpen className="size-10 text-primary/30" />
+          </div>
+        )}
+      </div>
+
+      <div className="flex flex-1 flex-col p-5 sm:p-6">
+        {(category || levelLabel) && (
+          <p className="mb-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] font-bold uppercase tracking-widest">
+            {category && <span className="text-primary">{category}</span>}
+            {category && levelLabel && (
+              <span className="text-border">·</span>
+            )}
+            {levelLabel && (
+              <span className="text-muted-foreground">{levelLabel}</span>
+            )}
+          </p>
+        )}
+
+        <h3 className="text-base font-black leading-snug tracking-tight text-foreground transition-colors duration-300 group-hover:text-primary sm:text-lg">
+          {title}
+        </h3>
+
+        <p className="mt-2 line-clamp-2 text-sm leading-relaxed text-muted-foreground">
+          {description}
+        </p>
+
+        <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs font-medium text-muted-foreground">
+          <Meta icon={Layers}>
+            {moduleCount} {moduleCount === 1 ? "módulo" : "módulos"}
+          </Meta>
+          <Meta icon={PlayCircle}>
+            {chapterCount} {chapterCount === 1 ? "clase" : "clases"}
+          </Meta>
+          {durationHours != null && durationHours > 0 && (
+            <Meta icon={Clock}>{durationHours} h</Meta>
           )}
-          <div className="absolute inset-0 bg-linear-to-t from-black/45 via-black/5 to-transparent" />
-          <div className="absolute top-3 left-3 flex items-center gap-2">
-            <Badge className="bg-white/95 text-foreground border-0 text-[11px] font-semibold">{moduleCount} modulos</Badge>
-            <Badge className="bg-black/50 text-white border border-white/20 text-[11px]">{chapterCount} clases</Badge>
-          </div>
-          <div className="absolute right-3 bottom-3 inline-flex items-center gap-1 rounded-full bg-white/95 px-2.5 py-1 text-[11px] font-semibold text-foreground transition-transform duration-300 group-hover:translate-x-0.5">
-            Ver detalle <ArrowUpRight className="size-3.5" />
-          </div>
         </div>
 
-        <CardContent className="p-5 sm:p-6 flex-1">
-          <h3 className="text-lg font-bold text-foreground leading-snug mb-2 group-hover:text-primary transition-colors duration-300 line-clamp-2">
-            {title}
-          </h3>
-          <p className="text-sm text-muted-foreground line-clamp-3 mb-4 leading-relaxed">
-            {description}
-          </p>
-          <div className="flex items-center gap-2 flex-wrap text-xs">
-            <Badge variant="secondary" className="font-medium bg-muted/70 text-foreground">
-              {moduleCount} modulos
-            </Badge>
-            <Badge variant="secondary" className="font-medium bg-muted/70 text-foreground">
-              {chapterCount} clases
-            </Badge>
-            <Badge variant="secondary" className="font-medium bg-muted/70 text-foreground">
-              180 días de acceso
-            </Badge>
-          </div>
-        </CardContent>
-
         {instructor && (
-          <div className="px-5 sm:px-6 pb-4 flex items-center gap-2">
+          <div className="mt-4 flex items-center gap-2 border-t border-border pt-4">
             {instructor.avatarUrl ? (
               <Image
                 src={instructor.avatarUrl}
-                alt={instructor.name}
-                width={20}
-                height={20}
-                className="size-6 rounded-full object-cover border border-border"
+                alt=""
+                width={24}
+                height={24}
+                className="size-6 rounded-full border border-border object-cover"
               />
             ) : (
-              <div className="size-6 rounded-full bg-primary/10 flex items-center justify-center">
+              <span className="flex size-6 items-center justify-center rounded-full bg-primary/10">
                 <User className="size-3 text-primary" />
-              </div>
+              </span>
             )}
-            <span className="text-xs text-muted-foreground truncate">{instructor.name}</span>
+            <span className="truncate text-xs text-muted-foreground">
+              {instructor.name}
+            </span>
           </div>
         )}
 
-        <CardFooter className="px-5 sm:px-6 py-4 border-t border-border bg-muted/30 flex items-end justify-between">
-          <div>
-            <p className="text-[11px] uppercase tracking-wide text-muted-foreground">Certificacion</p>
-            <span className="text-xs text-foreground font-medium">Incluida al aprobar</span>
+        {/* El pie se ancla abajo para que las tarjetas queden alineadas */}
+        <div className="mt-auto pt-5">
+          <div className="flex items-end justify-between gap-3 border-t border-border pt-4">
+            <div className="min-w-0">
+              <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
+                {gratuito ? "Inscripción" : "Inversión"}
+              </p>
+              <p
+                className={cn(
+                  "mt-0.5 text-2xl font-black leading-none tracking-tight",
+                  gratuito ? "text-emerald-700" : "text-foreground",
+                )}
+              >
+                {gratuito ? "Gratis" : formatCurrency(price)}
+              </p>
+              <p className="mt-1.5 truncate text-[11px] text-muted-foreground">
+                {isFree
+                  ? certificateFee != null
+                    ? `Certificado ${formatCurrency(certificateFee)}`
+                    : "Certificado con costo aparte"
+                  : "Certificado incluido al aprobar"}
+              </p>
+            </div>
+
+            <span className="inline-flex shrink-0 items-center gap-1 rounded-lg bg-primary/10 px-3 py-2 text-xs font-bold text-primary transition-colors group-hover:bg-primary group-hover:text-primary-foreground">
+              Ver detalle
+              <ArrowUpRight className="size-3.5" />
+            </span>
           </div>
-          <span className="text-2xl font-extrabold text-foreground leading-none">{formatCurrency(price)}</span>
-        </CardFooter>
-      </Card>
+
+          <p className="mt-3 text-[11px] text-muted-foreground">
+            {DIAS_ACCESO} días de acceso desde la inscripción
+          </p>
+        </div>
+      </div>
     </Link>
   );
 }

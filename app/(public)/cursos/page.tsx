@@ -1,6 +1,5 @@
 import { Suspense } from "react";
 import { LandingCourseCard } from "@/components/landing/CourseCard";
-import { Badge } from "@/components/ui/badge";
 import { ArrowRight, ShieldCheck } from "lucide-react";
 import Link from "next/link";
 import { getPublishedCourses } from "@/lib/queries/courses";
@@ -51,9 +50,23 @@ async function CoursesList() {
                   title={course.title}
                   description={course.description}
                   price={course.price}
+                  isFree={course.isFree}
+                  certificateFee={course.certificateFee}
+                  category={course.category}
+                  level={course.level}
+                  durationHours={course.durationHours}
                   thumbnailUrl={course.thumbnailUrl}
                   moduleCount={course._count.modules}
                   chapterCount={chapterCount}
+                  instructor={
+                    course.instructor
+                      ? {
+                          id: course.instructor.id,
+                          name: course.instructor.user.name,
+                          avatarUrl: course.instructor.avatarUrl,
+                        }
+                      : null
+                  }
                 />
               </div>
             );

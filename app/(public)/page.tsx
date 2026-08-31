@@ -1,6 +1,5 @@
 import { Suspense } from 'react';
 import Link from 'next/link';
-import { Badge } from '@/components/ui/badge';
 import { buttonVariants } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { LandingCourseCard } from '@/components/landing/CourseCard';
@@ -63,6 +62,11 @@ async function FeaturedCourses() {
               title={course.title}
               description={course.description}
               price={course.price}
+              isFree={course.isFree}
+              certificateFee={course.certificateFee}
+              category={course.category}
+              level={course.level}
+              durationHours={course.durationHours}
               thumbnailUrl={course.thumbnailUrl}
               moduleCount={course._count.modules}
               chapterCount={chapterCount}
