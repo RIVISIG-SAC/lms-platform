@@ -1,29 +1,24 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import {
+  ChevronLeft,
+  FileText,
+  GraduationCap,
+  HelpCircle,
+  Layers,
+} from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { serializeCourse } from "@/lib/serialize";
 import { CourseForm } from "@/components/admin/CourseForm";
+import { CourseEditHeader } from "@/components/admin/CourseEditHeader";
 import { ModuleAccordion } from "@/components/admin/modules/ModuleAccordion";
 import { AddModuleButton } from "@/components/admin/modules/AddModuleButton";
 import { deleteCourse, updateCourse } from "@/app/actions/courses";
 import { DeleteConfirmDialog } from "@/components/admin/DeleteConfirmDialog";
 import { ExamManager } from "@/components/admin/ExamManager";
 import { FaqManager } from "@/components/admin/FaqManager";
-import { EmptyState } from "@/components/admin/EmptyState";
-import { formatCurrency } from "@/lib/utils";
-import { COURSE_LEVEL_LABELS, type CourseLevelValue } from "@/lib/validations/course";
-import { BookOpen, Clock, FileText, GraduationCap, HelpCircle, Layers, Tag } from "lucide-react";
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent } from "@/components/ui/card";
 
 type Props = { params: Promise<{ courseId: string }> };
 
@@ -54,6 +49,7 @@ export default async function EditCoursePage({ params }: Props) {
           include: { options: true },
         },
         faqs: { orderBy: { order: "asc" } },
+        _count: { select: { enrollments: true } },
       },
     }),
     prisma.instructorProfile.findMany({
@@ -64,67 +60,43 @@ export default async function EditCoursePage({ params }: Props) {
 
   if (!course) notFound();
 
-  const totalChapters = course.modules.reduce((acc: number, m) => acc + m.chapters.length, 0);
-  const levelLabel = course.level
-    ? COURSE_LEVEL_LABELS[course.level as CourseLevelValue]
-    : null;
+  const totalChapters = course.modules.reduce(
+    (acc: number, m) => acc + m.chapters.length,
+    0,
+  );
+
+  // Número de clase global con el que arranca cada módulo
+  const inicioPorModulo = course.modules.map(
+    (_, i) =>
+      course.modules
+        .slice(0, i)
+        .reduce((total, m) => total + m.chapters.length, 0) + 1,
+  );
 
   return (
-    <div className="max-w-6xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      {/* Breadcrumb */}
-      <Breadcrumb>
-        <BreadcrumbList className="text-xs font-semibold uppercase tracking-widest">
-          <BreadcrumbItem>
-            <BreadcrumbLink render={<Link href="/admin/courses" />}>Cursos</BreadcrumbLink>
-          </BreadcrumbItem>
-          <BreadcrumbSeparator />
-          <BreadcrumbItem>
-            <BreadcrumbPage className="max-w-[260px] truncate normal-case tracking-normal font-medium">
-              {course.title}
-            </BreadcrumbPage>
-          </BreadcrumbItem>
-        </BreadcrumbList>
-      </Breadcrumb>
+    <div className="mx-auto max-w-5xl space-y-6 animate-in fade-in duration-500">
+      <Link
+        href="/admin/courses"
+        className="inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+      >
+        <ChevronLeft className="size-4" />
+        Cursos
+      </Link>
 
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-start justify-between gap-4 rounded-2xl border border-border bg-card p-6 shadow-sm">
-        <div className="flex items-start gap-4 min-w-0">
-          <div className="size-12 rounded-xl bg-primary/10 flex items-center justify-center border border-primary/15 shrink-0">
-            <BookOpen className="size-5 text-primary" />
-          </div>
-          <div className="min-w-0">
-            <h1 className="text-2xl font-bold tracking-tight text-foreground truncate">
-              {course.title}
-            </h1>
-            <div className="flex flex-wrap items-center gap-2 mt-2">
-              <Badge
-                variant={course.published ? "default" : "outline"}
-                className="font-semibold"
-              >
-                {course.published ? "Publicado" : "Borrador"}
-              </Badge>
-              <Badge variant="secondary" className="font-semibold">
-                {formatCurrency(course.price)}
-              </Badge>
-              {course.category && (
-                <Badge variant="outline" className="gap-1 font-semibold">
-                  <Tag className="size-3" /> {course.category}
-                </Badge>
-              )}
-              {levelLabel && (
-                <Badge variant="outline" className="font-semibold">
-                  {levelLabel}
-                </Badge>
-              )}
-              {course.durationHours != null && (
-                <Badge variant="outline" className="gap-1 font-semibold">
-                  <Clock className="size-3" /> {course.durationHours} h
-                </Badge>
-              )}
-            </div>
-          </div>
-        </div>
-        <div className="shrink-0">
+      <CourseEditHeader
+        courseId={course.id}
+        title={course.title}
+        published={course.published}
+        price={Number(course.price)}
+        isFree={course.isFree}
+        category={course.category}
+        level={course.level}
+        durationHours={course.durationHours}
+        modules={course.modules.length}
+        chapters={totalChapters}
+        questions={course.questions.length}
+        students={course._count.enrollments}
+        actions={
           <DeleteConfirmDialog
             action={deleteCourse.bind(null, course.id)}
             title="¿Eliminar curso?"
@@ -132,103 +104,108 @@ export default async function EditCoursePage({ params }: Props) {
             triggerLabel="Eliminar curso"
             successMessage="Curso eliminado"
           />
-        </div>
-      </div>
+        }
+      />
 
-      {/* Tabs */}
       <Tabs defaultValue="info">
-        <TabsList className="h-11 bg-muted/70 p-1">
-          <TabsTrigger value="info" className="px-4 gap-2">
-            <FileText className="size-4" />
+        <TabsList className="h-13 w-full justify-start gap-1 overflow-x-auto bg-muted p-1.5">
+          <TabsTrigger value="info" className="flex-none gap-2 px-5 text-sm font-semibold">
+            <FileText className="size-4.5" />
             Información
           </TabsTrigger>
-          <TabsTrigger value="content" className="px-4 gap-2">
-            <Layers className="size-4" />
+          <TabsTrigger value="content" className="flex-none gap-2 px-5 text-sm font-semibold">
+            <Layers className="size-4.5" />
             Contenido
-            <Badge variant="outline" className="ml-1 text-[10px] font-semibold">
+            <Badge variant="outline" className="ml-1 text-[11px] font-bold tabular-nums">
               {course.modules.length} · {totalChapters}
             </Badge>
           </TabsTrigger>
-          <TabsTrigger value="exam" className="px-4 gap-2">
-            <GraduationCap className="size-4" />
+          <TabsTrigger value="exam" className="flex-none gap-2 px-5 text-sm font-semibold">
+            <GraduationCap className="size-4.5" />
             Evaluación
-            <Badge variant="outline" className="ml-1 text-[10px] font-semibold">
+            <Badge variant="outline" className="ml-1 text-[11px] font-bold tabular-nums">
               {course.questions.length}
             </Badge>
           </TabsTrigger>
-          <TabsTrigger value="faqs" className="px-4 gap-2">
-            <HelpCircle className="size-4" />
+          <TabsTrigger value="faqs" className="flex-none gap-2 px-5 text-sm font-semibold">
+            <HelpCircle className="size-4.5" />
             FAQs
-            <Badge variant="outline" className="ml-1 text-[10px] font-semibold">
+            <Badge variant="outline" className="ml-1 text-[11px] font-bold tabular-nums">
               {course.faqs.length}
             </Badge>
           </TabsTrigger>
         </TabsList>
 
-        {/* ── Info Tab ─────────────────────────────────────── */}
         <TabsContent value="info" className="mt-6">
-          <Card>
-            <CardContent className="p-6 md:p-8">
-              <CourseForm action={updateCourse} course={serializeCourse(course)} instructors={instructors} />
-            </CardContent>
-          </Card>
+          <CourseForm
+            action={updateCourse}
+            course={serializeCourse(course)}
+            instructors={instructors}
+          />
         </TabsContent>
 
-        {/* ── Content Tab ──────────────────────────────────── */}
         <TabsContent value="content" className="mt-6">
-          <div className="space-y-4">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+          <section className="space-y-5">
+            <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
               <div>
-                <h2 className="text-lg font-bold text-foreground">Estructura del curso</h2>
-                <p className="text-sm text-muted-foreground mt-0.5">
-                  Organiza los módulos y capítulos que verán los estudiantes.
+                <h2 className="text-lg font-bold text-foreground">
+                  Estructura del curso
+                </h2>
+                <p className="mt-0.5 text-sm text-muted-foreground">
+                  {course.modules.length === 0
+                    ? "Organiza el contenido en módulos y, dentro de cada uno, capítulos."
+                    : `${course.modules.length} ${course.modules.length === 1 ? "módulo" : "módulos"} · ${totalChapters} ${totalChapters === 1 ? "capítulo" : "capítulos"} en total.`}
                 </p>
               </div>
-              <AddModuleButton
-                courseId={course.id}
-                nextOrder={course.modules.length}
-              />
+              {course.modules.length > 0 && (
+                <AddModuleButton
+                  courseId={course.id}
+                  nextOrder={course.modules.length}
+                />
+              )}
             </div>
 
             {course.modules.length === 0 ? (
-              <EmptyState
-                icon={Layers}
-                title="Aún no hay módulos"
-                description="Los cursos se organizan en módulos y, dentro de cada módulo, capítulos. Empieza creando el primer módulo."
-                action={
+              <div className="rounded-2xl border border-dashed border-border bg-card p-8 text-center sm:p-12">
+                <span className="mx-auto inline-flex size-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                  <Layers className="size-6" />
+                </span>
+                <h3 className="mt-4 text-base font-bold text-foreground">
+                  Aún no hay módulos
+                </h3>
+                <p className="mx-auto mt-2 max-w-sm text-sm leading-relaxed text-muted-foreground">
+                  Los cursos se organizan en módulos y, dentro de cada módulo,
+                  capítulos con video y material descargable.
+                </p>
+                <div className="mx-auto mt-6 max-w-xs">
                   <AddModuleButton
                     courseId={course.id}
                     nextOrder={0}
                     variant="ghost"
                   />
-                }
-              />
+                </div>
+              </div>
             ) : (
               <div className="space-y-3">
-                {course.modules.map((mod) => (
-                  <ModuleAccordion key={mod.id} mod={mod} courseId={course.id} />
+                {course.modules.map((mod, i) => (
+                  <ModuleAccordion
+                    key={mod.id}
+                    mod={mod}
+                    courseId={course.id}
+                    claseInicial={inicioPorModulo[i]}
+                  />
                 ))}
               </div>
             )}
-          </div>
+          </section>
         </TabsContent>
 
-        {/* ── Exam Tab ─────────────────────────────────────── */}
         <TabsContent value="exam" className="mt-6">
-          <Card>
-            <CardContent className="p-6 md:p-8">
-              <ExamManager courseId={course.id} questions={course.questions} />
-            </CardContent>
-          </Card>
+          <ExamManager courseId={course.id} questions={course.questions} />
         </TabsContent>
 
-        {/* ── FAQ Tab ──────────────────────────────────────── */}
         <TabsContent value="faqs" className="mt-6">
-          <Card>
-            <CardContent className="p-6 md:p-8">
-              <FaqManager courseId={course.id} faqs={course.faqs} />
-            </CardContent>
-          </Card>
+          <FaqManager courseId={course.id} faqs={course.faqs} />
         </TabsContent>
       </Tabs>
     </div>
