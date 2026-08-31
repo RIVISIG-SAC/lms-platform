@@ -1,123 +1,104 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState } from "react";
 import Link from "next/link";
-import { AlertCircle, CheckCircle2, Mail, Lock, ArrowRight } from "lucide-react";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { ArrowRight, Loader2, Lock, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { AuthField, PasswordField } from "@/components/auth/AuthField";
+import { AuthAlert, AuthHeading } from "@/components/auth/AuthUi";
 import { loginAction } from "@/app/actions/auth";
 
 type ActionState = { error?: string } | null;
 type Props = { next?: string; resetOk?: boolean };
 
 export function LoginForm({ next, resetOk }: Props) {
-  const [state, action, pending] = useActionState<ActionState, FormData>(loginAction, null);
-  const [email, setEmail] = useState("");
+  const [state, action, pending] = useActionState<ActionState, FormData>(
+    loginAction,
+    null,
+  );
 
   return (
-    <div className="space-y-8">
-      <div className="space-y-2">
-        <h1 className="text-2xl font-light text-foreground">
-          Bienvenido de<span className="font-semibold"> vuelta</span>
-        </h1>
-        <p className="text-sm text-muted-foreground">
-          Ingresa tus credenciales para acceder
-        </p>
-      </div>
+    <div className="space-y-7">
+      <AuthHeading
+        eyebrow="Acceso al campus"
+        title={
+          <>
+            Bienvenido de{" "}
+            <span className="text-foreground/40">vuelta</span>
+          </>
+        }
+        description="Ingresa con tu correo y contraseña para continuar con tus cursos."
+      />
 
-      <form action={action} className="space-y-6">
+      {resetOk && (
+        <AuthAlert tone="success">
+          Contraseña restablecida con éxito. Inicia sesión con tu nueva
+          contraseña.
+        </AuthAlert>
+      )}
+
+      <form action={action} className="space-y-5">
         {next && <input type="hidden" name="next" value={next} />}
 
-        {resetOk && (
-          <div className="flex items-center gap-2 text-sm text-emerald-700 bg-emerald-50 border border-emerald-200 px-4 py-3 rounded-lg">
-            <CheckCircle2 className="w-4 h-4 shrink-0" aria-hidden="true" />
-            <span>
-              Contraseña restablecida con éxito. Inicia sesión con tu nueva contraseña.
-            </span>
-          </div>
-        )}
+        <AuthField
+          id="email"
+          name="email"
+          type="email"
+          label="Correo electrónico"
+          icon={Mail}
+          autoComplete="email"
+          required
+          placeholder="nombre@empresa.com"
+        />
 
-        <div className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="email" className="text-xs font-medium text-muted-foreground">
-              Correo electrónico
-            </Label>
-            <div className="relative">
-              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/50" />
-              <Input
-                id="email"
-                name="email"
-                type="email"
-                autoComplete="email"
-                required
-                placeholder="nombre@empresa.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="pl-10 h-12 bg-background/50 border-muted-foreground/20 focus:border-primary focus:ring-0"
-              />
-            </div>
-          </div>
+        <PasswordField
+          id="password"
+          name="password"
+          label="Contraseña"
+          icon={Lock}
+          autoComplete="current-password"
+          required
+          placeholder="Tu contraseña"
+          accion={
+            <Link
+              href="/recuperar"
+              className="text-xs font-medium text-muted-foreground transition-colors hover:text-primary"
+            >
+              ¿Olvidaste tu contraseña?
+            </Link>
+          }
+        />
 
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <Label htmlFor="password" className="text-xs font-medium text-muted-foreground">
-                Contraseña
-              </Label>
-              <Link
-                href="/recuperar"
-                className="text-xs text-muted-foreground hover:text-primary transition-colors"
-              >
-                ¿Olvidaste tu contraseña?
-              </Link>
-            </div>
-            <div className="relative">
-              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/50" />
-              <Input
-                id="password"
-                name="password"
-                type="password"
-                autoComplete="current-password"
-                required
-                placeholder="••••••••"
-                className="pl-10 h-12 bg-background/50 border-muted-foreground/20 focus:border-primary focus:ring-0"
-              />
-            </div>
-          </div>
-        </div>
+        {state?.error && <AuthAlert tone="error">{state.error}</AuthAlert>}
 
-        {state?.error && (
-          <div className="flex items-center gap-2 text-sm text-destructive bg-destructive/5 border border-destructive/10 px-4 py-3 rounded-lg">
-            <AlertCircle className="w-4 h-4 shrink-0" aria-hidden="true" />
-            <span>{state.error}</span>
-          </div>
-        )}
-
-        <Button 
-          type="submit" 
-          disabled={pending} 
-          className="w-full h-12 text-sm font-medium flex items-center justify-center gap-2"
+        <Button
+          type="submit"
+          disabled={pending}
+          className="min-h-12 w-full text-sm font-bold"
         >
           {pending ? (
-            "Ingresando..."
+            <>
+              <Loader2 className="size-4 animate-spin" />
+              Ingresando...
+            </>
           ) : (
             <>
               Iniciar sesión
-              <ArrowRight className="w-4 h-4" />
+              <ArrowRight className="size-4" />
             </>
           )}
         </Button>
-
-        <div className="text-center pt-2">
-          <Link
-            href="/registro"
-            className="text-sm text-muted-foreground hover:text-primary transition-colors"
-          >
-            ¿No tienes cuenta?{' '}
-            <span className="font-medium text-primary">Regístrate</span>
-          </Link>
-        </div>
       </form>
+
+      <p className="border-t border-border pt-6 text-center text-sm text-muted-foreground">
+        ¿Aún no tienes cuenta?{" "}
+        <Link
+          href={next ? `/registro?next=${encodeURIComponent(next)}` : "/registro"}
+          className="font-semibold text-primary transition-opacity hover:opacity-80"
+        >
+          Crear una cuenta
+        </Link>
+      </p>
     </div>
   );
 }
