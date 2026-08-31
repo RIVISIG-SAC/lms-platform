@@ -4,19 +4,22 @@ import { useState } from "react";
 import type { Module, Chapter, ChapterResource } from "@prisma/client";
 import {
   ChevronDown,
-  Pencil,
-  Plus,
-  PlayCircle,
-  FileText,
-  FileSpreadsheet,
-  Presentation,
-  Paperclip,
   ExternalLink,
-  Layers,
+  FileSpreadsheet,
+  FileText,
+  Paperclip,
+  Pencil,
+  PlayCircle,
+  Plus,
+  Presentation,
+  type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { deleteModule, deleteChapter, deleteResource } from "@/app/actions/courses";
-import { Badge } from "@/components/ui/badge";
+import {
+  deleteModule,
+  deleteChapter,
+  deleteResource,
+} from "@/app/actions/courses";
 import { Button } from "@/components/ui/button";
 import { ChapterDialog } from "./ChapterDialog";
 import { ResourceDialog } from "./ResourceDialog";
@@ -26,7 +29,7 @@ import { DeleteConfirmDialog } from "@/components/admin/DeleteConfirmDialog";
 type ChapterWithResources = Chapter & { resources: ChapterResource[] };
 type ModuleWithChapters = Module & { chapters: ChapterWithResources[] };
 
-const RESOURCE_ICON: Record<string, typeof FileText> = {
+const RESOURCE_ICON: Record<string, LucideIcon> = {
   PDF: FileText,
   DOCX: FileText,
   PPTX: Presentation,
@@ -34,35 +37,46 @@ const RESOURCE_ICON: Record<string, typeof FileText> = {
   OTRO: Paperclip,
 };
 
-function ResourceRow({ resource, courseId }: { resource: ChapterResource; courseId: string }) {
+function ResourceRow({
+  resource,
+  courseId,
+}: {
+  resource: ChapterResource;
+  courseId: string;
+}) {
   const Icon = RESOURCE_ICON[resource.type] ?? Paperclip;
+
   return (
-    <div className="group/res flex items-center justify-between gap-2 rounded-md border border-border/50 bg-card px-3 py-1.5 text-xs">
-      <div className="flex items-center gap-2 min-w-0">
-        <Icon className="size-3.5 shrink-0 text-muted-foreground" />
-        <span className="truncate font-medium text-foreground">{resource.name}</span>
-        <Badge variant="outline" className="text-[10px] px-1.5 py-0 font-semibold uppercase">
+    <div className="group/res flex items-center gap-2.5 rounded-lg border border-border bg-card px-3 py-2">
+      <span className="inline-flex size-7 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground">
+        <Icon className="size-3.5" />
+      </span>
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-xs font-semibold text-foreground">
+          {resource.name}
+        </p>
+        <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
           {resource.type}
-        </Badge>
+        </p>
       </div>
-      <div className="flex items-center gap-1 opacity-0 group-hover/res:opacity-100 md:opacity-0 md:group-hover/res:opacity-100 transition-opacity">
+      <div className="flex shrink-0 items-center gap-0.5 transition-opacity md:opacity-0 md:group-hover/res:opacity-100">
         <a
           href={resource.url}
           target="_blank"
           rel="noopener noreferrer"
-          className="text-muted-foreground hover:text-primary p-1"
-          aria-label="Abrir recurso"
+          className="inline-flex size-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+          aria-label={`Abrir ${resource.name}`}
         >
           <ExternalLink className="size-3.5" />
         </a>
         <DeleteConfirmDialog
           action={() => deleteResource(resource.id, courseId)}
           title="¿Eliminar recurso?"
-          description={`"${resource.name}" será removido del capítulo.`}
+          description={`"${resource.name}" dejará de estar disponible para los estudiantes.`}
           triggerLabel="Eliminar recurso"
           successMessage="Recurso eliminado"
           variant="icon"
-          triggerClassName="size-6 text-destructive hover:bg-destructive/10"
+          triggerClassName="size-7 text-destructive hover:bg-destructive/10"
         />
       </div>
     </div>
@@ -71,42 +85,63 @@ function ResourceRow({ resource, courseId }: { resource: ChapterResource; course
 
 function ChapterRow({
   chapter,
+  numero,
   courseId,
 }: {
   chapter: ChapterWithResources;
+  numero: number;
   courseId: string;
 }) {
   const [expanded, setExpanded] = useState(false);
-  const hasResources = chapter.resources.length > 0;
+  const recursos = chapter.resources.length;
+  const sinVideo = !chapter.vimeoVideoId;
 
   return (
-    <div className="rounded-lg border border-border/50 bg-card">
-      <div className="flex items-center justify-between gap-3 px-3 py-2">
+    <div
+      className={cn(
+        "rounded-xl border transition-colors",
+        expanded ? "border-primary/30 bg-card" : "border-border bg-card",
+      )}
+    >
+      <div className="flex items-center gap-2 px-3 py-2.5">
         <button
           type="button"
           onClick={() => setExpanded((v) => !v)}
-          className="flex items-center gap-3 min-w-0 flex-1 text-left"
+          aria-expanded={expanded}
+          className="flex min-w-0 flex-1 items-center gap-3 text-left"
         >
-          <span className="size-6 rounded-md bg-muted text-muted-foreground text-xs font-bold flex items-center justify-center shrink-0">
-            {chapter.order + 1}
+          <ChevronDown
+            className={cn(
+              "size-3.5 shrink-0 text-muted-foreground transition-transform",
+              !expanded && "-rotate-90",
+            )}
+          />
+          <span className="inline-flex size-6 shrink-0 items-center justify-center rounded-md bg-muted text-[11px] font-bold tabular-nums text-muted-foreground">
+            {numero}
           </span>
-          <span className="truncate text-sm font-medium text-foreground">
+          <span className="truncate text-sm font-semibold text-foreground">
             {chapter.title}
           </span>
-          <div className="flex items-center gap-1.5 shrink-0">
-            {chapter.vimeoVideoId && (
-              <Badge variant="outline" className="gap-1 text-[10px] font-semibold">
-                <PlayCircle className="size-3" /> Video
-              </Badge>
-            )}
-            {hasResources && (
-              <Badge variant="secondary" className="text-[10px] font-semibold">
-                {chapter.resources.length} recurso{chapter.resources.length > 1 ? "s" : ""}
-              </Badge>
-            )}
-          </div>
         </button>
-        <div className="flex items-center gap-1 shrink-0">
+
+        <div className="flex shrink-0 items-center gap-2">
+          <span
+            className={cn(
+              "hidden items-center gap-1 text-[11px] font-semibold sm:inline-flex",
+              sinVideo ? "text-amber-700" : "text-muted-foreground",
+            )}
+            title={sinVideo ? "Esta clase no tiene video" : "Video configurado"}
+          >
+            <PlayCircle className="size-3.5" />
+            {sinVideo ? "Sin video" : "Video"}
+          </span>
+          {recursos > 0 && (
+            <span className="hidden items-center gap-1 text-[11px] font-semibold text-muted-foreground sm:inline-flex">
+              <Paperclip className="size-3.5" />
+              {recursos}
+            </span>
+          )}
+
           <ChapterDialog
             mode="edit"
             courseId={courseId}
@@ -116,7 +151,7 @@ function ChapterRow({
                 type="button"
                 variant="ghost"
                 size="icon-sm"
-                aria-label="Editar capítulo"
+                aria-label={`Editar ${chapter.title}`}
                 className="text-muted-foreground hover:text-foreground"
               >
                 <Pencil className="size-3.5" />
@@ -126,7 +161,7 @@ function ChapterRow({
           <DeleteConfirmDialog
             action={() => deleteChapter(chapter.id, courseId)}
             title="¿Eliminar capítulo?"
-            description={`Se eliminará "${chapter.title}" y todos sus recursos descargables.`}
+            description={`Se eliminará "${chapter.title}" y sus ${recursos} recurso${recursos === 1 ? "" : "s"} descargable${recursos === 1 ? "" : "s"}.`}
             triggerLabel="Eliminar capítulo"
             successMessage="Capítulo eliminado"
             variant="icon"
@@ -135,49 +170,51 @@ function ChapterRow({
       </div>
 
       {expanded && (
-        <div className="border-t border-border/50 px-3 py-3 space-y-2 bg-accent/20">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-              Recursos descargables
-            </span>
-            <ResourceDialog
-              chapterId={chapter.id}
-              courseId={courseId}
-              trigger={
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  className="h-7 text-xs font-semibold text-primary hover:text-primary hover:bg-primary/10"
-                >
-                  <Plus className="size-3.5" /> Añadir
-                </Button>
-              }
-            />
-          </div>
-
-          {chapter.resources.length === 0 ? (
-            <p className="text-xs text-muted-foreground italic py-2">
-              Este capítulo aún no tiene recursos descargables.
-            </p>
-          ) : (
-            <div className="space-y-1.5">
-              {chapter.resources.map((r) => (
-                <ResourceRow key={r.id} resource={r} courseId={courseId} />
-              ))}
-            </div>
-          )}
-
+        <div className="space-y-4 border-t border-border px-3 py-3.5">
           {chapter.content && (
-            <div className="pt-2 border-t border-border/40">
-              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">
+            <div>
+              <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
                 Descripción
               </p>
-              <p className="text-xs text-foreground/80 whitespace-pre-wrap">
+              <p className="mt-1 whitespace-pre-wrap text-xs leading-relaxed text-foreground/80">
                 {chapter.content}
               </p>
             </div>
           )}
+
+          <div>
+            <div className="flex items-center justify-between gap-3">
+              <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+                Recursos descargables
+              </p>
+              <ResourceDialog
+                chapterId={chapter.id}
+                courseId={courseId}
+                trigger={
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="font-semibold text-primary hover:bg-primary/10 hover:text-primary"
+                  >
+                    <Plus className="size-3.5" /> Añadir
+                  </Button>
+                }
+              />
+            </div>
+
+            {recursos === 0 ? (
+              <p className="mt-2 rounded-lg border border-dashed border-border px-3 py-3 text-center text-xs text-muted-foreground">
+                Sin recursos. Añade plantillas, guías o material de apoyo.
+              </p>
+            ) : (
+              <div className="mt-2 space-y-1.5">
+                {chapter.resources.map((r) => (
+                  <ResourceRow key={r.id} resource={r} courseId={courseId} />
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       )}
     </div>
@@ -187,42 +224,55 @@ function ChapterRow({
 export function ModuleAccordion({
   mod,
   courseId,
+  /** Número de clase con el que arranca este módulo, contando todo el curso. */
+  claseInicial = 1,
 }: {
   mod: ModuleWithChapters;
   courseId: string;
+  claseInicial?: number;
 }) {
   const [open, setOpen] = useState(true);
+  const total = mod.chapters.length;
+  const sinVideo = mod.chapters.filter((c) => !c.vimeoVideoId).length;
 
   return (
-    <div className="rounded-2xl border border-border bg-card shadow-sm overflow-hidden">
-      {/* Module header */}
-      <div className="flex items-center justify-between gap-3 px-4 py-3 bg-accent/30 border-b border-border/60">
+    <div className="overflow-hidden rounded-2xl border border-border bg-card">
+      {/* Cabecera del módulo */}
+      <div className="flex items-center gap-2 border-b border-border bg-muted/30 px-4 py-3">
         <button
           type="button"
           onClick={() => setOpen((v) => !v)}
-          className="flex items-center gap-3 min-w-0 flex-1 text-left"
+          aria-expanded={open}
+          className="flex min-w-0 flex-1 items-center gap-3 text-left"
         >
           <ChevronDown
             className={cn(
-              "size-4 text-muted-foreground transition-transform shrink-0",
-              !open && "-rotate-90"
+              "size-4 shrink-0 text-muted-foreground transition-transform",
+              !open && "-rotate-90",
             )}
           />
-          <div className="size-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-            <Layers className="size-3.5 text-primary" />
-          </div>
+          <span className="inline-flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-xs font-black tabular-nums text-primary">
+            {mod.order + 1}
+          </span>
           <div className="min-w-0">
-            <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-              Módulo {mod.order + 1}
+            <p className="truncate text-sm font-bold text-foreground">
+              {mod.title}
             </p>
-            <p className="text-sm font-semibold text-foreground truncate">{mod.title}</p>
+            <p className="text-[11px] text-muted-foreground">
+              {total === 0
+                ? "Sin capítulos"
+                : `${total} ${total === 1 ? "capítulo" : "capítulos"}`}
+              {sinVideo > 0 && (
+                <span className="font-semibold text-amber-700">
+                  {" "}
+                  · {sinVideo} sin video
+                </span>
+              )}
+            </p>
           </div>
-          <Badge variant="outline" className="ml-2 text-[10px] font-semibold">
-            {mod.chapters.length} cap.
-          </Badge>
         </button>
 
-        <div className="flex items-center gap-1 shrink-0">
+        <div className="flex shrink-0 items-center gap-0.5">
           <ModuleEditDialog
             mod={mod}
             courseId={courseId}
@@ -231,7 +281,7 @@ export function ModuleAccordion({
                 type="button"
                 variant="ghost"
                 size="icon-sm"
-                aria-label="Editar módulo"
+                aria-label={`Editar ${mod.title}`}
                 className="text-muted-foreground hover:text-foreground"
               >
                 <Pencil className="size-3.5" />
@@ -241,7 +291,7 @@ export function ModuleAccordion({
           <DeleteConfirmDialog
             action={() => deleteModule(mod.id, courseId)}
             title="¿Eliminar módulo?"
-            description={`Se eliminará "${mod.title}" junto con todos sus capítulos y recursos.`}
+            description={`Se eliminará "${mod.title}" junto con sus ${total} capítulo${total === 1 ? "" : "s"} y todos sus recursos.`}
             triggerLabel="Eliminar módulo"
             successMessage="Módulo eliminado"
             variant="icon"
@@ -249,16 +299,21 @@ export function ModuleAccordion({
         </div>
       </div>
 
-      {/* Chapters */}
+      {/* Capítulos */}
       {open && (
-        <div className="p-3 space-y-2">
-          {mod.chapters.length === 0 ? (
-            <div className="text-center py-6 text-xs text-muted-foreground italic">
-              Sin capítulos todavía.
-            </div>
+        <div className="space-y-2 p-3">
+          {total === 0 ? (
+            <p className="rounded-xl border border-dashed border-border px-4 py-6 text-center text-xs text-muted-foreground">
+              Este módulo todavía no tiene capítulos.
+            </p>
           ) : (
-            mod.chapters.map((ch) => (
-              <ChapterRow key={ch.id} chapter={ch} courseId={courseId} />
+            mod.chapters.map((ch, i) => (
+              <ChapterRow
+                key={ch.id}
+                chapter={ch}
+                numero={claseInicial + i}
+                courseId={courseId}
+              />
             ))
           )}
 
@@ -266,13 +321,13 @@ export function ModuleAccordion({
             mode="create"
             courseId={courseId}
             moduleId={mod.id}
-            nextOrder={mod.chapters.length}
+            nextOrder={total}
             trigger={
               <Button
                 type="button"
                 variant="outline"
                 size="sm"
-                className="w-full h-9 border-dashed font-semibold text-muted-foreground hover:text-foreground hover:border-primary/40"
+                className="h-10 w-full border-dashed font-semibold text-muted-foreground hover:border-primary/40 hover:text-foreground"
               >
                 <Plus className="size-3.5" /> Añadir capítulo
               </Button>
