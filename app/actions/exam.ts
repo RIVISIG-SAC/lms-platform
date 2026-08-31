@@ -3,19 +3,26 @@
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { getRequiredSession } from "@/lib/auth";
+import {
+  assertCourseAccess,
+  revalidateCourseEditors,
+} from "@/lib/courseAccess";
 import { addDays } from "@/lib/utils";
 import { notifyCertificateIssued } from "@/lib/notifications";
 
-// ─── Admin: gestión de preguntas ────────────────────────────────────────────
+// ─── Gestión de preguntas: admin e instructor propietario ───────────────────
 
 export async function createQuestion(
   _prev: unknown,
   formData: FormData
 ): Promise<{ error?: string; success?: boolean }> {
-  const session = await getRequiredSession();
-  if (session.role !== "ADMIN") return { error: "No autorizado" };
-
   const courseId = formData.get("courseId") as string;
+  try {
+    await assertCourseAccess(courseId);
+  } catch {
+    return { error: "No autorizado" };
+  }
+
   const text = (formData.get("text") as string)?.trim();
   const order = Number(formData.get("order"));
 
@@ -46,7 +53,7 @@ export async function createQuestion(
     },
   });
 
-  revalidatePath(`/admin/courses/${courseId}`);
+  revalidateCourseEditors(courseId);
   return { success: true };
 }
 
@@ -54,11 +61,14 @@ export async function updateQuestion(
   _prev: unknown,
   formData: FormData
 ): Promise<{ error?: string; success?: boolean }> {
-  const session = await getRequiredSession();
-  if (session.role !== "ADMIN") return { error: "No autorizado" };
+  const courseId = formData.get("courseId") as string;
+  try {
+    await assertCourseAccess(courseId);
+  } catch {
+    return { error: "No autorizado" };
+  }
 
   const questionId = formData.get("questionId") as string;
-  const courseId = formData.get("courseId") as string;
   const text = (formData.get("text") as string)?.trim();
 
   if (!questionId) return { error: "Pregunta no encontrada" };
@@ -91,16 +101,19 @@ export async function updateQuestion(
     }),
   ]);
 
-  revalidatePath(`/admin/courses/${courseId}`);
+  revalidateCourseEditors(courseId);
   return { success: true };
 }
 
 export async function deleteQuestion(questionId: string, courseId: string) {
-  const session = await getRequiredSession();
-  if (session.role !== "ADMIN") return { error: "No autorizado" };
+  try {
+    await assertCourseAccess(courseId);
+  } catch {
+    return { error: "No autorizado" };
+  }
 
   await prisma.question.delete({ where: { id: questionId } });
-  revalidatePath(`/admin/courses/${courseId}`);
+  revalidateCourseEditors(courseId);
 }
 
 // ─── Student: rendir evaluación ─────────────────────────────────────────────

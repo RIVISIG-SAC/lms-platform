@@ -4,6 +4,10 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getRequiredSession } from "@/lib/auth";
+import {
+  assertCourseAccess,
+  revalidateCourseEditors,
+} from "@/lib/courseAccess";
 import { courseSchema, moduleSchema, chapterSchema } from "@/lib/validations/course";
 import type { CourseLevel } from "@prisma/client";
 
@@ -85,18 +89,6 @@ export async function createCourse(_prev: unknown, formData: FormData) {
   redirect(`/admin/courses/${course.id}`);
 }
 
-async function assertCourseAccess(courseId: string) {
-  const session = await getRequiredSession();
-  if (session.role === "ADMIN") return session;
-  if (session.role === "INSTRUCTOR") {
-    const profile = await prisma.instructorProfile.findUnique({ where: { userId: session.userId } });
-    const course = await prisma.course.findUnique({ where: { id: courseId } });
-    if (!profile || course?.instructorId !== profile.id) throw new Error("No autorizado");
-    return session;
-  }
-  throw new Error("No autorizado");
-}
-
 export async function updateCourse(_prev: unknown, formData: FormData) {
   const id = formData.get("id") as string;
   let session: Awaited<ReturnType<typeof getRequiredSession>>;
@@ -138,9 +130,22 @@ export async function deleteCourse(courseId: string) {
 
 // ─── Modules ────────────────────────────────────────────────────────────────
 
-function revalidateCourse(courseId: string) {
-  revalidatePath(`/admin/courses/${courseId}`);
-  revalidatePath(`/instructor/courses/${courseId}`);
+/** Publica o despublica el curso desde la cabecera del editor. */
+export async function setCoursePublished(courseId: string, published: boolean) {
+  try {
+    await assertCourseAccess(courseId);
+  } catch {
+    return { error: "No autorizado" };
+  }
+
+  await prisma.course.update({ where: { id: courseId }, data: { published } });
+
+  revalidateCourseEditors(courseId);
+  revalidatePath("/admin/courses");
+  revalidatePath("/instructor/courses");
+  revalidatePath("/cursos");
+  revalidatePath(`/cursos/${courseId}`);
+  return { success: true };
 }
 
 export async function createModule(_prev: unknown, formData: FormData) {
@@ -154,7 +159,7 @@ export async function createModule(_prev: unknown, formData: FormData) {
   if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Datos inválidos" };
 
   await prisma.module.create({ data: { ...parsed.data, courseId } });
-  revalidateCourse(courseId);
+  revalidateCourseEditors(courseId);
   return { success: true };
 }
 
@@ -170,7 +175,7 @@ export async function updateModule(_prev: unknown, formData: FormData) {
   if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Datos inválidos" };
 
   await prisma.module.update({ where: { id }, data: parsed.data });
-  revalidateCourse(courseId);
+  revalidateCourseEditors(courseId);
   return { success: true };
 }
 
@@ -178,7 +183,7 @@ export async function deleteModule(moduleId: string, courseId: string) {
   try { await assertCourseAccess(courseId); } catch { return { error: "No autorizado" }; }
 
   await prisma.module.delete({ where: { id: moduleId } });
-  revalidateCourse(courseId);
+  revalidateCourseEditors(courseId);
 }
 
 // ─── Chapters ───────────────────────────────────────────────────────────────
@@ -197,7 +202,7 @@ export async function createChapter(_prev: unknown, formData: FormData) {
   if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Datos inválidos" };
 
   await prisma.chapter.create({ data: { ...parsed.data, moduleId } });
-  revalidateCourse(courseId);
+  revalidateCourseEditors(courseId);
   return { success: true };
 }
 
@@ -215,7 +220,7 @@ export async function updateChapter(_prev: unknown, formData: FormData) {
   if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Datos inválidos" };
 
   await prisma.chapter.update({ where: { id }, data: parsed.data });
-  revalidateCourse(courseId);
+  revalidateCourseEditors(courseId);
   return { success: true };
 }
 
@@ -223,7 +228,7 @@ export async function deleteChapter(chapterId: string, courseId: string) {
   try { await assertCourseAccess(courseId); } catch { return { error: "No autorizado" }; }
 
   await prisma.chapter.delete({ where: { id: chapterId } });
-  revalidateCourse(courseId);
+  revalidateCourseEditors(courseId);
 }
 
 // ─── Chapter Resources ───────────────────────────────────────────────────────
@@ -247,7 +252,7 @@ export async function createResource(_prev: unknown, formData: FormData) {
   }
 
   await prisma.chapterResource.create({ data: { chapterId, name, url, type } });
-  revalidateCourse(courseId);
+  revalidateCourseEditors(courseId);
   return { success: true };
 }
 
@@ -255,7 +260,7 @@ export async function deleteResource(resourceId: string, courseId: string) {
   try { await assertCourseAccess(courseId); } catch { return { error: "No autorizado" }; }
 
   await prisma.chapterResource.delete({ where: { id: resourceId } });
-  revalidateCourse(courseId);
+  revalidateCourseEditors(courseId);
 }
 
 // ─── Course FAQs ────────────────────────────────────────────────────────────
@@ -299,7 +304,7 @@ export async function createCourseFaq(_prev: unknown, formData: FormData) {
     },
   });
 
-  revalidateCourse(courseId);
+  revalidateCourseEditors(courseId);
   revalidatePath(`/cursos/${courseId}`);
   return { success: true };
 }
@@ -318,7 +323,7 @@ export async function updateCourseFaq(_prev: unknown, formData: FormData) {
     data: { question: payload.question, answer: payload.answer },
   });
 
-  revalidateCourse(courseId);
+  revalidateCourseEditors(courseId);
   revalidatePath(`/cursos/${courseId}`);
   return { success: true };
 }
@@ -327,7 +332,7 @@ export async function deleteCourseFaq(faqId: string, courseId: string) {
   try { await assertCourseAccess(courseId); } catch { return { error: "No autorizado" }; }
 
   await prisma.courseFaq.delete({ where: { id: faqId } });
-  revalidateCourse(courseId);
+  revalidateCourseEditors(courseId);
   revalidatePath(`/cursos/${courseId}`);
 }
 
@@ -340,7 +345,7 @@ export async function reorderCourseFaqs(courseId: string, orderedIds: string[]) 
     ),
   );
 
-  revalidateCourse(courseId);
+  revalidateCourseEditors(courseId);
   revalidatePath(`/cursos/${courseId}`);
   return { success: true };
 }
