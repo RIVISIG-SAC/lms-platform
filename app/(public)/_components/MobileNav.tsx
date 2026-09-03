@@ -7,7 +7,12 @@ import { Menu, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { NAV_LINKS } from './nav-links';
 
-export function MobileNav() {
+type Props = {
+  /** Botones de sesión renderizados en el servidor por SiteNavbar. */
+  auth: React.ReactNode;
+};
+
+export function MobileNav({ auth }: Props) {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
 
@@ -33,11 +38,11 @@ export function MobileNav() {
   }, [open]);
 
   return (
-    <div className="md:hidden">
+    <>
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="flex items-center justify-center size-9 rounded-lg border border-border text-foreground hover:bg-accent transition-colors"
+        className="flex size-10 items-center justify-center rounded-lg border border-border text-foreground transition-colors hover:bg-accent lg:hidden"
         aria-label={open ? 'Cerrar menú' : 'Abrir menú'}
         aria-expanded={open}
       >
@@ -46,38 +51,55 @@ export function MobileNav() {
 
       {open && (
         <>
+          {/* El panel se ancla al header (sticky) con `top-full`, así no depende
+              de la altura de la franja institucional, que solo existe en md+. */}
           <button
             type="button"
             aria-hidden="true"
             tabIndex={-1}
             onClick={() => setOpen(false)}
-            className="fixed inset-x-0 bottom-0 top-18 z-40 bg-black/20"
+            className="fixed inset-0 z-40 bg-foreground/20 lg:hidden"
           />
-          <nav className="fixed inset-x-0 top-18 z-50 border-b border-border bg-white shadow-lg motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-top-2 motion-safe:duration-200">
-            <ul className="max-w-7xl mx-auto px-4 sm:px-6 py-3 space-y-1">
-              {NAV_LINKS.map(({ href, label, Icon }) => {
-                const isActive = pathname === href || pathname.startsWith(`${href}/`);
+          <div className="absolute inset-x-0 top-full z-50 max-h-[calc(100dvh-4.5rem)] overflow-y-auto border-b border-border bg-background shadow-lg motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-top-2 motion-safe:duration-200 lg:hidden">
+            <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6">
+              <nav aria-label="Principal">
+                <ul className="space-y-0.5">
+                  {NAV_LINKS.map(({ href, label, Icon }) => {
+                    const isActive =
+                      pathname === href || pathname.startsWith(`${href}/`);
 
-                return (
-                  <li key={href}>
-                    <Link
-                      href={href}
-                      aria-current={isActive ? 'page' : undefined}
-                      className={cn(
-                        'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors hover:bg-accent',
-                        isActive ? 'bg-primary/5 text-primary' : 'text-foreground'
-                      )}
-                    >
-                      <Icon className="size-4 text-primary" aria-hidden="true" />
-                      {label}
-                    </Link>
-                  </li>
-                );
-              })}
-            </ul>
-          </nav>
+                    return (
+                      <li key={href}>
+                        <Link
+                          href={href}
+                          aria-current={isActive ? 'page' : undefined}
+                          className={cn(
+                            'flex min-h-11 items-center gap-3 rounded-lg px-3 text-sm transition-colors',
+                            isActive
+                              ? 'bg-primary/5 font-semibold text-primary'
+                              : 'font-medium text-foreground hover:bg-accent',
+                          )}
+                        >
+                          <Icon
+                            className={cn(
+                              'size-4 shrink-0',
+                              isActive ? 'text-primary' : 'text-muted-foreground',
+                            )}
+                            aria-hidden="true"
+                          />
+                          {label}
+                        </Link>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </nav>
+
+              <div className="mt-4 border-t border-border pt-4">{auth}</div>
+            </div>
+          </div>
         </>
       )}
-    </div>
+    </>
   );
 }

@@ -5,12 +5,17 @@ import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { NAV_LINKS } from './nav-links';
 
+/**
+ * Navegación principal de escritorio. Sin iconos a propósito: a este tamaño
+ * no aportan significado y ensucian la lectura de la fila. El estado activo
+ * y el hover comparten el mismo subrayado, anclado al borde del header.
+ */
 export function DesktopNavLinks() {
   const pathname = usePathname();
 
   return (
-    <nav className="hidden md:flex items-center gap-6 text-sm text-muted-foreground">
-      {NAV_LINKS.map(({ href, label, Icon }) => {
+    <nav className="hidden lg:flex lg:items-center lg:gap-1" aria-label="Principal">
+      {NAV_LINKS.map(({ href, label }) => {
         const isActive = pathname === href || pathname.startsWith(`${href}/`);
 
         return (
@@ -19,15 +24,21 @@ export function DesktopNavLinks() {
             href={href}
             aria-current={isActive ? 'page' : undefined}
             className={cn(
-              'relative flex items-center gap-2 py-2 transition-colors hover:text-foreground',
-              isActive ? 'font-semibold text-primary' : 'text-muted-foreground'
+              'group relative flex h-18 items-center px-3.5 text-sm transition-colors',
+              isActive
+                ? 'font-semibold text-foreground'
+                : 'font-medium text-muted-foreground hover:text-foreground',
             )}
           >
-            <Icon className="h-4 w-4" aria-hidden="true" />
             {label}
-            {isActive && (
-              <span className="absolute -bottom-[1px] left-0 right-0 h-0.5 rounded-full bg-primary" />
-            )}
+            <span
+              className={cn(
+                'absolute inset-x-3 bottom-0 h-0.5 rounded-full transition-colors',
+                isActive
+                  ? 'bg-primary'
+                  : 'bg-transparent group-hover:bg-border',
+              )}
+            />
           </Link>
         );
       })}

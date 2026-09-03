@@ -3,6 +3,10 @@ import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
 import { createCharge, toCents } from "@/lib/culqi";
 import { addDays } from "@/lib/utils";
+import {
+  REENROLLABLE_STATUSES,
+  resetEnrollmentProgress,
+} from "@/lib/enrollments";
 import { checkRateLimit } from "@/lib/security/rateLimit";
 import { notifyPaymentReceived } from "@/lib/notifications";
 
@@ -45,14 +49,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Ya estás inscrito en este curso" }, { status: 409 });
   }
 
-  // Limpiar datos previos si se está re-inscribiendo tras reprobar
-  if (existing && ["FAILED", "EXPIRED"].includes(existing.status)) {
-    await prisma.$transaction([
-      prisma.examAttempt.deleteMany({ where: { enrollmentId: existing.id } }),
-      prisma.chapterProgress.deleteMany({ where: { enrollmentId: existing.id } }),
-      prisma.certificate.deleteMany({ where: { enrollmentId: existing.id } }),
-    ]);
-  }
 
   // Procesar cobro con Culqi
   let chargeId: string;
@@ -68,6 +64,11 @@ export async function POST(request: NextRequest) {
   } catch (err) {
     const message = err instanceof Error ? err.message : "Error al procesar el pago";
     return NextResponse.json({ error: message }, { status: 402 });
+  }
+
+  // El cobro ya se hizo: recién ahora se limpia el intento anterior
+  if (existing && REENROLLABLE_STATUSES.includes(existing.status as never)) {
+    await resetEnrollmentProgress(existing.id);
   }
 
   // Crear o actualizar inscripción

@@ -3,19 +3,26 @@
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { getRequiredSession } from "@/lib/auth";
+import {
+  assertCourseAccess,
+  revalidateCourseEditors,
+} from "@/lib/courseAccess";
 import { addDays } from "@/lib/utils";
 import { notifyCertificateIssued } from "@/lib/notifications";
 
-// ─── Admin: gestión de preguntas ────────────────────────────────────────────
+// ─── Gestión de preguntas: admin e instructor propietario ───────────────────
 
 export async function createQuestion(
   _prev: unknown,
   formData: FormData
 ): Promise<{ error?: string; success?: boolean }> {
-  const session = await getRequiredSession();
-  if (session.role !== "ADMIN") return { error: "No autorizado" };
-
   const courseId = formData.get("courseId") as string;
+  try {
+    await assertCourseAccess(courseId);
+  } catch {
+    return { error: "No autorizado" };
+  }
+
   const text = (formData.get("text") as string)?.trim();
   const order = Number(formData.get("order"));
 
@@ -46,7 +53,7 @@ export async function createQuestion(
     },
   });
 
-  revalidatePath(`/admin/courses/${courseId}`);
+  revalidateCourseEditors(courseId);
   return { success: true };
 }
 
@@ -54,11 +61,14 @@ export async function updateQuestion(
   _prev: unknown,
   formData: FormData
 ): Promise<{ error?: string; success?: boolean }> {
-  const session = await getRequiredSession();
-  if (session.role !== "ADMIN") return { error: "No autorizado" };
+  const courseId = formData.get("courseId") as string;
+  try {
+    await assertCourseAccess(courseId);
+  } catch {
+    return { error: "No autorizado" };
+  }
 
   const questionId = formData.get("questionId") as string;
-  const courseId = formData.get("courseId") as string;
   const text = (formData.get("text") as string)?.trim();
 
   if (!questionId) return { error: "Pregunta no encontrada" };
@@ -91,16 +101,19 @@ export async function updateQuestion(
     }),
   ]);
 
-  revalidatePath(`/admin/courses/${courseId}`);
+  revalidateCourseEditors(courseId);
   return { success: true };
 }
 
 export async function deleteQuestion(questionId: string, courseId: string) {
-  const session = await getRequiredSession();
-  if (session.role !== "ADMIN") return { error: "No autorizado" };
+  try {
+    await assertCourseAccess(courseId);
+  } catch {
+    return { error: "No autorizado" };
+  }
 
   await prisma.question.delete({ where: { id: questionId } });
-  revalidatePath(`/admin/courses/${courseId}`);
+  revalidateCourseEditors(courseId);
 }
 
 // ─── Student: rendir evaluación ─────────────────────────────────────────────
@@ -184,15 +197,25 @@ export async function submitExam(
         notifyAdminsAlso: true,
       });
     }
+
+    revalidatePath(`/student/courses/${courseId}/exam`);
+    revalidatePath("/student/my-courses");
+    revalidatePath("/student");
   } else if (attemptCount + 1 >= 2) {
-    // Agotó intentos sin aprobar
+    // Agotó los 2 intentos: se retira el acceso al curso. La inscripción se
+    // conserva en estado FAILED para que siga visible en el historial; el
+    // progreso y los intentos se reinician recién al volver a inscribirse.
     await prisma.enrollment.update({
       where: { id: enrollment.id },
       data: { status: "FAILED" },
     });
+    // Ojo: aquí NO se revalida la ruta del examen. Hacerlo refresca el router,
+    // el layout detecta el estado FAILED y redirige antes de que el estudiante
+    // alcance a ver su resultado. Sale por el botón "Ir a mis cursos".
+  } else {
+    revalidatePath(`/student/courses/${courseId}/exam`);
   }
 
-  revalidatePath(`/student/courses/${courseId}/exam`);
   return { score, passed, requiresCertPayment: passed && enrollment.course.isFree };
 }
 

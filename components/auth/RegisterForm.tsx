@@ -2,222 +2,274 @@
 
 import { useActionState, useState } from "react";
 import Link from "next/link";
-import { AlertCircle, User, Mail, Lock, CreditCard, Building2, ArrowRight } from "lucide-react";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import {
+  ArrowRight,
+  Building2,
+  Check,
+  CreditCard,
+  Loader2,
+  Lock,
+  Mail,
+  User,
+  X,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { AuthField, PasswordField } from "@/components/auth/AuthField";
+import { AuthAlert, AuthHeading } from "@/components/auth/AuthUi";
 import { registerAction } from "@/app/actions/register";
+import { cn } from "@/lib/utils";
 
 type ActionState = { error?: string } | null;
 type Props = { next?: string };
 
+/** Mismas reglas que `registerSchema` en lib/validations/auth.ts. */
+const REGLAS = [
+  { label: "Mínimo 8 caracteres", test: (v: string) => v.length >= 8 },
+  { label: "Una letra mayúscula", test: (v: string) => /[A-Z]/.test(v) },
+  { label: "Un número", test: (v: string) => /[0-9]/.test(v) },
+];
+
+function Regla({ ok, label }: { ok: boolean; label: string }) {
+  return (
+    <li
+      className={cn(
+        "inline-flex items-center gap-1.5 text-[11px] font-medium transition-colors",
+        ok ? "text-emerald-700" : "text-muted-foreground",
+      )}
+    >
+      <span
+        className={cn(
+          "inline-flex size-4 shrink-0 items-center justify-center rounded-full",
+          ok ? "bg-emerald-100" : "bg-muted",
+        )}
+      >
+        {ok ? <Check className="size-2.5" /> : <X className="size-2.5" />}
+      </span>
+      {label}
+    </li>
+  );
+}
+
 export function RegisterForm({ next }: Props) {
-  const [state, action, pending] = useActionState<ActionState, FormData>(registerAction, null);
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [dni, setDni] = useState("");
-  const [company, setCompany] = useState("");
+  const [state, action, pending] = useActionState<ActionState, FormData>(
+    registerAction,
+    null,
+  );
+  const [password, setPassword] = useState("");
+  const [confirm, setConfirm] = useState("");
+
+  const cumplidas = REGLAS.filter((r) => r.test(password)).length;
+  const fuerza = password ? (cumplidas / REGLAS.length) * 100 : 0;
+  const coinciden = confirm.length > 0 && confirm === password;
 
   return (
-    <div className="space-y-8">
-      <div className="space-y-2">
-        <h1 className="text-2xl font-light text-foreground">
-          Crea tu<span className="font-semibold"> cuenta</span>
-        </h1>
-        <p className="text-sm text-muted-foreground">
-          Completa el formulario para comenzar
-        </p>
-      </div>
+    <div className="space-y-7">
+      <AuthHeading
+        eyebrow="Nueva cuenta"
+        title={
+          <>
+            Crea tu <span className="text-foreground/40">cuenta</span>
+          </>
+        }
+        description="Regístrate para inscribirte a los cursos y gestionar tus certificados."
+      />
 
-      <form action={action} className="space-y-6">
+      <form action={action} className="space-y-5">
         {next && <input type="hidden" name="next" value={next} />}
 
-        <div className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="name" className="text-xs font-medium text-muted-foreground">
-              Nombre completo
-            </Label>
-            <div className="relative">
-              <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/50" />
-              <Input
-                id="name"
-                name="name"
-                type="text"
-                placeholder="Tu nombre completo"
-                required
-                autoComplete="name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                className="pl-10 h-12 bg-background/50 border-muted-foreground/20 focus:border-primary focus:ring-0"
-              />
-            </div>
-          </div>
+        <AuthField
+          id="name"
+          name="name"
+          type="text"
+          label="Nombre completo"
+          icon={User}
+          autoComplete="name"
+          required
+          placeholder="Tu nombre completo"
+        />
 
-          <div className="space-y-2">
-            <Label htmlFor="email" className="text-xs font-medium text-muted-foreground">
-              Correo electrónico
-            </Label>
-            <div className="relative">
-              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/50" />
-              <Input
-                id="email"
-                name="email"
-                type="email"
-                placeholder="nombre@empresa.com"
-                required
-                autoComplete="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="pl-10 h-12 bg-background/50 border-muted-foreground/20 focus:border-primary focus:ring-0"
-              />
-            </div>
-          </div>
+        <AuthField
+          id="email"
+          name="email"
+          type="email"
+          label="Correo electrónico"
+          icon={Mail}
+          autoComplete="email"
+          required
+          placeholder="nombre@empresa.com"
+        />
 
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-2">
-              <Label htmlFor="dni" className="text-xs font-medium text-muted-foreground">
-                DNI
-              </Label>
-              <div className="relative">
-                <CreditCard className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/50" />
-                <Input
-                  id="dni"
-                  name="dni"
-                  type="text"
-                  inputMode="numeric"
-                  placeholder="12345678"
-                  autoComplete="off"
-                  value={dni}
-                  onChange={(e) => setDni(e.target.value)}
-                  className="pl-10 h-12 bg-background/50 border-muted-foreground/20 focus:border-primary focus:ring-0"
-                />
-              </div>
-            </div>
+        <div className="grid gap-5 sm:grid-cols-2">
+          <AuthField
+            id="dni"
+            name="dni"
+            type="text"
+            inputMode="numeric"
+            maxLength={12}
+            label="DNI"
+            icon={CreditCard}
+            autoComplete="off"
+            placeholder="12345678"
+            hint={
+              <p className="text-[11px] text-muted-foreground">
+                Aparecerá en tu certificado.
+              </p>
+            }
+          />
 
-            <div className="space-y-2">
-              <Label htmlFor="company" className="text-xs font-medium text-muted-foreground">
+          <AuthField
+            id="company"
+            name="company"
+            type="text"
+            label={
+              <>
                 Empresa{" "}
-                <span className="text-muted-foreground/60 font-normal">(opcional)</span>
-              </Label>
-              <div className="relative">
-                <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/50" />
-                <Input
-                  id="company"
-                  name="company"
-                  type="text"
-                  placeholder="Tu empresa"
-                  autoComplete="organization"
-                  value={company}
-                  onChange={(e) => setCompany(e.target.value)}
-                  className="pl-10 h-12 bg-background/50 border-muted-foreground/20 focus:border-primary focus:ring-0"
-                />
-              </div>
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="password" className="text-xs font-medium text-muted-foreground">
-              Contraseña
-            </Label>
-            <div className="relative">
-              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/50" />
-              <Input
-                id="password"
-                name="password"
-                type="password"
-                placeholder="Mínimo 8 caracteres"
-                required
-                autoComplete="new-password"
-                className="pl-10 h-12 bg-background/50 border-muted-foreground/20 focus:border-primary focus:ring-0"
-              />
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="confirmPassword" className="text-xs font-medium text-muted-foreground">
-              Confirmar contraseña
-            </Label>
-            <div className="relative">
-              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/50" />
-              <Input
-                id="confirmPassword"
-                name="confirmPassword"
-                type="password"
-                placeholder="Repite tu contraseña"
-                required
-                autoComplete="new-password"
-                className="pl-10 h-12 bg-background/50 border-muted-foreground/20 focus:border-primary focus:ring-0"
-              />
-            </div>
-          </div>
+                <span className="font-normal text-muted-foreground/60">
+                  (opcional)
+                </span>
+              </>
+            }
+            icon={Building2}
+            autoComplete="organization"
+            maxLength={100}
+            placeholder="Tu empresa"
+          />
         </div>
 
-        <div className="flex items-start gap-2.5 pt-1">
+        <PasswordField
+          id="password"
+          name="password"
+          label="Contraseña"
+          icon={Lock}
+          autoComplete="new-password"
+          required
+          placeholder="Crea una contraseña segura"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          hint={
+            <div className="space-y-2 pt-1">
+              <div className="h-1 overflow-hidden rounded-full bg-muted">
+                <div
+                  className={cn(
+                    "h-full rounded-full transition-all duration-300",
+                    cumplidas === REGLAS.length
+                      ? "bg-emerald-500"
+                      : cumplidas === 2
+                        ? "bg-amber-500"
+                        : "bg-destructive",
+                  )}
+                  style={{ width: `${fuerza}%` }}
+                />
+              </div>
+              <ul className="flex flex-wrap gap-x-4 gap-y-1.5">
+                {REGLAS.map((r) => (
+                  <Regla key={r.label} ok={r.test(password)} label={r.label} />
+                ))}
+              </ul>
+            </div>
+          }
+        />
+
+        <PasswordField
+          id="confirmPassword"
+          name="confirmPassword"
+          label="Confirmar contraseña"
+          icon={Lock}
+          autoComplete="new-password"
+          required
+          placeholder="Repite tu contraseña"
+          value={confirm}
+          onChange={(e) => setConfirm(e.target.value)}
+          hint={
+            confirm.length > 0 ? (
+              <p
+                className={cn(
+                  "inline-flex items-center gap-1.5 text-[11px] font-medium",
+                  coinciden ? "text-emerald-700" : "text-destructive",
+                )}
+              >
+                {coinciden ? (
+                  <Check className="size-3" />
+                ) : (
+                  <X className="size-3" />
+                )}
+                {coinciden
+                  ? "Las contraseñas coinciden"
+                  : "Las contraseñas no coinciden"}
+              </p>
+            ) : undefined
+          }
+        />
+
+        <label
+          htmlFor="acceptTerms"
+          className="flex cursor-pointer items-start gap-3 rounded-xl border border-border bg-card px-4 py-3.5 transition-colors hover:border-primary/30 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-primary/40"
+        >
           <input
             id="acceptTerms"
             name="acceptTerms"
             type="checkbox"
             required
-            className="mt-0.5 h-4 w-4 shrink-0 rounded border-muted-foreground/30 text-primary focus:ring-2 focus:ring-primary/40 cursor-pointer"
+            className="mt-0.5 size-4 shrink-0 cursor-pointer rounded border-muted-foreground/30 accent-primary focus:ring-2 focus:ring-primary/40"
           />
-          <label
-            htmlFor="acceptTerms"
-            className="text-[11px] text-muted-foreground leading-snug cursor-pointer select-none"
-          >
+          <span className="text-xs leading-relaxed text-muted-foreground">
             Acepto los{" "}
             <Link
               href="/terminos-y-condiciones"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-primary hover:underline font-medium whitespace-nowrap"
+              className="font-semibold text-primary hover:underline"
             >
-              Términos
+              Términos y Condiciones
             </Link>{" "}
             y la{" "}
             <Link
               href="/politica-de-privacidad"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-primary hover:underline font-medium whitespace-nowrap"
+              className="font-semibold text-primary hover:underline"
             >
               Política de Privacidad
             </Link>
             .
-          </label>
-        </div>
+          </span>
+        </label>
 
-        {state?.error && (
-          <div className="flex items-center gap-2 text-sm text-destructive bg-destructive/5 border border-destructive/10 px-4 py-3 rounded-lg">
-            <AlertCircle className="w-4 h-4 shrink-0" aria-hidden="true" />
-            <span>{state.error}</span>
-          </div>
-        )}
+        {state?.error && <AuthAlert tone="error">{state.error}</AuthAlert>}
 
         <Button
           type="submit"
           disabled={pending}
-          className="w-full h-12 text-sm font-medium flex items-center justify-center gap-2"
+          className="min-h-12 w-full text-sm font-bold"
         >
           {pending ? (
-            "Creando cuenta..."
+            <>
+              <Loader2 className="size-4 animate-spin" />
+              Creando cuenta...
+            </>
           ) : (
             <>
               Crear cuenta
-              <ArrowRight className="w-4 h-4" />
+              <ArrowRight className="size-4" />
             </>
           )}
         </Button>
 
-        <div className="text-center pt-2">
-          <Link
-            href="/login"
-            className="text-sm text-muted-foreground hover:text-primary transition-colors"
-          >
-            ¿Ya tienes cuenta?{" "}
-            <span className="font-medium text-primary">Inicia sesión</span>
-          </Link>
-        </div>
+        <p className="text-center text-[11px] leading-relaxed text-muted-foreground">
+          Te enviaremos un correo para verificar tu cuenta antes de poder
+          ingresar.
+        </p>
       </form>
+
+      <p className="border-t border-border pt-6 text-center text-sm text-muted-foreground">
+        ¿Ya tienes cuenta?{" "}
+        <Link
+          href={next ? `/login?next=${encodeURIComponent(next)}` : "/login"}
+          className="font-semibold text-primary transition-opacity hover:opacity-80"
+        >
+          Inicia sesión
+        </Link>
+      </p>
     </div>
   );
 }

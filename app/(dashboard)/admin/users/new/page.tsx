@@ -1,52 +1,33 @@
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb";
+import Link from "next/link";
+import { ChevronLeft } from "lucide-react";
 import { CreateUserForm } from "@/components/admin/CreateUserForm";
-import { UserPlus } from "lucide-react";
 
 export const metadata = { title: "Nuevo usuario | Admin" };
 
 export default function NewUserPage() {
   return (
-    <div className="max-w-3xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <Breadcrumb>
-        <BreadcrumbList className="text-xs font-semibold uppercase tracking-widest">
-          <BreadcrumbItem>
-            <BreadcrumbLink href="/admin/users" className="normal-case tracking-normal font-medium">
-              Usuarios
-            </BreadcrumbLink>
-          </BreadcrumbItem>
-          <BreadcrumbSeparator />
-          <BreadcrumbItem>
-            <BreadcrumbPage className="normal-case tracking-normal font-medium">
-              Nuevo usuario
-            </BreadcrumbPage>
-          </BreadcrumbItem>
-        </BreadcrumbList>
-      </Breadcrumb>
-
-      <div className="flex items-start gap-4 rounded-2xl border border-border bg-card p-6 shadow-sm">
-        <div className="size-12 rounded-xl bg-primary/10 flex items-center justify-center border border-primary/15 shrink-0">
-          <UserPlus className="size-5 text-primary" />
-        </div>
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight text-foreground">
-            Crear nuevo usuario
-          </h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            El usuario podrá iniciar sesión con la contraseña temporal asignada.
-          </p>
-        </div>
+    <div className="mx-auto max-w-3xl space-y-6 animate-in fade-in duration-500">
+      <div>
+        <Link
+          href="/admin/users"
+          className="inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+        >
+          <ChevronLeft className="size-4" />
+          Usuarios
+        </Link>
+        <p className="mt-4 text-xs font-semibold uppercase tracking-widest text-primary">
+          Alta de cuenta
+        </p>
+        <h1 className="mt-1.5 text-2xl font-black tracking-tight text-foreground sm:text-3xl">
+          Crear nuevo usuario
+        </h1>
+        <p className="mt-2 max-w-xl text-sm leading-relaxed text-muted-foreground">
+          Completa los datos y asigna un rol. El usuario podrá iniciar sesión con
+          la contraseña temporal que definas aquí.
+        </p>
       </div>
 
-      <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
-        <CreateUserForm />
-      </div>
+      <CreateUserForm />
     </div>
   );
 }

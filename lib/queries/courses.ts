@@ -6,7 +6,12 @@ const courseSelect = {
   title: true,
   description: true,
   price: true,
+  isFree: true,
+  certificateFee: true,
   thumbnailUrl: true,
+  category: true,
+  level: true,
+  durationHours: true,
   _count: { select: { modules: true } },
   modules: {
     select: { _count: { select: { chapters: true } } },
