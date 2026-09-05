@@ -2,14 +2,31 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Search, Loader2 } from "lucide-react";
+import { Loader2, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
-export function CertificateSearchForm({ defaultValue = "" }: { defaultValue?: string }) {
+/** Deja el código en el formato XXXX-XXXX-XXXX mientras se escribe. */
+function normalizar(valor: string) {
+  const limpio = valor
+    .toUpperCase()
+    .replace(/[^A-Z0-9]/g, "")
+    .slice(0, 12);
+  return limpio.replace(/(.{4})(?=.)/g, "$1-");
+}
+
+export function CertificateSearchForm({
+  defaultValue = "",
+  autoFocus = false,
+}: {
+  defaultValue?: string;
+  autoFocus?: boolean;
+}) {
   const router = useRouter();
   const [code, setCode] = useState(defaultValue);
   const [loading, setLoading] = useState(false);
+
+  const listo = code.trim().length > 0;
 
   return (
     <form
@@ -20,27 +37,37 @@ export function CertificateSearchForm({ defaultValue = "" }: { defaultValue?: st
         setLoading(true);
         router.push(`/verificar/${encodeURIComponent(trimmed)}`);
       }}
-      className="flex gap-2 w-full"
+      className="flex flex-col gap-2 sm:flex-row"
     >
-      <Input
-        value={code}
-        onChange={(e) => setCode(e.target.value)}
-        placeholder="Ej. ABCD-EFGH-IJKL"
-        className="h-12 font-mono text-sm tracking-widest bg-white border-border/60 focus-visible:ring-primary/30 text-secondary-foreground"
-        autoComplete="off"
-        spellCheck={false}
-      />
+      <div className="relative flex-1">
+        <Search className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground/60" />
+        <Input
+          value={code}
+          onChange={(e) => setCode(normalizar(e.target.value))}
+          placeholder="ABCD-EFGH-IJKL"
+          aria-label="Código de verificación"
+          className="h-12 rounded-xl border-border bg-background pl-10 font-mono text-sm tracking-widest uppercase placeholder:tracking-widest focus-visible:border-primary focus-visible:ring-primary/25"
+          autoComplete="off"
+          spellCheck={false}
+          autoFocus={autoFocus}
+        />
+      </div>
       <Button
         type="submit"
-        disabled={loading || !code.trim()}
-        className="h-12 px-6 shrink-0 gap-2"
+        disabled={loading || !listo}
+        className="h-12 shrink-0 justify-center gap-2 px-6 text-sm font-bold"
       >
         {loading ? (
-          <Loader2 className="size-4 animate-spin" />
+          <>
+            <Loader2 className="size-4 animate-spin" />
+            Verificando...
+          </>
         ) : (
-          <Search className="size-4" />
+          <>
+            <Search className="size-4" />
+            Verificar
+          </>
         )}
-        Verificar
       </Button>
     </form>
   );

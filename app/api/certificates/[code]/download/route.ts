@@ -12,6 +12,29 @@ import { getCertificateEffectiveStatus } from '@/lib/utils';
 import { checkRateLimit } from '@/lib/security/rateLimit';
 import { getClientIp } from '@/lib/security/ip';
 
+// Los assets de marca son inmutables: se leen del disco una sola vez por
+// instancia en vez de en cada descarga. react-pdf no soporta webp, así que
+// estas rutas deben seguir apuntando a los PNG.
+let brandAssets: [logo: string, sello: string, icon: string] | null = null;
+
+function getBrandAssets() {
+  if (!brandAssets) {
+    const readImageAsBase64 = (filename: string) => {
+      const filePath = path.join(process.cwd(), 'public', 'images', filename);
+      const buffer = fs.readFileSync(filePath);
+      return `data:image/png;base64,${buffer.toString('base64')}`;
+    };
+
+    brandAssets = [
+      readImageAsBase64('logo.png'),
+      readImageAsBase64('sello-transparent.png'),
+      readImageAsBase64('icon.png'),
+    ];
+  }
+
+  return brandAssets;
+}
+
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ code: string }> },
@@ -92,23 +115,14 @@ export async function GET(
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://rivisig.com';
   const verificationUrl = `${baseUrl}/verificar/${certificate.verificationCode}`;
 
-  const readImageAsBase64 = (filename: string) => {
-    const filePath = path.join(process.cwd(), 'public', 'images', filename);
-    const buffer = fs.readFileSync(filePath);
-    return `data:image/png;base64,${buffer.toString('base64')}`;
-  };
+  const [logoBase64, selloBase64, iconBase64] = getBrandAssets();
 
-  const [qrCodeBase64, logoBase64, selloBase64, iconBase64] = await Promise.all([
-    QRCode.toDataURL(verificationUrl, {
-      errorCorrectionLevel: 'M',
-      margin: 1,
-      width: 200,
-      color: { dark: '#1a1a2e', light: '#ffffff' },
-    }),
-    Promise.resolve(readImageAsBase64('logo.png')),
-    Promise.resolve(readImageAsBase64('sello.png')),
-    Promise.resolve(readImageAsBase64('icon.png')),
-  ]);
+  const qrCodeBase64 = await QRCode.toDataURL(verificationUrl, {
+    errorCorrectionLevel: 'M',
+    margin: 1,
+    width: 200,
+    color: { dark: '#1a1a2e', light: '#ffffff' },
+  });
 
   const pdfElement = createElement(CertificatePDF, {
       studentName,
