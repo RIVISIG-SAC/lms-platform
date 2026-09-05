@@ -40,6 +40,16 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
+  // El certificado PDF se renderiza en el servidor leyendo fuentes e imágenes
+  // del disco, así que deben viajar dentro del bundle de esa ruta.
+  outputFileTracingIncludes: {
+    "/api/certificates/[code]/download": [
+      "./public/fonts/**",
+      "./public/images/logo.png",
+      "./public/images/sello-transparent.png",
+      "./public/images/icon.png",
+    ],
+  },
   images: {
     remotePatterns: [
       {
