@@ -1,137 +1,148 @@
-import { ShieldCheck, CheckCircle2, QrCode, Globe } from "lucide-react";
+import Link from "next/link";
+import { CheckCircle2, FileSearch, Globe, QrCode, ShieldCheck } from "lucide-react";
 import { CertificateSearchForm } from "@/components/public/CertificateSearchForm";
-import { Badge } from "@/components/ui/badge";
 
 export const metadata = {
   title: { absolute: "Verificar Certificado | RIVISIG Consultores" },
   description:
     "Verifica la autenticidad de cualquier certificado emitido por RIVISIG Consultores ingresando el código de verificación.",
-  alternates: { canonical: `${process.env.NEXT_PUBLIC_SITE_URL || "https://rivisig.com"}/verificar` },
+  alternates: {
+    canonical: `${process.env.NEXT_PUBLIC_SITE_URL || "https://rivisig.com"}/verificar`,
+  },
 };
 
-const HOW_IT_WORKS = [
+const PASOS = [
   {
     icon: QrCode,
     title: "Localiza el código",
-    desc: "Encuéntralo en la parte inferior del certificado PDF, en formato XXXX-XXXX-XXXX.",
+    desc: "Está en la parte inferior del certificado PDF, con el formato XXXX-XXXX-XXXX.",
   },
   {
-    icon: ShieldCheck,
-    title: "Ingresa el código",
-    desc: "Escribe o pega el código en el campo de búsqueda y presiona Verificar.",
+    icon: FileSearch,
+    title: "Ingrésalo arriba",
+    desc: "Escríbelo o pégalo en el buscador. No distinguimos mayúsculas ni guiones.",
   },
   {
     icon: Globe,
-    title: "Obtén el resultado",
-    desc: "Verás los datos del titular, el curso y la fecha de emisión confirmados.",
+    title: "Consulta el resultado",
+    desc: "Verás el titular, el curso, la fecha de emisión y la vigencia del certificado.",
   },
 ];
 
-const TRUST_POINTS = [
-  "Verificación en tiempo real contra nuestra base de datos",
-  "Resultados instantáneos y transparentes",
-  "Código único e intransferible por cada certificado",
+const GARANTIAS = [
+  "Consulta en tiempo real contra nuestra base de datos.",
+  "Código único e intransferible por cada certificado emitido.",
+  "Abierto a empleadores, clientes y auditores, sin necesidad de cuenta.",
 ];
 
 export default function VerificarPage() {
   return (
     <>
-      {/* ── Hero ─────────────────────────────────────────── */}
-      <section className="bg-foreground text-primary-foreground">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 lg:py-24">
-          <div className="max-w-2xl mx-auto text-center space-y-6">
-            <Badge
-              variant="outline"
-              className="border-primary/40 text-primary bg-primary/10 text-xs font-medium px-3 py-1"
-            >
-              <ShieldCheck className="size-3 mr-1.5" />
-              Portal de Verificación
-            </Badge>
-
-            <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight leading-[1.05]">
-              Verifica la autenticidad de un{" "}
-              <span className="text-primary">certificado</span>
-            </h1>
-
-            <p className="text-base text-primary-foreground/70 leading-relaxed">
-              Ingresa el código de verificación del certificado para confirmar
-              que fue emitido oficialmente por RIVISIG Consultores y que se
-              encuentra vigente.
+      {/* Buscador */}
+      <section className="border-b border-border">
+        <div className="mx-auto max-w-3xl px-4 py-16 sm:px-6 lg:py-20">
+          <div className="text-center">
+            <p className="text-xs font-semibold uppercase tracking-widest text-primary">
+              Portal de verificación
             </p>
+            <h1 className="mt-3 text-3xl font-black leading-[1.1] tracking-tight text-foreground sm:text-4xl lg:text-5xl">
+              Verifica la autenticidad de un{" "}
+              <span className="text-foreground/35">certificado</span>
+            </h1>
+            <p className="mx-auto mt-4 max-w-xl text-sm leading-relaxed text-muted-foreground sm:text-base">
+              Ingresa el código del certificado para confirmar que fue emitido
+              oficialmente por RIVISIG Consultores y que sigue vigente.
+            </p>
+          </div>
 
-            <div className="pt-2">
-              <CertificateSearchForm />
-              <p className="text-xs text-primary-foreground/40 mt-3">
-                El código tiene el formato XXXX-XXXX-XXXX y lo encontrarás en
-                el certificado PDF.
-              </p>
-            </div>
+          <div className="mx-auto mt-8 max-w-xl rounded-2xl border border-border bg-card p-5 sm:p-6">
+            <CertificateSearchForm autoFocus />
+            <p className="mt-3 text-center text-xs text-muted-foreground">
+              El código aparece al pie del PDF, con el formato XXXX-XXXX-XXXX.
+            </p>
           </div>
         </div>
       </section>
 
-      {/* ── How it works ─────────────────────────────────── */}
-      <section className="bg-muted/40 border-y border-border py-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-10">
-            <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-2">
-              Proceso
+      {/* Cómo verificar */}
+      <section className="border-b border-border">
+        <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
+          <div className="max-w-xl">
+            <p className="text-xs font-semibold uppercase tracking-widest text-primary">
+              Cómo funciona
             </p>
-            <h2 className="text-2xl font-bold text-foreground">
-              ¿Cómo verificar un certificado?
+            <h2 className="mt-2 text-2xl font-black tracking-tight text-foreground sm:text-3xl">
+              Tres pasos y unos segundos
             </h2>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {HOW_IT_WORKS.map((step, i) => (
-              <div
-                key={step.title}
-                className="bg-white rounded-2xl border border-border p-6 shadow-sm flex gap-4"
-              >
-                <div className="size-10 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0">
-                  <step.icon className="size-5 text-primary" />
-                </div>
-                <div>
-                  <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1">
+          <div className="mt-10 grid gap-8 md:grid-cols-3 md:gap-10">
+            {PASOS.map(({ icon: Icon, title, desc }, i) => (
+              <div key={title} className="group">
+                <div className="flex items-center gap-3">
+                  <span className="inline-flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                    <Icon className="size-5" />
+                  </span>
+                  <span className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
                     Paso {i + 1}
-                  </p>
-                  <p className="font-semibold text-foreground text-sm mb-1">
-                    {step.title}
-                  </p>
-                  <p className="text-sm text-muted-foreground leading-relaxed">
-                    {step.desc}
-                  </p>
+                  </span>
                 </div>
+                <h3 className="mt-4 text-base font-bold text-foreground">
+                  {title}
+                </h3>
+                <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">
+                  {desc}
+                </p>
+                <div className="mt-5 h-px bg-border transition-colors group-hover:bg-primary/50" />
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* ── Trust ────────────────────────────────────────── */}
-      <section className="py-16 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="max-w-xl mx-auto text-center space-y-6">
-            <div className="size-14 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center mx-auto">
-              <ShieldCheck className="size-7 text-primary" />
+      {/* Garantía */}
+      <section>
+        <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
+          <div className="grid items-start gap-10 lg:grid-cols-2 lg:gap-16">
+            <div>
+              <span className="inline-flex size-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                <ShieldCheck className="size-6" />
+              </span>
+              <h2 className="mt-5 text-2xl font-black tracking-tight text-foreground sm:text-3xl">
+                Garantía de autenticidad
+              </h2>
+              <p className="mt-3 max-w-lg text-sm leading-relaxed text-muted-foreground">
+                Cada certificado que emitimos lleva un código único ligado al
+                titular y al curso. Verificarlo aquí es la única forma de
+                confirmar que un documento es nuestro.
+              </p>
             </div>
-            <h2 className="text-2xl font-bold text-foreground">
-              Garantía de autenticidad
-            </h2>
-            <p className="text-sm text-muted-foreground leading-relaxed">
-              Cada certificado emitido por nuestra plataforma incluye un código
-              único e infalsificable. Empleadores, clientes y auditores pueden
-              verificarlo aquí en segundos.
-            </p>
-            <ul className="space-y-2 text-left">
-              {TRUST_POINTS.map((point) => (
-                <li key={point} className="flex items-start gap-3">
-                  <CheckCircle2 className="size-4 text-primary mt-0.5 shrink-0" />
-                  <span className="text-sm text-muted-foreground">{point}</span>
+
+            <ul className="space-y-4 lg:pt-4">
+              {GARANTIAS.map((punto) => (
+                <li
+                  key={punto}
+                  className="flex items-start gap-3 border-b border-border pb-4 last:border-0"
+                >
+                  <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-primary" />
+                  <span className="text-sm leading-relaxed text-foreground/80">
+                    {punto}
+                  </span>
                 </li>
               ))}
             </ul>
           </div>
+
+          <p className="mt-12 border-t border-border pt-6 text-sm text-muted-foreground">
+            ¿Buscas formación certificada?{" "}
+            <Link
+              href="/cursos"
+              className="font-semibold text-primary hover:underline"
+            >
+              Explora nuestros cursos
+            </Link>
+            .
+          </p>
         </div>
       </section>
     </>
