@@ -283,3 +283,46 @@
 .hljs-variable,
 .hljs-attribute { color: #fcd34d; }
 
+
+/* ── Empresas — sistema editorial "expediente" ───────────────────────────── */
+
+/* Grano sutil para las bandas oscuras (hero, proceso, estándares) */
+.emp-grain::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.28;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/></filter><rect width='160' height='160' filter='url(%23n)' opacity='0.6'/></svg>");
+}
+
+/* Entradilla editorial: el primer párrafo del rich text pesa más */
+.emp-lead > p:first-child {
+  font-size: 1.2rem;
+  line-height: 1.7;
+  color: var(--foreground);
+}
+
+/* Marcas de esquina tipo documento */
+.emp-corners::before,
+.emp-corners::after {
+  content: '';
+  position: absolute;
+  width: 0.875rem;
+  height: 0.875rem;
+  border-color: var(--primary);
+  pointer-events: none;
+}
+.emp-corners::before {
+  top: -1px;
+  left: -1px;
+  border-top-width: 2px;
+  border-left-width: 2px;
+}
+.emp-corners::after {
+  bottom: -1px;
+  right: -1px;
+  border-bottom-width: 2px;
+  border-right-width: 2px;
+}
