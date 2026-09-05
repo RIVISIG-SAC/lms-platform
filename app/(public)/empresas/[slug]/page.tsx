@@ -1,41 +1,21 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import {
-  ArrowLeft,
-  MapPin,
-  Target,
-  ShieldCheck,
-  Users,
-  Search,
-  ClipboardList,
-  FileText,
-  GraduationCap,
-  Settings,
-  BadgeCheck,
-  Megaphone,
-} from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+import { ArrowLeft, ArrowRight, MapPin, Megaphone, ShieldCheck, Target, Users } from "lucide-react";
 import { getCompanyBySlug } from "@/lib/queries/empresas";
 import { getCompanyIcon } from "@/lib/empresas/icons";
 import { splitHighlight } from "@/lib/empresas/highlight";
 import { CompanyGallery } from "@/components/public/CompanyGallery";
 import { ImageCarousel } from "@/components/public/ImageCarousel";
 import { TestimonialVideo } from "@/components/public/TestimonialVideo";
+import { Eyebrow, SectionHeading } from "@/components/public/empresas/SectionHeading";
+import { ProcessTimeline } from "@/components/public/empresas/ProcessTimeline";
+import { ProjectFicha } from "@/components/public/empresas/ProjectFicha";
+import { StoryCard } from "@/components/public/empresas/StoryCard";
 
 type Params = Promise<{ slug: string }>;
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://rivisig.com";
-
-const IMPLEMENTATION_STEPS = [
-  { label: "Diagnóstico", Icon: Search },
-  { label: "Planificación", Icon: ClipboardList },
-  { label: "Diseño Documental", Icon: FileText },
-  { label: "Capacitación", Icon: GraduationCap },
-  { label: "Implementación", Icon: Settings },
-  { label: "Auditoría Interna", Icon: ShieldCheck },
-  { label: "Certificación", Icon: BadgeCheck },
-] as const;
 
 export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {
   const { slug } = await params;
@@ -92,6 +72,18 @@ export default async function CompanyPage({ params }: { params: Params }) {
 
   const aboutImages = company.images.filter((img) => img.section === "ABOUT");
   const galleryImages = company.images.filter((img) => img.section === "GALLERY");
+  const standards = company.certifications.map((cert) => cert.standard);
+
+  // Numeración correlativa del expediente: sólo cuenta las secciones presentes.
+  let section = 0;
+  const nextIndex = () => String(++section).padStart(2, "0");
+
+  const heroMeta = [
+    { label: "Sector", value: company.sector },
+    { label: "Ubicación", value: company.fichaLocation },
+    { label: "Certificación", value: company.fichaCertificationYear },
+    { label: "Normas", value: standards.length > 0 ? standards.join(" · ") : null },
+  ].filter((item) => Boolean(item.value));
 
   const breadcrumbLd = {
     "@context": "https://schema.org",
@@ -104,396 +96,387 @@ export default async function CompanyPage({ params }: { params: Params }) {
   };
 
   return (
-    <article className="pb-20">
+    <article className="bg-background">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbLd) }} />
 
-      {/* Hero — título a la izquierda, foto a la derecha con degradado (desktop) */}
-      <header className="relative overflow-hidden border-b border-border bg-white">
-        <div
-          className={`relative ${company.heroImageUrl ? "lg:min-h-[440px]" : ""} flex items-center`}
-        >
-          {company.heroImageUrl && (
-            <div className="hidden lg:block absolute inset-0">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={company.heroImageUrl} alt={company.name} className="absolute inset-0 w-full h-full object-cover" />
-              <div className="absolute inset-0 bg-linear-to-r from-white via-white/85 to-white/10" />
-            </div>
-          )}
-
-          <div className="relative z-10 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-10 lg:py-16 motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-2 motion-safe:duration-700">
-            <div className="max-w-xl">
-              <Link
-                href="/empresas"
-                className="inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-widest text-muted-foreground hover:text-primary mb-5"
-              >
-                <ArrowLeft className="size-3.5" />
-                Volver a empresas
-              </Link>
-
-              <div className="flex items-center gap-3 mb-4">
-                {company.logoUrl && (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={company.logoUrl}
-                    alt={`Logo de ${company.name}`}
-                    className="h-9 w-auto object-contain shrink-0"
-                  />
-                )}
-                {company.sector && (
-                  <Badge variant="outline" className="border-primary/30 bg-primary/5 text-primary">
-                    {company.sector}
-                  </Badge>
-                )}
-              </div>
-
-              <h1 className="text-3xl sm:text-4xl lg:text-[2.75rem] font-black tracking-tight text-foreground leading-[1.15]">
-                {renderHeroTitle(company.heroTitle, company.heroHighlight)}
-              </h1>
-
-              {company.heroSubtitle && (
-                <>
-                  <div className="w-10 h-1 bg-primary my-5" />
-                  <p className="text-base text-muted-foreground leading-relaxed">{company.heroSubtitle}</p>
-                </>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* Mobile: la foto va debajo, sin degradado */}
-        {company.heroImageUrl && (
-          <div className="lg:hidden px-4 sm:px-6 pb-8 -mt-2">
+      {/* ── Portada del expediente ─────────────────────────────────────── */}
+      <header className="emp-grain relative flex min-h-[38rem] flex-col justify-end overflow-hidden bg-foreground text-background lg:min-h-[44rem]">
+        {company.heroImageUrl ? (
+          <>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={company.heroImageUrl}
               alt={company.name}
-              className="w-full aspect-video object-cover rounded-2xl border border-border shadow-sm"
+              className="absolute inset-0 size-full object-cover opacity-55"
             />
-          </div>
+            <div className="absolute inset-0 bg-linear-to-t from-foreground via-foreground/85 to-foreground/40" />
+          </>
+        ) : (
+          <div
+            aria-hidden="true"
+            className="absolute -right-32 -top-32 size-[36rem] rounded-full bg-primary/20 blur-[130px]"
+          />
         )}
+
+        <div className="relative mx-auto w-full max-w-7xl px-4 pb-10 pt-12 sm:px-6 lg:px-8 lg:pb-12 lg:pt-20">
+          <div className="motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-3 motion-safe:duration-700">
+            <Link
+              href="/empresas"
+              className="font-semibold group inline-flex items-center gap-2 text-[11px] uppercase tracking-[0.24em] text-background/55 transition-colors hover:text-primary"
+            >
+              <ArrowLeft className="size-3.5 transition-transform duration-300 group-hover:-translate-x-1" />
+              Empresas
+            </Link>
+
+            <div className="mt-10 flex flex-wrap items-center gap-5">
+              {company.logoUrl && (
+                <span className="flex h-14 items-center bg-background px-4">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={company.logoUrl}
+                    alt={`Logo de ${company.name}`}
+                    className="max-h-9 w-auto object-contain"
+                  />
+                </span>
+              )}
+              <div>
+                <p className="font-black text-2xl leading-none tracking-tight text-background sm:text-3xl">
+                  {company.name}
+                </p>
+                {company.sector && (
+                  <p className="font-semibold mt-2 text-[11px] uppercase tracking-[0.24em] text-primary">
+                    {company.sector}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            <h1 className="font-black mt-8 max-w-4xl text-4xl leading-[1.05] tracking-tight sm:text-5xl">
+              {renderHeroTitle(company.heroTitle, company.heroHighlight)}
+            </h1>
+
+            {company.heroSubtitle && (
+              <p className="mt-6 max-w-2xl text-base leading-relaxed text-background/65">{company.heroSubtitle}</p>
+            )}
+          </div>
+
+          {heroMeta.length > 0 && (
+            <dl className="mt-12 grid grid-cols-2 gap-6 border-t border-background/15 pt-6 lg:grid-cols-4">
+              {heroMeta.map((item) => (
+                <div key={item.label}>
+                  <dt className="font-semibold text-[10px] uppercase tracking-[0.24em] text-background/40">
+                    {item.label}
+                  </dt>
+                  <dd className="mt-2 text-sm font-medium text-background">{item.value}</dd>
+                </div>
+              ))}
+            </dl>
+          )}
+        </div>
       </header>
 
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-16 mt-12">
-        {/* ¿Quién es? */}
-        <section>
-          <h2 className="text-2xl sm:text-3xl font-bold text-foreground mb-6">¿Quién es {company.name}?</h2>
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <div className="lg:col-span-2 space-y-6">
-              <div
-                className="prose-blog"
-                dangerouslySetInnerHTML={{ __html: company.aboutContent }}
-              />
-              {company.fullAddress && (
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <MapPin className="size-4 text-primary shrink-0" />
-                  {company.fullAddress}
-                </div>
-              )}
-            </div>
-
-            {company.facts.length > 0 && (
-              <div className="space-y-3">
-                {company.facts.map((fact) => {
-                  const Icon = getCompanyIcon(fact.icon);
-                  return (
-                    <div key={fact.id} className="flex items-start gap-3 rounded-xl border border-border bg-card p-4">
-                      <div className="size-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                        <Icon className="size-4 text-primary" />
-                      </div>
-                      <div>
-                        <p className="text-sm font-semibold text-foreground">{fact.label}</p>
-                        {fact.value && <p className="text-xs text-muted-foreground mt-0.5">{fact.value}</p>}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
+      {/* ── Perfil ─────────────────────────────────────────────────────── */}
+      <section className="mx-auto max-w-7xl px-4 py-20 sm:px-6 sm:py-24 lg:px-8">
+        <div className="grid grid-cols-1 gap-12 lg:grid-cols-12 lg:gap-16">
+          <div className="lg:col-span-7">
+            <SectionHeading index={nextIndex()} eyebrow="Perfil" title={`¿Quién es ${company.name}?`} />
+            <div
+              className="prose-blog emp-lead mt-8"
+              dangerouslySetInnerHTML={{ __html: company.aboutContent }}
+            />
+            {company.fullAddress && (
+              <p className="mt-8 flex items-start gap-2.5 border-t border-border pt-5 text-sm text-muted-foreground">
+                <MapPin className="mt-0.5 size-4 shrink-0 text-primary" aria-hidden="true" />
+                {company.fullAddress}
+              </p>
             )}
           </div>
 
-          {aboutImages.length > 0 && (
-            <div className="mt-8">
-              <ImageCarousel images={aboutImages} />
-            </div>
-          )}
-        </section>
-
-        {/* El reto / Compromiso / Trabajo en equipo */}
-        {(company.challengeText || company.leadershipText || company.teamworkText) && (
-          <section className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {company.challengeText && (
-              <div className="rounded-2xl border border-border bg-card p-6 space-y-4">
-                <div className="flex items-center gap-3">
-                  <div className="size-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
-                    <Target className="size-5 text-primary" />
-                  </div>
-                  <h3 className="text-base font-bold text-foreground">El reto</h3>
-                </div>
-                <p className="text-sm text-muted-foreground leading-relaxed">{company.challengeText}</p>
-                {company.challengeImageUrl && (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={company.challengeImageUrl}
-                    alt="El reto"
-                    className="w-full aspect-4/3 object-cover rounded-lg border border-border"
-                  />
-                )}
+          {company.facts.length > 0 && (
+            <aside className="lg:col-span-4 lg:col-start-9">
+              <div className="lg:sticky lg:top-28">
+                <Eyebrow>En cifras</Eyebrow>
+                <dl className="mt-6 border-t border-border">
+                  {company.facts.map((fact) => {
+                    const Icon = getCompanyIcon(fact.icon);
+                    return (
+                      <div key={fact.id} className="flex items-start gap-4 border-b border-border py-5">
+                        <Icon className="mt-0.5 size-5 shrink-0 text-primary" aria-hidden="true" />
+                        <div>
+                          <dt className="text-sm font-semibold leading-snug text-foreground">{fact.label}</dt>
+                          {fact.value && (
+                            <dd className="mt-1 text-sm leading-relaxed text-muted-foreground">{fact.value}</dd>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </dl>
               </div>
+            </aside>
+          )}
+        </div>
+
+        {aboutImages.length > 0 && (
+          <div className="mt-14">
+            <ImageCarousel images={aboutImages} />
+          </div>
+        )}
+      </section>
+
+      {/* ── El reto / Alta Dirección / Trabajo en equipo ────────────────── */}
+      {(company.challengeText || company.leadershipText || company.teamworkText) && (
+        <section className="border-y border-border bg-muted/40">
+          <div className="mx-auto grid max-w-7xl grid-cols-1 items-stretch gap-6 px-4 py-20 sm:px-6 sm:py-24 md:grid-cols-3 lg:gap-8 lg:px-8">
+            {company.challengeText && (
+              <StoryCard
+                index={nextIndex()}
+                title="El reto"
+                text={company.challengeText}
+                imageUrl={company.challengeImageUrl}
+                Icon={Target}
+              />
             )}
             {company.leadershipText && (
-              <div className="rounded-2xl border border-border bg-card p-6 space-y-4">
-                <div className="flex items-center gap-3">
-                  <div className="size-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
-                    <ShieldCheck className="size-5 text-primary" />
-                  </div>
-                  <h3 className="text-base font-bold text-foreground">Compromiso de la Alta Dirección</h3>
-                </div>
-                <p className="text-sm text-muted-foreground leading-relaxed">{company.leadershipText}</p>
-                {company.leadershipImageUrl && (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={company.leadershipImageUrl}
-                    alt="Compromiso de la Alta Dirección"
-                    className="w-full aspect-4/3 object-cover rounded-lg border border-border"
-                  />
-                )}
-              </div>
+              <StoryCard
+                index={nextIndex()}
+                title="Compromiso de la Alta Dirección"
+                text={company.leadershipText}
+                imageUrl={company.leadershipImageUrl}
+                Icon={ShieldCheck}
+              />
             )}
             {company.teamworkText && (
-              <div className="rounded-2xl border border-border bg-card p-6 space-y-4">
-                <div className="flex items-center gap-3">
-                  <div className="size-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
-                    <Users className="size-5 text-primary" />
-                  </div>
-                  <h3 className="text-base font-bold text-foreground">Trabajo en equipo</h3>
-                </div>
-                <p className="text-sm text-muted-foreground leading-relaxed">{company.teamworkText}</p>
-                {company.teamworkImageUrl && (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={company.teamworkImageUrl}
-                    alt="Trabajo en equipo"
-                    className="w-full aspect-4/3 object-cover rounded-lg border border-border"
-                  />
+              <StoryCard
+                index={nextIndex()}
+                title="Trabajo en equipo"
+                text={company.teamworkText}
+                imageUrl={company.teamworkImageUrl}
+                Icon={Users}
+              />
+            )}
+          </div>
+        </section>
+      )}
+
+      {/* ── Servicios de la empresa ─────────────────────────────────────── */}
+      {company.services.length > 0 && (
+        <section className="mx-auto max-w-7xl px-4 py-20 sm:px-6 sm:py-24 lg:px-8">
+          <SectionHeading index={nextIndex()} eyebrow="Actividad" title="Sus servicios" />
+          <div className="mt-12 grid grid-cols-1 gap-x-10 gap-y-px sm:grid-cols-2 lg:grid-cols-3">
+            {company.services.map((service, i) => (
+              <div key={service.id} className="border-t border-border py-6">
+                <span className="font-semibold text-[11px] tracking-[0.2em] text-primary">
+                  {String(i + 1).padStart(2, "0")}
+                </span>
+                <h3 className="mt-3 text-base font-semibold leading-snug text-foreground">{service.title}</h3>
+                {service.description && (
+                  <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{service.description}</p>
                 )}
               </div>
-            )}
-          </section>
-        )}
+            ))}
+          </div>
+        </section>
+      )}
 
-        {/* Sus servicios */}
-        {company.services.length > 0 && (
-          <section>
-            <h2 className="text-2xl sm:text-3xl font-bold text-foreground mb-6">Sus servicios</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {company.services.map((service) => (
-                <div key={service.id} className="rounded-xl border border-border bg-card p-5">
-                  <h3 className="text-sm font-semibold text-foreground">{service.title}</h3>
-                  {service.description && (
-                    <p className="text-sm text-muted-foreground mt-1.5 leading-relaxed">{service.description}</p>
+      {/* ── Proceso de implementación (bloque estructural fijo) ─────────── */}
+      <ProcessTimeline index={nextIndex()} />
+
+      {/* ── Normas certificadas ────────────────────────────────────────── */}
+      {company.certifications.length > 0 && (
+        <section className="mx-auto max-w-7xl px-4 py-20 sm:px-6 sm:py-24 lg:px-8">
+          <SectionHeading
+            index={nextIndex()}
+            eyebrow="Estándares"
+            title={
+              <>
+                Un sistema alineado con estándares <span className="text-primary">internacionales</span>
+              </>
+            }
+            lead="Normas certificadas dentro del alcance de este proyecto."
+          />
+
+          <div className="mt-12 grid grid-cols-1 gap-x-10 gap-y-px sm:grid-cols-2 lg:grid-cols-3">
+            {company.certifications.map((cert) => {
+              const Icon = getCompanyIcon(cert.icon);
+              return (
+                <div
+                  key={cert.id}
+                  className="group flex items-start gap-5 border-t border-foreground py-7 transition-colors duration-300 hover:border-primary"
+                >
+                  <Icon
+                    className="mt-1 size-6 shrink-0 text-primary transition-transform duration-300 group-hover:scale-110"
+                    aria-hidden="true"
+                  />
+                  <div>
+                    <p className="font-black text-2xl leading-none tracking-tight text-foreground">
+                      {cert.standard}
+                    </p>
+                    <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{cert.label}</p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+      )}
+
+      {/* ── Mejoras alcanzadas ─────────────────────────────────────────── */}
+      {company.achievements.length > 0 && (
+        <section className="border-y border-border bg-muted/40">
+          <div className="mx-auto max-w-7xl px-4 py-20 sm:px-6 sm:py-24 lg:px-8">
+            <SectionHeading index={nextIndex()} eyebrow="Resultados" title="Principales mejoras alcanzadas" />
+            <ol className="mt-12 grid grid-cols-1 gap-x-14 lg:grid-cols-2">
+              {company.achievements.map((achievement, i) => (
+                <li key={achievement.id} className="flex items-baseline gap-5 border-b border-border py-6">
+                  <span className="font-semibold shrink-0 text-[11px] tracking-[0.2em] text-primary">
+                    {String(i + 1).padStart(2, "0")}
+                  </span>
+                  <p className="text-base leading-relaxed text-foreground">{achievement.text}</p>
+                </li>
+              ))}
+            </ol>
+          </div>
+        </section>
+      )}
+
+      {/* ── Reconocimientos ────────────────────────────────────────────── */}
+      {company.awards.length > 0 && (
+        <section className="mx-auto max-w-7xl px-4 py-20 sm:px-6 sm:py-24 lg:px-8">
+          <SectionHeading index={nextIndex()} eyebrow="Distinciones" title="Reconocimientos" />
+          <div className="mt-12 grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
+            {company.awards.map((award) => (
+              <article key={award.id} className="group">
+                {award.imageUrl && (
+                  <div className="overflow-hidden bg-muted">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={award.imageUrl}
+                      alt={award.title}
+                      loading="lazy"
+                      className="aspect-4/3 w-full object-cover grayscale-[35%] transition-all duration-700 group-hover:scale-[1.03] group-hover:grayscale-0"
+                    />
+                  </div>
+                )}
+                <div className="border-t-2 border-foreground pt-5">
+                  <h3 className="text-base font-semibold leading-snug text-foreground">{award.title}</h3>
+                  {award.description && (
+                    <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{award.description}</p>
                   )}
                 </div>
-              ))}
-            </div>
-          </section>
-        )}
+              </article>
+            ))}
+          </div>
+        </section>
+      )}
 
-        {/* Proceso de Implementación — fijo, igual para todas las empresas */}
-        <section>
-          <h2 className="text-2xl sm:text-3xl font-bold text-foreground mb-8 text-center">
-            Proceso de Implementación
-          </h2>
-          <div className="overflow-x-auto pb-2 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
-            <div className="relative flex items-start justify-between gap-4">
-              <div className="absolute left-12 right-12 top-7 h-px bg-border" aria-hidden="true" />
-              {IMPLEMENTATION_STEPS.map(({ label, Icon }) => (
-                <div key={label} className="relative z-10 flex flex-col items-center gap-2 w-24 text-center shrink-0">
-                  <div className="size-14 rounded-full bg-background">
-                    <div className="size-full rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center">
-                      <Icon className="size-6 text-primary" />
-                    </div>
-                  </div>
-                  <span className="text-xs font-semibold text-foreground leading-snug">{label}</span>
-                </div>
-              ))}
+      {/* ── Momentos del proyecto ──────────────────────────────────────── */}
+      {galleryImages.length > 0 && (
+        <section className="mx-auto max-w-7xl px-4 py-20 sm:px-6 sm:py-24 lg:px-8">
+          <SectionHeading index={nextIndex()} eyebrow="Archivo" title="Momentos del proyecto" />
+          <div className="mt-12">
+            <CompanyGallery images={galleryImages} />
+          </div>
+        </section>
+      )}
+
+      {/* ── Testimonio ─────────────────────────────────────────────────── */}
+      {company.testimonialVimeoId && (
+        <section className="border-y border-border bg-muted/40">
+          <div className="mx-auto max-w-7xl px-4 py-20 sm:px-6 sm:py-24 lg:px-8">
+            <SectionHeading index={nextIndex()} eyebrow="En sus palabras" title="Testimonio" />
+            <div className="mt-12">
+              <TestimonialVideo
+                vimeoId={company.testimonialVimeoId}
+                title={`Testimonio de ${company.name}`}
+                quote={company.testimonialQuote}
+                authorName={company.testimonialAuthorName}
+                authorRole={company.testimonialAuthorRole}
+              />
             </div>
           </div>
         </section>
+      )}
 
-        {/* Normas certificadas */}
-        {company.certifications.length > 0 && (
-          <section className="rounded-2xl bg-foreground text-background p-8 sm:p-10">
-            <h2 className="text-xl sm:text-2xl font-bold mb-2">
-              Un Sistema de Gestión alineado con estándares internacionales
-            </h2>
-            <p className="text-background/70 text-sm mb-6 max-w-2xl">
-              Normas y estándares certificados en este proyecto.
-            </p>
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
-              {company.certifications.map((cert) => {
-                const Icon = getCompanyIcon(cert.icon);
-                return (
-                  <div key={cert.id} className="flex flex-col items-center text-center gap-2 rounded-xl bg-background/10 p-4">
-                    <Icon className="size-6 text-primary" />
-                    <div>
-                      <p className="text-sm font-semibold">{cert.standard}</p>
-                      <p className="text-xs text-background/60">{cert.label}</p>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </section>
-        )}
-
-        {/* Mejoras alcanzadas */}
-        {company.achievements.length > 0 && (
-          <section>
-            <h2 className="text-2xl sm:text-3xl font-bold text-foreground mb-6">Principales mejoras alcanzadas</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {company.achievements.map((achievement) => (
-                <div key={achievement.id} className="flex items-start gap-2.5 rounded-lg border border-border bg-card p-4">
-                  <BadgeCheck className="size-4 text-primary shrink-0 mt-0.5" />
-                  <p className="text-sm text-foreground">{achievement.text}</p>
-                </div>
-              ))}
-            </div>
-          </section>
-        )}
-
-        {/* Reconocimientos */}
-        {company.awards.length > 0 && (
-          <section>
-            <h2 className="text-2xl sm:text-3xl font-bold text-foreground mb-6">Reconocimientos</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {company.awards.map((award) => (
-                <div key={award.id} className="rounded-xl border border-border bg-card overflow-hidden">
-                  {award.imageUrl && (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={award.imageUrl} alt={award.title} className="w-full aspect-video object-cover" />
-                  )}
-                  <div className="p-4">
-                    <h3 className="text-sm font-semibold text-foreground">{award.title}</h3>
-                    {award.description && (
-                      <p className="text-sm text-muted-foreground mt-1 leading-relaxed">{award.description}</p>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </section>
-        )}
-
-        {/* Momentos del proyecto */}
-        {galleryImages.length > 0 && (
-          <section>
-            <h2 className="text-2xl sm:text-3xl font-bold text-foreground mb-6">Momentos del proyecto</h2>
-            <CompanyGallery images={galleryImages} />
-          </section>
-        )}
-
-        {/* Testimonio */}
-        {company.testimonialVimeoId && (
-          <section>
-            <h2 className="text-2xl sm:text-3xl font-bold text-foreground mb-6">Testimonio</h2>
-            <TestimonialVideo
-              vimeoId={company.testimonialVimeoId}
-              title={`Testimonio de ${company.name}`}
-              quote={company.testimonialQuote}
-              authorName={company.testimonialAuthorName}
-              authorRole={company.testimonialAuthorRole}
+      {/* ── Ficha del proyecto + cierre institucional ───────────────────── */}
+      <section className="mx-auto max-w-7xl px-4 py-20 sm:px-6 sm:py-24 lg:px-8">
+        <div className="grid grid-cols-1 gap-10 lg:grid-cols-12">
+          <div className={company.closingMessage ? "lg:col-span-7" : "lg:col-span-12"}>
+            <ProjectFicha
+              index={nextIndex()}
+              standards={standards}
+              fields={[
+                { label: "Cliente", value: company.fichaClientName },
+                { label: "RUC", value: company.fichaRuc },
+                { label: "Ubicación", value: company.fichaLocation },
+                { label: "Año de certificación", value: company.fichaCertificationYear },
+                { label: "Estado", value: company.fichaProjectStatus },
+                { label: "Acompañamiento", value: company.fichaAccompaniment },
+                { label: "Alcance del proyecto", value: company.fichaProjectScope, wide: true },
+              ]}
             />
-          </section>
-        )}
+          </div>
 
-        {/* Ficha del Proyecto */}
-        {(company.fichaLocation ||
-          company.fichaClientName ||
-          company.fichaRuc ||
-          company.fichaProjectScope ||
-          company.fichaCertificationYear ||
-          company.fichaProjectStatus ||
-          company.fichaAccompaniment) && (
-          <section className="rounded-2xl border border-border bg-card p-6 sm:p-8">
-            <h2 className="text-lg font-bold text-foreground mb-5 flex items-center gap-2">
-              <ClipboardList className="size-5 text-primary" /> Ficha del Proyecto
-            </h2>
-            <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4 text-sm">
-              {company.fichaClientName && (
-                <div>
-                  <dt className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Cliente</dt>
-                  <dd className="text-foreground mt-0.5">{company.fichaClientName}</dd>
-                </div>
-              )}
-              {company.fichaRuc && (
-                <div>
-                  <dt className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">RUC</dt>
-                  <dd className="text-foreground mt-0.5">{company.fichaRuc}</dd>
-                </div>
-              )}
-              {company.fichaLocation && (
-                <div>
-                  <dt className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Ubicación</dt>
-                  <dd className="text-foreground mt-0.5">{company.fichaLocation}</dd>
-                </div>
-              )}
-              {company.fichaCertificationYear && (
-                <div>
-                  <dt className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                    Año de certificación
-                  </dt>
-                  <dd className="text-foreground mt-0.5">{company.fichaCertificationYear}</dd>
-                </div>
-              )}
-              {company.fichaProjectStatus && (
-                <div>
-                  <dt className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Estado</dt>
-                  <dd className="text-foreground mt-0.5">{company.fichaProjectStatus}</dd>
-                </div>
-              )}
-              {company.fichaAccompaniment && (
-                <div>
-                  <dt className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                    Acompañamiento
-                  </dt>
-                  <dd className="text-foreground mt-0.5">{company.fichaAccompaniment}</dd>
-                </div>
-              )}
-              {company.fichaProjectScope && (
-                <div className="sm:col-span-2">
-                  <dt className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                    Alcance / Proyecto
-                  </dt>
-                  <dd className="text-foreground mt-0.5">{company.fichaProjectScope}</dd>
-                </div>
-              )}
-            </dl>
-          </section>
-        )}
+          {company.closingMessage && (
+            <div className="lg:col-span-5">
+              <div className="emp-grain relative h-full overflow-hidden bg-foreground p-7 text-background sm:p-9">
+                <div
+                  aria-hidden="true"
+                  className="absolute -right-20 -top-20 size-64 rounded-full bg-primary/25 blur-[90px]"
+                />
+                <div className="relative">
+                  <Eyebrow tone="ink">
+                    <span className="inline-flex items-center gap-2">
+                      <Megaphone className="size-3.5 text-primary" aria-hidden="true" />
+                      Reconocimiento institucional
+                    </span>
+                  </Eyebrow>
 
-        {/* Cierre institucional */}
-        {company.closingMessage && (
-          <section className="rounded-2xl border border-primary/20 bg-primary/5 p-6 sm:p-8 flex flex-col sm:flex-row gap-6 items-start">
-            {company.closingImageUrl && (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={company.closingImageUrl}
-                alt={`Reconocimiento a ${company.name}`}
-                className="w-full sm:w-56 aspect-4/3 object-cover rounded-xl border border-border shrink-0"
-              />
-            )}
-            <div>
-              <div className="flex items-center gap-2 mb-3">
-                <Megaphone className="size-5 text-primary" />
-                <h2 className="text-base font-bold text-foreground">Reconocimiento Institucional</h2>
+                  {company.closingImageUrl && (
+                    <div className="mt-7 overflow-hidden">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={company.closingImageUrl}
+                        alt={`Reconocimiento a ${company.name}`}
+                        loading="lazy"
+                        className="aspect-video w-full object-cover"
+                      />
+                    </div>
+                  )}
+
+                  <p className="mt-7 whitespace-pre-line text-sm leading-relaxed text-background/70">
+                    {company.closingMessage}
+                  </p>
+                </div>
               </div>
-              <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-line">
-                {company.closingMessage}
-              </p>
             </div>
-          </section>
-        )}
-      </div>
+          )}
+        </div>
+      </section>
+
+      {/* ── Cierre / navegación ────────────────────────────────────────── */}
+      <section className="border-t border-border">
+        <div className="mx-auto flex max-w-7xl flex-col items-start justify-between gap-8 px-4 py-16 sm:px-6 lg:flex-row lg:items-center lg:px-8">
+          <p className="font-black max-w-xl text-3xl leading-tight tracking-tight text-foreground sm:text-4xl">
+            ¿Quieres un proyecto como el de <span className="text-primary">{company.name}</span>?
+          </p>
+          <div className="flex flex-wrap items-center gap-4">
+            <Link
+              href="/servicios"
+              className="font-semibold group inline-flex items-center gap-3 bg-primary px-7 py-4 text-[11px] uppercase tracking-[0.2em] text-primary-foreground transition-colors hover:bg-foreground"
+            >
+              Ver servicios
+              <ArrowRight className="size-4 transition-transform duration-300 group-hover:translate-x-1" />
+            </Link>
+            <Link
+              href="/empresas"
+              className="font-semibold inline-flex items-center gap-3 border border-border px-7 py-4 text-[11px] uppercase tracking-[0.2em] text-foreground transition-colors hover:border-foreground"
+            >
+              Otros casos
+            </Link>
+          </div>
+        </div>
+      </section>
     </article>
   );
 }

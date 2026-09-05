@@ -14,7 +14,7 @@ export function ImageCarousel({ images }: { images: CarouselImage[] }) {
     const el = trackRef.current;
     if (!el) return;
     const slide = el.querySelector<HTMLElement>("[data-slide]");
-    const amount = (slide?.offsetWidth ?? 288) + 16;
+    const amount = (slide?.offsetWidth ?? 320) + 12;
     el.scrollBy({ left: dir * amount, behavior: "smooth" });
   }
 
@@ -22,26 +22,34 @@ export function ImageCarousel({ images }: { images: CarouselImage[] }) {
     <div className="relative">
       <div
         ref={trackRef}
-        className="flex gap-4 overflow-x-auto snap-x snap-mandatory scroll-smooth pb-1 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+        className="flex snap-x snap-mandatory gap-3 overflow-x-auto scroll-smooth pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       >
-        {images.map((img) => (
-          <div
+        {images.map((img, i) => (
+          <figure
             key={img.id}
             data-slide
-            className="snap-start shrink-0 w-64 sm:w-72 aspect-4/3 rounded-xl overflow-hidden border border-border bg-muted"
+            className="group relative aspect-4/3 w-72 shrink-0 snap-start overflow-hidden bg-muted sm:w-80"
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={img.url} alt={img.alt} className="w-full h-full object-cover" />
-          </div>
+            <img
+              src={img.url}
+              alt={img.alt}
+              loading="lazy"
+              className="size-full object-cover grayscale-[30%] transition-all duration-700 group-hover:scale-105 group-hover:grayscale-0"
+            />
+            <figcaption className="font-semibold absolute bottom-0 left-0 bg-foreground/80 px-2 py-1 text-[10px] tracking-[0.2em] text-background">
+              {String(i + 1).padStart(2, "0")}
+            </figcaption>
+          </figure>
         ))}
       </div>
 
       {images.length > 1 && (
-        <>
+        <div className="mt-4 hidden items-center gap-2 sm:flex">
           <button
             type="button"
             onClick={() => scrollByAmount(-1)}
-            className="hidden sm:flex absolute left-2 top-1/2 -translate-y-1/2 size-9 rounded-full bg-white/90 border border-border shadow-sm items-center justify-center hover:bg-white transition-colors"
+            className="flex size-10 items-center justify-center border border-border transition-colors hover:border-primary hover:bg-primary hover:text-primary-foreground"
             aria-label="Anterior"
           >
             <ChevronLeft className="size-4" />
@@ -49,12 +57,12 @@ export function ImageCarousel({ images }: { images: CarouselImage[] }) {
           <button
             type="button"
             onClick={() => scrollByAmount(1)}
-            className="hidden sm:flex absolute right-2 top-1/2 -translate-y-1/2 size-9 rounded-full bg-white/90 border border-border shadow-sm items-center justify-center hover:bg-white transition-colors"
+            className="flex size-10 items-center justify-center border border-border transition-colors hover:border-primary hover:bg-primary hover:text-primary-foreground"
             aria-label="Siguiente"
           >
             <ChevronRight className="size-4" />
           </button>
-        </>
+        </div>
       )}
     </div>
   );
