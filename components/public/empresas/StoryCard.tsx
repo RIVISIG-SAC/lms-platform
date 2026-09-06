@@ -5,20 +5,18 @@ import type { LucideIcon } from "lucide-react";
  * El reto — Compromiso de la Alta Dirección — Trabajo en equipo.
  */
 export function StoryCard({
-  index,
   title,
   text,
   imageUrl,
   Icon,
 }: {
-  index: string;
   title: string;
   text: string;
   imageUrl?: string | null;
   Icon: LucideIcon;
 }) {
   return (
-    <article className="group flex h-full flex-col bg-card">
+    <article className="group flex h-full flex-col overflow-hidden rounded-2xl border border-border/70 bg-white transition-all duration-300 hover:-translate-y-1 hover:border-primary/30 hover:shadow-xl hover:shadow-black/5">
       {imageUrl && (
         <div className="overflow-hidden bg-muted">
           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -26,21 +24,20 @@ export function StoryCard({
             src={imageUrl}
             alt={title}
             loading="lazy"
-            className="aspect-4/3 w-full object-cover grayscale-[35%] transition-all duration-700 group-hover:scale-[1.03] group-hover:grayscale-0"
+            className="aspect-4/3 w-full object-cover transition-transform duration-700 group-hover:scale-105"
           />
         </div>
       )}
 
-      <div className="flex flex-1 flex-col border-t-2 border-foreground p-6 transition-colors duration-300 group-hover:border-primary sm:p-7">
+      <div className="flex flex-1 flex-col p-6 sm:p-7">
         <div className="flex items-center gap-3">
-          <span className="flex size-10 shrink-0 items-center justify-center border border-primary/25 bg-primary/5">
+          <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10">
             <Icon className="size-5 text-primary" aria-hidden="true" />
           </span>
-          <span className="text-[11px] font-semibold uppercase tracking-[0.28em] text-primary">{index}</span>
+          <h3 className="text-base font-bold leading-snug tracking-tight text-foreground">{title}</h3>
         </div>
 
-        <h3 className="mt-5 text-lg font-bold leading-snug tracking-tight text-foreground">{title}</h3>
-        <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{text}</p>
+        <p className="mt-4 text-sm leading-relaxed text-muted-foreground">{text}</p>
       </div>
     </article>
   );

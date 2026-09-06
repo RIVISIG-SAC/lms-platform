@@ -10,34 +10,41 @@ type Props = {
 };
 
 export function TestimonialVideo({ vimeoId, title, quote, authorName, authorRole }: Props) {
+  const hasText = Boolean(quote || authorName || authorRole);
+
   return (
-    <div className="grid grid-cols-1 items-center gap-10 lg:grid-cols-12 lg:gap-14">
-      <div className="lg:col-span-7">
-        <div className="overflow-hidden border border-border bg-foreground">
+    <div className="overflow-hidden rounded-2xl border border-border/70 bg-white shadow-sm">
+      <div className={`grid grid-cols-1 ${hasText ? "lg:grid-cols-12" : ""}`}>
+        <div className={`p-4 sm:p-6 ${hasText ? "lg:col-span-7 lg:pr-3" : ""}`}>
           <VimeoPlayer videoId={vimeoId} title={title} />
         </div>
-      </div>
 
-      {(quote || authorName) && (
-        <blockquote className="lg:col-span-5">
-          <Quote className="size-8 text-primary" aria-hidden="true" />
-          {quote && (
-            <p className="font-black mt-5 text-2xl leading-[1.3] tracking-tight text-foreground sm:text-[1.9rem]">
-              {quote}
-            </p>
-          )}
-          {(authorName || authorRole) && (
-            <footer className="mt-7 border-t border-border pt-5">
-              {authorName && <p className="text-sm font-semibold text-foreground">{authorName}</p>}
-              {authorRole && (
-                <p className="font-semibold mt-1 text-[11px] uppercase tracking-[0.2em] text-muted-foreground">
-                  {authorRole}
-                </p>
-              )}
-            </footer>
-          )}
-        </blockquote>
-      )}
+        {hasText && (
+          <figure className="flex flex-col justify-center border-t border-border/70 p-6 sm:p-8 lg:col-span-5 lg:border-l lg:border-t-0 lg:pl-8">
+            <Quote className="size-7 shrink-0 text-primary/70" aria-hidden="true" />
+
+            {quote && (
+              <blockquote className="mt-4 text-lg font-medium leading-relaxed text-foreground sm:text-xl sm:leading-relaxed">
+                {quote}
+              </blockquote>
+            )}
+
+            {(authorName || authorRole) && (
+              <figcaption className="mt-6 flex items-center gap-3 border-t border-border/70 pt-5">
+                <span className="h-9 w-1 shrink-0 rounded-full bg-primary" aria-hidden="true" />
+                <span>
+                  {authorName && <span className="block text-sm font-semibold text-foreground">{authorName}</span>}
+                  {authorRole && (
+                    <span className="mt-0.5 block text-xs uppercase tracking-wider text-muted-foreground">
+                      {authorRole}
+                    </span>
+                  )}
+                </span>
+              </figcaption>
+            )}
+          </figure>
+        )}
+      </div>
     </div>
   );
 }

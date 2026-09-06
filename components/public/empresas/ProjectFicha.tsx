@@ -4,11 +4,9 @@ type FichaField = { label: string; value: string | null | undefined; wide?: bool
 
 /** Ficha del Proyecto: hoja de datos estructurada con estética de documento. */
 export function ProjectFicha({
-  index,
   fields,
   standards,
 }: {
-  index?: string;
   fields: FichaField[];
   standards?: string[];
 }) {
@@ -17,7 +15,7 @@ export function ProjectFicha({
 
   return (
     <div className="emp-corners relative border border-border bg-card p-7 sm:p-10">
-      <Eyebrow index={index}>Ficha del proyecto</Eyebrow>
+      <Eyebrow>Ficha del proyecto</Eyebrow>
 
       <dl className="mt-8 grid grid-cols-1 gap-px bg-border sm:grid-cols-2">
         {visible.map((field) => (

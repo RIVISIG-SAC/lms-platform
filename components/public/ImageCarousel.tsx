@@ -14,55 +14,52 @@ export function ImageCarousel({ images }: { images: CarouselImage[] }) {
     const el = trackRef.current;
     if (!el) return;
     const slide = el.querySelector<HTMLElement>("[data-slide]");
-    const amount = (slide?.offsetWidth ?? 320) + 12;
+    const amount = (slide?.offsetWidth ?? 320) + 16;
     el.scrollBy({ left: dir * amount, behavior: "smooth" });
   }
 
   return (
-    <div className="relative">
+    <div className="group/carousel relative">
       <div
         ref={trackRef}
-        className="flex snap-x snap-mandatory gap-3 overflow-x-auto scroll-smooth pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        className="flex snap-x snap-mandatory gap-4 overflow-x-auto scroll-smooth [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       >
-        {images.map((img, i) => (
+        {images.map((img) => (
           <figure
             key={img.id}
             data-slide
-            className="group relative aspect-4/3 w-72 shrink-0 snap-start overflow-hidden bg-muted sm:w-80"
+            className="group relative aspect-4/3 w-64 shrink-0 snap-start overflow-hidden rounded-xl border border-border/70 bg-muted sm:w-80"
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={img.url}
               alt={img.alt}
               loading="lazy"
-              className="size-full object-cover grayscale-[30%] transition-all duration-700 group-hover:scale-105 group-hover:grayscale-0"
+              className="size-full object-cover transition-transform duration-700 group-hover:scale-105"
             />
-            <figcaption className="font-semibold absolute bottom-0 left-0 bg-foreground/80 px-2 py-1 text-[10px] tracking-[0.2em] text-background">
-              {String(i + 1).padStart(2, "0")}
-            </figcaption>
           </figure>
         ))}
       </div>
 
       {images.length > 1 && (
-        <div className="mt-4 hidden items-center gap-2 sm:flex">
+        <>
           <button
             type="button"
             onClick={() => scrollByAmount(-1)}
-            className="flex size-10 items-center justify-center border border-border transition-colors hover:border-primary hover:bg-primary hover:text-primary-foreground"
-            aria-label="Anterior"
+            className="absolute -left-3 top-1/2 hidden size-10 -translate-y-1/2 items-center justify-center rounded-full border border-border/70 bg-white/95 text-foreground shadow-md shadow-black/10 backdrop-blur transition-all duration-300 hover:border-primary/40 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 sm:flex sm:opacity-0 focus-visible:opacity-100 sm:group-hover/carousel:opacity-100"
+            aria-label="Imagen anterior"
           >
             <ChevronLeft className="size-4" />
           </button>
           <button
             type="button"
             onClick={() => scrollByAmount(1)}
-            className="flex size-10 items-center justify-center border border-border transition-colors hover:border-primary hover:bg-primary hover:text-primary-foreground"
-            aria-label="Siguiente"
+            className="absolute -right-3 top-1/2 hidden size-10 -translate-y-1/2 items-center justify-center rounded-full border border-border/70 bg-white/95 text-foreground shadow-md shadow-black/10 backdrop-blur transition-all duration-300 hover:border-primary/40 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 sm:flex sm:opacity-0 focus-visible:opacity-100 sm:group-hover/carousel:opacity-100"
+            aria-label="Siguiente imagen"
           >
             <ChevronRight className="size-4" />
           </button>
-        </div>
+        </>
       )}
     </div>
   );
