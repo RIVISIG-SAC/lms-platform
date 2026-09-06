@@ -1,6 +1,5 @@
 import { Suspense } from "react";
 import { ArrowRight, Building2 } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
 import { CompanyCard } from "@/components/public/CompanyCard";
 import { getPublishedCompanies } from "@/lib/queries/empresas";
 
@@ -13,7 +12,6 @@ export const metadata = {
 
 async function CompaniesList() {
   const companies = await getPublishedCompanies();
-  const [featured, ...rest] = companies;
 
   if (companies.length === 0) {
     return (
@@ -26,39 +24,23 @@ async function CompaniesList() {
   }
 
   return (
-    <div className="space-y-10">
-      {featured && (
-        <CompanyCard
-          slug={featured.slug}
-          name={featured.name}
-          sector={featured.sector}
-          logoUrl={featured.logoUrl}
-          heroImageUrl={featured.heroImageUrl}
-          heroTitle={featured.heroTitle}
-          featured
-        />
-      )}
-
-      {rest.length > 0 && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-7">
-          {rest.map((company, index) => (
-            <div
-              key={company.id}
-              className="motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-3 motion-safe:duration-500"
-              style={{ animationDelay: `${Math.min(index, 8) * 70}ms` }}
-            >
-              <CompanyCard
-                slug={company.slug}
-                name={company.name}
-                sector={company.sector}
-                logoUrl={company.logoUrl}
-                heroImageUrl={company.heroImageUrl}
-                heroTitle={company.heroTitle}
-              />
-            </div>
-          ))}
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-7">
+      {companies.map((company, index) => (
+        <div
+          key={company.id}
+          className="motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-3 motion-safe:duration-500"
+          style={{ animationDelay: `${Math.min(index, 8) * 70}ms` }}
+        >
+          <CompanyCard
+            slug={company.slug}
+            name={company.name}
+            sector={company.sector}
+            logoUrl={company.logoUrl}
+            heroImageUrl={company.heroImageUrl}
+            heroTitle={company.heroTitle}
+          />
         </div>
-      )}
+      ))}
     </div>
   );
 }
@@ -67,7 +49,15 @@ function CompaniesListSkeleton() {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-7">
       {Array.from({ length: 6 }).map((_, i) => (
-        <div key={i} className="h-80 rounded-2xl bg-muted animate-pulse" />
+        <div key={i} className="overflow-hidden rounded-2xl border border-border/70 bg-white">
+          <div className="h-[4.75rem] border-b border-border/70 bg-muted/40" />
+          <div className="aspect-16/10 animate-pulse bg-muted" />
+          <div className="space-y-3 p-5">
+            <div className="h-5 w-2/3 animate-pulse rounded bg-muted" />
+            <div className="h-4 w-full animate-pulse rounded bg-muted" />
+            <div className="h-4 w-4/5 animate-pulse rounded bg-muted" />
+          </div>
+        </div>
       ))}
     </div>
   );
