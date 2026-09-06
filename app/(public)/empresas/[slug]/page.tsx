@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, ArrowRight, MapPin, Megaphone, ShieldCheck, Target, Users } from "lucide-react";
+import { ArrowLeft, ArrowRight, BadgeCheck, MapPin, Megaphone, ShieldCheck, Target, Users } from "lucide-react";
 import { getCompanyBySlug } from "@/lib/queries/empresas";
 import { getCompanyIcon } from "@/lib/empresas/icons";
 import { splitHighlight } from "@/lib/empresas/highlight";
@@ -73,10 +73,6 @@ export default async function CompanyPage({ params }: { params: Params }) {
   const aboutImages = company.images.filter((img) => img.section === "ABOUT");
   const galleryImages = company.images.filter((img) => img.section === "GALLERY");
   const standards = company.certifications.map((cert) => cert.standard);
-
-  // Numeración correlativa del expediente: sólo cuenta las secciones presentes.
-  let section = 0;
-  const nextIndex = () => String(++section).padStart(2, "0");
 
   const heroMeta = [
     { label: "Sector", value: company.sector },
@@ -176,10 +172,10 @@ export default async function CompanyPage({ params }: { params: Params }) {
       </header>
 
       {/* ── Perfil ─────────────────────────────────────────────────────── */}
-      <section className="mx-auto max-w-7xl px-4 py-20 sm:px-6 sm:py-24 lg:px-8">
+      <section className="mx-auto max-w-7xl px-4 pb-14 pt-20 sm:px-6 sm:pb-16 sm:pt-24 lg:px-8">
         <div className="grid grid-cols-1 gap-12 lg:grid-cols-12 lg:gap-16">
           <div className="lg:col-span-7">
-            <SectionHeading index={nextIndex()} eyebrow="Perfil" title={`¿Quién es ${company.name}?`} />
+            <SectionHeading eyebrow="Perfil" title={`¿Quién es ${company.name}?`} />
             <div
               className="prose-blog emp-lead mt-8"
               dangerouslySetInnerHTML={{ __html: company.aboutContent }}
@@ -218,7 +214,7 @@ export default async function CompanyPage({ params }: { params: Params }) {
         </div>
 
         {aboutImages.length > 0 && (
-          <div className="mt-14">
+          <div className="mt-10">
             <ImageCarousel images={aboutImages} />
           </div>
         )}
@@ -230,7 +226,6 @@ export default async function CompanyPage({ params }: { params: Params }) {
           <div className="mx-auto grid max-w-7xl grid-cols-1 items-stretch gap-6 px-4 py-20 sm:px-6 sm:py-24 md:grid-cols-3 lg:gap-8 lg:px-8">
             {company.challengeText && (
               <StoryCard
-                index={nextIndex()}
                 title="El reto"
                 text={company.challengeText}
                 imageUrl={company.challengeImageUrl}
@@ -239,7 +234,6 @@ export default async function CompanyPage({ params }: { params: Params }) {
             )}
             {company.leadershipText && (
               <StoryCard
-                index={nextIndex()}
                 title="Compromiso de la Alta Dirección"
                 text={company.leadershipText}
                 imageUrl={company.leadershipImageUrl}
@@ -248,7 +242,6 @@ export default async function CompanyPage({ params }: { params: Params }) {
             )}
             {company.teamworkText && (
               <StoryCard
-                index={nextIndex()}
                 title="Trabajo en equipo"
                 text={company.teamworkText}
                 imageUrl={company.teamworkImageUrl}
@@ -262,14 +255,11 @@ export default async function CompanyPage({ params }: { params: Params }) {
       {/* ── Servicios de la empresa ─────────────────────────────────────── */}
       {company.services.length > 0 && (
         <section className="mx-auto max-w-7xl px-4 py-20 sm:px-6 sm:py-24 lg:px-8">
-          <SectionHeading index={nextIndex()} eyebrow="Actividad" title="Sus servicios" />
+          <SectionHeading eyebrow="Actividad" title="Sus servicios" />
           <div className="mt-12 grid grid-cols-1 gap-x-10 gap-y-px sm:grid-cols-2 lg:grid-cols-3">
-            {company.services.map((service, i) => (
-              <div key={service.id} className="border-t border-border py-6">
-                <span className="font-semibold text-[11px] tracking-[0.2em] text-primary">
-                  {String(i + 1).padStart(2, "0")}
-                </span>
-                <h3 className="mt-3 text-base font-semibold leading-snug text-foreground">{service.title}</h3>
+            {company.services.map((service) => (
+              <div key={service.id} className="border-t-2 border-border py-6">
+                <h3 className="text-base font-semibold leading-snug text-foreground">{service.title}</h3>
                 {service.description && (
                   <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{service.description}</p>
                 )}
@@ -280,13 +270,12 @@ export default async function CompanyPage({ params }: { params: Params }) {
       )}
 
       {/* ── Proceso de implementación (bloque estructural fijo) ─────────── */}
-      <ProcessTimeline index={nextIndex()} />
+      <ProcessTimeline />
 
       {/* ── Normas certificadas ────────────────────────────────────────── */}
       {company.certifications.length > 0 && (
         <section className="mx-auto max-w-7xl px-4 py-20 sm:px-6 sm:py-24 lg:px-8">
           <SectionHeading
-            index={nextIndex()}
             eyebrow="Estándares"
             title={
               <>
@@ -325,17 +314,15 @@ export default async function CompanyPage({ params }: { params: Params }) {
       {company.achievements.length > 0 && (
         <section className="border-y border-border bg-muted/40">
           <div className="mx-auto max-w-7xl px-4 py-20 sm:px-6 sm:py-24 lg:px-8">
-            <SectionHeading index={nextIndex()} eyebrow="Resultados" title="Principales mejoras alcanzadas" />
-            <ol className="mt-12 grid grid-cols-1 gap-x-14 lg:grid-cols-2">
-              {company.achievements.map((achievement, i) => (
-                <li key={achievement.id} className="flex items-baseline gap-5 border-b border-border py-6">
-                  <span className="font-semibold shrink-0 text-[11px] tracking-[0.2em] text-primary">
-                    {String(i + 1).padStart(2, "0")}
-                  </span>
+            <SectionHeading eyebrow="Resultados" title="Principales mejoras alcanzadas" />
+            <ul className="mt-12 grid grid-cols-1 gap-x-14 lg:grid-cols-2">
+              {company.achievements.map((achievement) => (
+                <li key={achievement.id} className="flex items-start gap-4 border-b border-border py-6">
+                  <BadgeCheck className="mt-0.5 size-5 shrink-0 text-primary" aria-hidden="true" />
                   <p className="text-base leading-relaxed text-foreground">{achievement.text}</p>
                 </li>
               ))}
-            </ol>
+            </ul>
           </div>
         </section>
       )}
@@ -343,7 +330,7 @@ export default async function CompanyPage({ params }: { params: Params }) {
       {/* ── Reconocimientos ────────────────────────────────────────────── */}
       {company.awards.length > 0 && (
         <section className="mx-auto max-w-7xl px-4 py-20 sm:px-6 sm:py-24 lg:px-8">
-          <SectionHeading index={nextIndex()} eyebrow="Distinciones" title="Reconocimientos" />
+          <SectionHeading eyebrow="Distinciones" title="Reconocimientos" />
           <div className="mt-12 grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
             {company.awards.map((award) => (
               <article key={award.id} className="group">
@@ -373,7 +360,7 @@ export default async function CompanyPage({ params }: { params: Params }) {
       {/* ── Momentos del proyecto ──────────────────────────────────────── */}
       {galleryImages.length > 0 && (
         <section className="mx-auto max-w-7xl px-4 py-20 sm:px-6 sm:py-24 lg:px-8">
-          <SectionHeading index={nextIndex()} eyebrow="Archivo" title="Momentos del proyecto" />
+          <SectionHeading eyebrow="Archivo" title="Momentos del proyecto" />
           <div className="mt-12">
             <CompanyGallery images={galleryImages} />
           </div>
@@ -384,7 +371,7 @@ export default async function CompanyPage({ params }: { params: Params }) {
       {company.testimonialVimeoId && (
         <section className="border-y border-border bg-muted/40">
           <div className="mx-auto max-w-7xl px-4 py-20 sm:px-6 sm:py-24 lg:px-8">
-            <SectionHeading index={nextIndex()} eyebrow="En sus palabras" title="Testimonio" />
+            <SectionHeading eyebrow="En sus palabras" title="Testimonio" />
             <div className="mt-12">
               <TestimonialVideo
                 vimeoId={company.testimonialVimeoId}
@@ -403,7 +390,6 @@ export default async function CompanyPage({ params }: { params: Params }) {
         <div className="grid grid-cols-1 gap-10 lg:grid-cols-12">
           <div className={company.closingMessage ? "lg:col-span-7" : "lg:col-span-12"}>
             <ProjectFicha
-              index={nextIndex()}
               standards={standards}
               fields={[
                 { label: "Cliente", value: company.fichaClientName },
@@ -419,35 +405,29 @@ export default async function CompanyPage({ params }: { params: Params }) {
 
           {company.closingMessage && (
             <div className="lg:col-span-5">
-              <div className="emp-grain relative h-full overflow-hidden bg-foreground p-7 text-background sm:p-9">
-                <div
-                  aria-hidden="true"
-                  className="absolute -right-20 -top-20 size-64 rounded-full bg-primary/25 blur-[90px]"
-                />
-                <div className="relative">
-                  <Eyebrow tone="ink">
-                    <span className="inline-flex items-center gap-2">
-                      <Megaphone className="size-3.5 text-primary" aria-hidden="true" />
-                      Reconocimiento institucional
-                    </span>
-                  </Eyebrow>
+              <div className="h-full rounded-2xl border border-primary/20 bg-primary/5 p-7 sm:p-9">
+                <Eyebrow>
+                  <span className="inline-flex items-center gap-2">
+                    <Megaphone className="size-3.5 text-primary" aria-hidden="true" />
+                    Reconocimiento institucional
+                  </span>
+                </Eyebrow>
 
-                  {company.closingImageUrl && (
-                    <div className="mt-7 overflow-hidden">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={company.closingImageUrl}
-                        alt={`Reconocimiento a ${company.name}`}
-                        loading="lazy"
-                        className="aspect-video w-full object-cover"
-                      />
-                    </div>
-                  )}
+                {company.closingImageUrl && (
+                  <div className="mt-7 overflow-hidden rounded-xl border border-border">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={company.closingImageUrl}
+                      alt={`Reconocimiento a ${company.name}`}
+                      loading="lazy"
+                      className="aspect-video w-full object-cover"
+                    />
+                  </div>
+                )}
 
-                  <p className="mt-7 whitespace-pre-line text-sm leading-relaxed text-background/70">
-                    {company.closingMessage}
-                  </p>
-                </div>
+                <p className="mt-7 whitespace-pre-line text-sm leading-relaxed text-muted-foreground">
+                  {company.closingMessage}
+                </p>
               </div>
             </div>
           )}
