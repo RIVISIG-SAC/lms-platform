@@ -53,7 +53,7 @@ const PAGE_W = 842;
 const PAGE_H = 595;
 const WATERMARK_SIZE = 300;
 const HEADER_H = 42;
-const FOOTER_H = 168;
+const FOOTER_H = 200;
 
 const styles = StyleSheet.create({
   page: {
@@ -339,13 +339,15 @@ const styles = StyleSheet.create({
   signatoriesRow: {
     flexDirection: 'row',
     justifyContent: 'center',
-    gap: 52,
+    gap: 44,
     marginBottom: 18,
   },
 
+  // 160 pt para que "ING. CIP. ALEX RIVERA VILLACREZ" entre en una sola linea
+  // (signatoryName recorta con maxLines: 1).
   signatoryItem: {
     alignItems: 'center',
-    width: 148,
+    width: 160,
   },
 
   signatoryScript: {
@@ -355,8 +357,21 @@ const styles = StyleSheet.create({
     marginBottom: 1,
   },
 
+  // Alto fijo para que el pie no cambie de altura segun la firma que se cargue
+  // (FOOTER_H es fijo y el cuerpo se dimensiona contra el).
+  // Las tres firmas tienen proporciones muy distintas (de 0.68 a 1.55), asi que
+  // se encajan por altura con objectFit 'contain': el ancho queda centrado
+  // dentro de la caja y ninguna domina a las otras. El margen negativo hace que
+  // el trazo cruce la linea, como en una firma manuscrita sobre papel.
+  signatureImage: {
+    width: 140,
+    height: 56,
+    objectFit: 'contain',
+    marginBottom: -14,
+  },
+
   signatoryLine: {
-    width: 132,
+    width: 140,
     height: 0.9,
     backgroundColor: '#c9ccd1',
     marginBottom: 6,
@@ -370,6 +385,21 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
     maxLines: 1,
     textOverflow: 'ellipsis',
+  },
+
+  // Hueco de alto fijo: se reserva aunque el firmante no tenga colegiatura, para
+  // que los tres cargos queden alineados en la misma linea base.
+  signatoryCredentialSlot: {
+    height: 9,
+    marginTop: 1,
+  },
+
+  signatoryCredential: {
+    fontSize: 6.5,
+    fontWeight: 700,
+    color: DARK,
+    textAlign: 'center',
+    letterSpacing: 0.5,
   },
 
   signatoryTitle: {
@@ -484,28 +514,43 @@ type Props = {
   selloBase64: string;
   qrCodeBase64: string;
   iconBase64: string;
+  /** Firmas en data URI, indexadas por el `file` de SIGNATORIES. */
+  signatureBase64?: Record<string, string>;
 };
 
 const DEFAULT_DESCRIPTION =
   'Por haber completado satisfactoriamente el programa de capacitación profesional, demostrando dominio en los conceptos y prácticas del sector.';
 
-const SIGNATORIES = [
+// Las firmas reales viven en `assets/signatures/` (fuera de `public/`, por lo
+// que no hay URL pública que las sirva) y se embeben en el PDF como base64.
+// `script` es el respaldo manuscrito si el PNG no está disponible.
+export const SIGNATORIES = [
   {
-    script: 'L. Rivera',
-    name: 'ING. LEWIS RIVERA VILLACREZ',
-    title: 'INSTRUCTOR',
+    file: 'alex-rivera.png',
+    script: 'A. Rivera',
+    name: 'ING. CIP. ALEX RIVERA VILLACREZ',
+    credential: 'CIP: 195767',
+    title: 'EXPOSITOR',
   },
   {
+    file: 'rosa-soria.png',
     script: 'R. Soria',
     name: 'ROSA SORIA LOPEZ',
     title: 'ADMINISTRADORA',
   },
   {
-    script: 'D. Leyva',
-    name: 'DEISY LEYVA ARANA',
-    title: 'COORDINADORA',
+    file: 'lewis-rivera.png',
+    script: 'L. Rivera',
+    name: 'ING. LEWIS RIVERA VILLACREZ',
+    title: 'GERENTE GENERAL',
   },
-];
+] satisfies ReadonlyArray<{
+  file: string;
+  script: string;
+  name: string;
+  credential?: string;
+  title: string;
+}>;
 
 const NAME_STEPS = [
   [26, 34],
@@ -551,6 +596,7 @@ export function CertificatePDF({
   selloBase64,
   qrCodeBase64,
   iconBase64,
+  signatureBase64 = {},
 }: Props) {
   const resolvedDescription =
     description && description.trim() !== ''
@@ -646,11 +692,26 @@ export function CertificatePDF({
             <View style={styles.signatoriesRow}>
               {SIGNATORIES.map((sig) => (
                 <View key={sig.name} style={styles.signatoryItem}>
-                  <Text style={styles.signatoryScript}>{sig.script}</Text>
+                  {signatureBase64[sig.file] ? (
+                    <Image
+                      style={styles.signatureImage}
+                      src={signatureBase64[sig.file]}
+                    />
+                  ) : (
+                    <Text style={styles.signatoryScript}>{sig.script}</Text>
+                  )}
 
                   <View style={styles.signatoryLine} />
 
                   <Text style={styles.signatoryName}>{sig.name}</Text>
+
+                  <View style={styles.signatoryCredentialSlot}>
+                    {sig.credential ? (
+                      <Text style={styles.signatoryCredential}>
+                        {sig.credential}
+                      </Text>
+                    ) : null}
+                  </View>
 
                   <Text style={styles.signatoryTitle}>{sig.title}</Text>
                 </View>

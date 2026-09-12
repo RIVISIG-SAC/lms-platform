@@ -24,6 +24,7 @@ type InstructorInfo = {
 
 type Props = {
   id: string;
+  slug: string;
   title: string;
   description: string;
   price: Precio;
@@ -62,7 +63,7 @@ function Meta({
 }
 
 export function LandingCourseCard({
-  id,
+  slug,
   title,
   description,
   price,
@@ -86,7 +87,7 @@ export function LandingCourseCard({
 
   return (
     <Link
-      href={`/cursos/${id}`}
+      href={`/cursos/${slug}`}
       className="group flex h-full flex-col overflow-hidden rounded-2xl border border-border bg-card transition-all duration-300 hover:-translate-y-1 hover:border-primary/30 hover:shadow-xl hover:shadow-black/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2"
     >
       {/* Portada, sin superposiciones: muchas imágenes ya traen texto */}

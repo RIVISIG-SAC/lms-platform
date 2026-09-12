@@ -6,6 +6,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { PetMascot, type PetPose } from "./PetMascot";
 
 export type EstadoVerificacion =
   | "ACTIVE"
@@ -32,6 +33,13 @@ type Config = {
   chip: string;
   badgeClass: string;
   borde: string;
+  /**
+   * Pose de la mascota. Sólo la llevan los estados que admiten un tono
+   * expresivo: celebrar un certificado válido o acompañar una búsqueda fallida.
+   * Vencido, revocado y pendiente de pago se quedan con el icono, porque son
+   * malas noticias y la mascota desentonaría.
+   */
+  pose?: PetPose;
 };
 
 const ESTADOS: Record<EstadoVerificacion, Config> = {
@@ -44,6 +52,7 @@ const ESTADOS: Record<EstadoVerificacion, Config> = {
     chip: "bg-emerald-100 text-emerald-700",
     badgeClass: "bg-emerald-600 text-white",
     borde: "border-emerald-200",
+    pose: "exito",
   },
   EXPIRED: {
     icon: ShieldAlert,
@@ -85,6 +94,7 @@ const ESTADOS: Record<EstadoVerificacion, Config> = {
     chip: "bg-destructive/10 text-destructive",
     badgeClass: "bg-destructive text-white",
     borde: "border-destructive/20",
+    pose: "buscando",
   },
 };
 
@@ -133,6 +143,12 @@ export function CertificateResult({
           {cfg.badge}
         </span>
       </div>
+
+      {cfg.pose && (
+        <div className="flex justify-center border-b border-border px-5 pt-6 sm:px-6">
+          <PetMascot pose={cfg.pose} size={200} className="h-auto w-32" />
+        </div>
+      )}
 
       {filas.length > 0 && (
         <dl className="divide-y divide-border px-5 sm:px-6">

@@ -14,7 +14,7 @@ export default function PublicNotFound() {
   return (
     <section>
       <div className="mx-auto flex max-w-3xl flex-col items-center px-4 py-20 text-center sm:px-6 lg:py-28">
-        <PetMascot size={220} className="h-auto w-40 sm:w-52" />
+        <PetMascot pose="buscando" size={220} className="h-auto w-40 sm:w-52" />
 
         <p className="mt-6 text-xs font-semibold uppercase tracking-widest text-primary">
           Error 404

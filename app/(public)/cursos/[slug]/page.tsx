@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { notFound } from 'next/navigation';
+import { notFound, permanentRedirect } from 'next/navigation';
 import { prisma } from '@/lib/prisma';
 import { getSession } from '@/lib/auth';
 import { InstructorCard } from '@/components/instructor/InstructorCard';
@@ -14,9 +14,9 @@ import { LEGAL_COMPANY } from '@/lib/legal/company';
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://rivisig.com';
 
 export async function generateMetadata(props: { params: Promise<unknown> }): Promise<Metadata> {
-  const { courseId } = (await props.params) as { courseId: string };
-  const course = await prisma.course.findUnique({
-    where: { id: courseId },
+  const { slug } = (await props.params) as { slug: string };
+  const course = await prisma.course.findFirst({
+    where: { OR: [{ slug }, { id: slug }] },
     include: {
       instructor: { include: { user: { select: { name: true } } } },
       _count: { select: { enrollments: true } },
@@ -24,7 +24,7 @@ export async function generateMetadata(props: { params: Promise<unknown> }): Pro
   });
   if (!course) return {};
 
-  const canonical = `${SITE_URL}/cursos/${course.id}`;
+  const canonical = `${SITE_URL}/cursos/${course.slug}`;
   const enrollmentCount = course._count?.enrollments ?? 0;
   const description =
     course.description.length > 160
@@ -79,11 +79,13 @@ export async function generateMetadata(props: { params: Promise<unknown> }): Pro
 export default async function CourseDetailPage(props: {
   params: Promise<unknown>;
 }) {
-  const { courseId } = (await props.params) as { courseId: string };
+  const { slug } = (await props.params) as { slug: string };
 
   const [course, session] = await Promise.all([
-    prisma.course.findUnique({
-      where: { id: courseId, published: true },
+    // El `id` sigue aceptandose para no romper las URLs con cuid que ya
+    // circulan; abajo se redirigen de forma permanente al slug.
+    prisma.course.findFirst({
+      where: { published: true, OR: [{ slug }, { id: slug }] },
       include: {
         modules: {
           orderBy: { order: 'asc' },
@@ -106,6 +108,8 @@ export default async function CourseDetailPage(props: {
 
   if (!course) notFound();
 
+  if (course.slug !== slug) permanentRedirect(`/cursos/${course.slug}`);
+
   const chapterCount = course.modules.reduce(
     (acc, m) => acc + m.chapters.length,
     0,
@@ -114,7 +118,7 @@ export default async function CourseDetailPage(props: {
 
   const enrollment = session
     ? await prisma.enrollment.findUnique({
-        where: { userId_courseId: { userId: session.userId, courseId } },
+        where: { userId_courseId: { userId: session.userId, courseId: course.id } },
         select: { status: true },
       })
     : null;
@@ -122,7 +126,7 @@ export default async function CourseDetailPage(props: {
   const isPaid =
     enrollment?.status === 'PAID' || enrollment?.status === 'COMPLETED';
 
-  const courseUrl = `${SITE_URL}/cursos/${course.id}`;
+  const courseUrl = `${SITE_URL}/cursos/${course.slug}`;
   const priceNumber = course.isFree ? 0 : Number(course.price);
 
   const courseLd = {

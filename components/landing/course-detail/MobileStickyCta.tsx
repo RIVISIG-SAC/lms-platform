@@ -62,17 +62,17 @@ export function MobileStickyCta({ course, session, isPaid }: Props) {
               </form>
             ) : (
               <Link
-                href={`/login?next=/cursos/${course.id}`}
+                href={`/registro?next=/cursos/${course.slug}`}
                 className={cn(buttonVariants(), "h-10 px-4 text-sm")}
               >
-                Iniciar sesión
+                Inscribirse
               </Link>
             )
           ) : session ? (
             <BuyButton courseId={course.id} price={Number(course.price)} />
           ) : (
             <Link
-              href={`/registro?next=/cursos/${course.id}`}
+              href={`/registro?next=/cursos/${course.slug}`}
               className={cn(buttonVariants(), "h-10 px-4 text-sm")}
             >
               Comprar

@@ -80,6 +80,7 @@ export default function NotFound() {
 
               <div className="order-1 flex justify-center lg:order-2">
                 <PetMascot
+                  pose="confundido"
                   size={360}
                   priority
                   className="h-auto w-56 drop-shadow-2xl sm:w-72 lg:w-[360px]"

@@ -212,18 +212,21 @@ export function CoursePreviewHero({
                       </button>
                     </form>
                   ) : (
+                    // Visitante nuevo en un curso gratuito: al registro directo,
+                    // igual que la rama de pago. El "¿Ya tienes cuenta?" de abajo
+                    // cubre a quien ya esta registrado.
                     <Link
-                      href={`/login?next=/cursos/${course.id}`}
+                      href={`/registro?next=/cursos/${course.slug}`}
                       className={cn(buttonVariants(), "w-full h-11 justify-center focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2")}
                     >
-                      Iniciar sesión para inscribirse
+                      Inscribirse gratis
                     </Link>
                   )
                 ) : session ? (
                   <BuyButton courseId={course.id} price={Number(course.price)} />
                 ) : (
                   <Link
-                    href={`/registro?next=/cursos/${course.id}`}
+                    href={`/registro?next=/cursos/${course.slug}`}
                     className={cn(buttonVariants(), "w-full h-11 justify-center focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2")}
                   >
                     Comprar ahora
@@ -234,7 +237,7 @@ export function CoursePreviewHero({
                   <p className="text-xs text-center text-muted-foreground">
                     ¿Ya tienes cuenta?{" "}
                     <Link
-                      href={`/login?next=/cursos/${course.id}`}
+                      href={`/login?next=/cursos/${course.slug}`}
                       className="text-primary font-semibold hover:underline"
                     >
                       Inicia sesión

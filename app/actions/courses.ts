@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getRequiredSession } from "@/lib/auth";
@@ -9,7 +9,31 @@ import {
   revalidateCourseEditors,
 } from "@/lib/courseAccess";
 import { courseSchema, moduleSchema, chapterSchema } from "@/lib/validations/course";
+import { ensureUniqueCourseSlug } from "@/lib/courses/slug";
 import type { CourseLevel } from "@prisma/client";
+
+/**
+ * Invalida el catalogo publico. El tag "courses" cubre las entradas cacheadas
+ * (home, /cursos y sitemap): sin el, revalidar solo "/cursos" dejaba la portada
+ * sirviendo su snapshot hasta que expirara el revalidate.
+ */
+/** El path publico va por slug, asi que hay que resolverlo desde el courseId. */
+async function revalidatePublicCourseById(courseId: string) {
+  const course = await prisma.course.findUnique({
+    where: { id: courseId },
+    select: { slug: true },
+  });
+  revalidatePublicCourses(course?.slug);
+}
+
+function revalidatePublicCourses(...slugs: Array<string | null | undefined>) {
+  updateTag("courses");
+  revalidatePath("/");
+  revalidatePath("/cursos");
+  for (const slug of new Set(slugs.filter(Boolean))) {
+    revalidatePath(`/cursos/${slug}`);
+  }
+}
 
 // ─── Courses ────────────────────────────────────────────────────────────────
 
@@ -31,6 +55,7 @@ function parseCoursePayload(formData: FormData) {
 
   return {
     title: formData.get("title"),
+    slug: ((formData.get("slug") as string) || "").trim(),
     description: formData.get("description"),
     price: Number(formData.get("price")),
     isFree,
@@ -76,7 +101,11 @@ export async function createCourse(_prev: unknown, formData: FormData) {
   }
 
   const payload = parseCoursePayload(formData);
-  const parsed = courseSchema.safeParse({ ...payload, published: false });
+  // Si el admin no toca el campo, el slug sale del titulo.
+  const slug = await ensureUniqueCourseSlug(
+    payload.slug || String(payload.title ?? ""),
+  );
+  const parsed = courseSchema.safeParse({ ...payload, slug, published: false });
   if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Datos inválidos" };
 
   const course = await prisma.course.create({ data: buildCourseData(parsed, instructorId) });
@@ -98,8 +127,19 @@ export async function updateCourse(_prev: unknown, formData: FormData) {
   const instructorId = session.role === "INSTRUCTOR"
     ? (await prisma.instructorProfile.findUnique({ where: { userId: session.userId } }))?.id ?? null
     : payload.instructorId;
+
+  const existing = await prisma.course.findUnique({ where: { id }, select: { slug: true } });
+  if (!existing) return { error: "Curso no encontrado" };
+
+  const requested = payload.slug || String(payload.title ?? "");
+  const slug =
+    requested === existing.slug
+      ? existing.slug
+      : await ensureUniqueCourseSlug(requested, id);
+
   const parsed = courseSchema.safeParse({
     ...payload,
+    slug,
     published: formData.get("published") === "true",
   });
   if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Datos inválidos" };
@@ -109,7 +149,8 @@ export async function updateCourse(_prev: unknown, formData: FormData) {
   revalidatePath(`/admin/courses/${id}`);
   revalidatePath("/instructor/courses");
   revalidatePath(`/instructor/courses/${id}`);
-  return { success: true };
+  revalidatePublicCourses(existing.slug, slug);
+  return { success: true, slug };
 }
 
 export async function deleteCourse(courseId: string) {
@@ -121,9 +162,10 @@ export async function deleteCourse(courseId: string) {
   }
 
   const session = await getRequiredSession();
-  await prisma.course.delete({ where: { id: courseId } });
+  const deleted = await prisma.course.delete({ where: { id: courseId } });
   revalidatePath("/admin/courses");
   revalidatePath("/instructor/courses");
+  revalidatePublicCourses(deleted.slug);
   if (session.role === "INSTRUCTOR") redirect("/instructor/courses");
   redirect("/admin/courses");
 }
@@ -138,13 +180,16 @@ export async function setCoursePublished(courseId: string, published: boolean) {
     return { error: "No autorizado" };
   }
 
-  await prisma.course.update({ where: { id: courseId }, data: { published } });
+  const course = await prisma.course.update({
+    where: { id: courseId },
+    data: { published },
+    select: { slug: true },
+  });
 
   revalidateCourseEditors(courseId);
   revalidatePath("/admin/courses");
   revalidatePath("/instructor/courses");
-  revalidatePath("/cursos");
-  revalidatePath(`/cursos/${courseId}`);
+  revalidatePublicCourses(course.slug);
   return { success: true };
 }
 
@@ -305,7 +350,7 @@ export async function createCourseFaq(_prev: unknown, formData: FormData) {
   });
 
   revalidateCourseEditors(courseId);
-  revalidatePath(`/cursos/${courseId}`);
+  await revalidatePublicCourseById(courseId);
   return { success: true };
 }
 
@@ -324,7 +369,7 @@ export async function updateCourseFaq(_prev: unknown, formData: FormData) {
   });
 
   revalidateCourseEditors(courseId);
-  revalidatePath(`/cursos/${courseId}`);
+  await revalidatePublicCourseById(courseId);
   return { success: true };
 }
 
@@ -333,7 +378,7 @@ export async function deleteCourseFaq(faqId: string, courseId: string) {
 
   await prisma.courseFaq.delete({ where: { id: faqId } });
   revalidateCourseEditors(courseId);
-  revalidatePath(`/cursos/${courseId}`);
+  await revalidatePublicCourseById(courseId);
 }
 
 export async function reorderCourseFaqs(courseId: string, orderedIds: string[]) {
@@ -346,6 +391,6 @@ export async function reorderCourseFaqs(courseId: string, orderedIds: string[]) 
   );
 
   revalidateCourseEditors(courseId);
-  revalidatePath(`/cursos/${courseId}`);
+  await revalidatePublicCourseById(courseId);
   return { success: true };
 }

@@ -3,6 +3,7 @@ import { LandingCourseCard } from "@/components/landing/CourseCard";
 import { ArrowRight, ShieldCheck } from "lucide-react";
 import Link from "next/link";
 import { getPublishedCourses } from "@/lib/queries/courses";
+import { PetMascot } from "@/components/public/PetMascot";
 
 export const metadata = {
   title: { absolute: "Cursos de Sistemas de Gestión ISO | RIVISIG" },
@@ -28,9 +29,14 @@ async function CoursesList() {
       </div>
 
       {courses.length === 0 ? (
-        <div className="text-center py-24 border border-dashed border-border rounded-2xl bg-muted/30">
-          <p className="text-foreground font-semibold">Estamos preparando nuevos cursos.</p>
-          <p className="text-muted-foreground text-sm mt-1">Vuelve pronto para ver nuevas rutas de formacion.</p>
+        <div className="rounded-2xl border border-dashed border-border bg-card py-20 text-center">
+          <PetMascot
+            pose="buscando"
+            size={200}
+            className="mx-auto h-auto w-32 sm:w-36"
+          />
+          <p className="mt-4 font-semibold text-foreground">Estamos preparando nuevos cursos.</p>
+          <p className="mt-1 text-sm text-muted-foreground">Vuelve pronto para ver nuevas rutas de formacion.</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-7">
@@ -47,6 +53,7 @@ async function CoursesList() {
               >
                 <LandingCourseCard
                   id={course.id}
+                  slug={course.slug}
                   title={course.title}
                   description={course.description}
                   price={course.price}

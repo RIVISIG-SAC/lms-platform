@@ -23,12 +23,12 @@ const getPublishedCoursesForSitemap = unstable_cache(
   async () => {
     return prisma.course.findMany({
       where: { published: true },
-      select: { id: true, updatedAt: true, createdAt: true },
+      select: { slug: true, updatedAt: true, createdAt: true },
       orderBy: { updatedAt: "desc" },
     });
   },
-  ["sitemap-courses"],
-  { revalidate: 3600, tags: ["sitemap"] },
+  ["sitemap-courses-v2"],
+  { revalidate: 3600, tags: ["sitemap", "courses"] },
 );
 
 const getBlogCategoriesForSitemap = unstable_cache(
@@ -82,7 +82,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   }));
 
   const courseEntries: MetadataRoute.Sitemap = courses.map((c) => ({
-    url: `${SITE_URL}/cursos/${c.id}`,
+    url: `${SITE_URL}/cursos/${c.slug}`,
     lastModified: c.updatedAt ?? c.createdAt ?? now,
     changeFrequency: "weekly",
     priority: 0.8,

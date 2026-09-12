@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
-import { Mail } from "lucide-react";
+import { PetMascot } from "@/components/public/PetMascot";
 
 export const metadata = {
   title: "Revisa tu correo — RIVISIG Consultores",
@@ -15,9 +15,7 @@ export default async function VerificarPage() {
 
   return (
     <div className="space-y-6 text-center">
-      <div className="w-14 h-14 bg-primary/10 rounded-full flex items-center justify-center mx-auto">
-        <Mail className="size-7 text-primary" />
-      </div>
+      <PetMascot pose="ok" size={200} className="mx-auto h-auto w-32" />
 
       <div className="space-y-2">
         <h1 className="text-2xl font-bold text-foreground">Revisa tu correo</h1>

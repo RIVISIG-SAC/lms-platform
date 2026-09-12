@@ -9,6 +9,7 @@ import {
 } from "@/lib/courseAccess";
 import { addDays } from "@/lib/utils";
 import { notifyCertificateIssued } from "@/lib/notifications";
+import { generateUniqueCertificateCode } from "@/lib/certificate-code";
 
 // ─── Gestión de preguntas: admin e instructor propietario ───────────────────
 
@@ -172,7 +173,7 @@ export async function submitExam(
 
   if (passed) {
     const certStatus = enrollment.course.isFree ? "PENDING_PAYMENT" : "ACTIVE";
-    const verificationCode = generateVerificationCode();
+    const verificationCode = await generateUniqueCertificateCode();
     const issueDate = new Date();
     const expiresAt =
       enrollment.course.certificateValidityDays != null
@@ -219,12 +220,3 @@ export async function submitExam(
   return { score, passed, requiresCertPayment: passed && enrollment.course.isFree };
 }
 
-function generateVerificationCode(): string {
-  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-  let code = "";
-  for (let i = 0; i < 12; i++) {
-    if (i > 0 && i % 4 === 0) code += "-";
-    code += chars[Math.floor(Math.random() * chars.length)];
-  }
-  return code; // Ej: ABCD-EFGH-IJKL
-}

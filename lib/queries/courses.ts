@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma';
 
 const courseSelect = {
   id: true,
+  slug: true,
   title: true,
   description: true,
   price: true,
@@ -34,8 +35,11 @@ export const getFeaturedCourses = unstable_cache(
       select: courseSelect,
     });
   },
-  ['featured-courses'],
-  { revalidate: 3600 },
+  // El sufijo -v2 corta con los snapshots cacheados antes de que el select
+  // incluyera `slug`: sin el, el catalogo enlazaba a /cursos/undefined tras el
+  // deploy, porque el Data Cache sobrevive a los despliegues.
+  ['featured-courses-v2'],
+  { revalidate: 3600, tags: ['courses'] },
 );
 
 export const getPublishedCourses = unstable_cache(
@@ -46,6 +50,6 @@ export const getPublishedCourses = unstable_cache(
       select: courseSelect,
     });
   },
-  ['published-courses'],
-  { revalidate: 3600 },
+  ['published-courses-v2'],
+  { revalidate: 3600, tags: ['courses'] },
 );

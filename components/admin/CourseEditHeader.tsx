@@ -16,6 +16,7 @@ import {
 
 type Props = {
   courseId: string;
+  slug: string;
   title: string;
   published: boolean;
   price: number;
@@ -37,6 +38,7 @@ type Props = {
  */
 export function CourseEditHeader({
   courseId,
+  slug,
   title,
   published,
   price,
@@ -104,7 +106,7 @@ export function CourseEditHeader({
             )}
             {published && (
               <Link
-                href={`/cursos/${courseId}`}
+                href={`/cursos/${slug}`}
                 target="_blank"
                 className="inline-flex items-center gap-1.5 font-medium transition-colors hover:text-foreground"
               >

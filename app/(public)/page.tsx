@@ -59,6 +59,7 @@ async function FeaturedCourses() {
             <LandingCourseCard
               key={course.id}
               id={course.id}
+              slug={course.slug}
               title={course.title}
               description={course.description}
               price={course.price}

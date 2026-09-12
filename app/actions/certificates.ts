@@ -5,31 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { getRequiredSession } from "@/lib/auth";
 import { manualCertificateSchema } from "@/lib/validations/certificate";
 import { notifyCertificateIssued } from "@/lib/notifications";
-
-const CERTIFICATE_CODE_PREFIX = "RIVS";
-
-function randomCertificateCode(): string {
-  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-  let code = "";
-  for (let i = 0; i < 6; i++) {
-    if (i > 0 && i % 3 === 0) code += "-";
-    code += chars[Math.floor(Math.random() * chars.length)];
-  }
-  return `${CERTIFICATE_CODE_PREFIX}-${code}`;
-}
-
-async function generateVerificationCode(): Promise<string> {
-  const MAX_ATTEMPTS = 5;
-  for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
-    const code = randomCertificateCode();
-    const existing = await prisma.certificate.findUnique({
-      where: { verificationCode: code },
-      select: { id: true },
-    });
-    if (!existing) return code;
-  }
-  throw new Error("No se pudo generar un código de verificación único.");
-}
+import { generateUniqueCertificateCode } from "@/lib/certificate-code";
 
 export async function issueCertificateAction(enrollmentId: string) {
   const session = await getRequiredSession();
@@ -50,7 +26,7 @@ export async function issueCertificateAction(enrollmentId: string) {
     return { error: "El estudiante debe haber pagado o completado el curso." };
   }
 
-  const verificationCode = enrollment.certificate?.verificationCode ?? (await generateVerificationCode());
+  const verificationCode = enrollment.certificate?.verificationCode ?? (await generateUniqueCertificateCode());
   const wasAlreadyActive = enrollment.certificate?.status === "ACTIVE";
 
   await prisma.certificate.upsert({
@@ -111,7 +87,7 @@ export async function createManualCertificate(_prev: unknown, formData: FormData
   const expiresAt = certificateValidityDays
     ? new Date(issueDate.getTime() + certificateValidityDays * 24 * 60 * 60 * 1000)
     : null;
-  const verificationCode = await generateVerificationCode();
+  const verificationCode = await generateUniqueCertificateCode();
 
   await prisma.certificate.create({
     data: {
