@@ -3,6 +3,7 @@ import { PrismaNeon } from "@prisma/adapter-neon";
 import { neonConfig } from "@neondatabase/serverless";
 import bcrypt from "bcryptjs";
 import ws from "ws";
+import { toSlug } from "../lib/courses/slug-client";
 
 neonConfig.webSocketConstructor = ws;
 
@@ -57,6 +58,7 @@ async function seedCourse() {
   return prisma.course.create({
     data: {
       title: COURSE_TITLE,
+      slug: toSlug(COURSE_TITLE),
       description:
         "Programa formativo orientado a profesionales responsables de implementar, auditar y mantener Sistemas de Gestión de la Calidad conforme a la norma ISO 9001:2015. Incluye marco normativo, enfoque basado en procesos y auditoría interna.",
       price: "450.00",
