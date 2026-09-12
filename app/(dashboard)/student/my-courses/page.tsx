@@ -11,12 +11,12 @@ import {
   CheckCircle2,
   Clock,
   Compass,
-  GraduationCap,
   History,
   Layers,
   Play,
 } from 'lucide-react';
 import { buttonVariants } from '@/components/ui/button';
+import { PetMascot } from "@/components/public/PetMascot";
 
 export const metadata = { title: 'Mis Cursos | Cursos Pro' };
 
@@ -145,7 +145,7 @@ export default async function StudentMyCoursesPage({ searchParams }: Props) {
               cuando quieras: tu progreso e intentos empezarán desde cero.
             </p>
             <Link
-              href={`/cursos/${reprobado.courseId}`}
+              href={`/cursos/${reprobado.course.slug}`}
               className={cn(
                 buttonVariants({ size: 'sm' }),
                 'mt-4 justify-center font-semibold',
@@ -159,9 +159,11 @@ export default async function StudentMyCoursesPage({ searchParams }: Props) {
 
       {enrollments.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-border bg-card p-10 text-center sm:p-14">
-          <span className="mx-auto inline-flex size-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
-            <GraduationCap className="size-6" />
-          </span>
+          <PetMascot
+            pose="apuntando"
+            size={200}
+            className="mx-auto h-auto w-32 sm:w-36"
+          />
           <h2 className="mt-4 text-lg font-bold text-foreground">
             Tu aula está vacía
           </h2>
@@ -388,7 +390,7 @@ export default async function StudentMyCoursesPage({ searchParams }: Props) {
                               </Link>
                             ) : (
                               <Link
-                                href={`/cursos/${course.id}`}
+                                href={`/cursos/${course.slug}`}
                                 className={cn(
                                   buttonVariants({
                                     variant: 'outline',

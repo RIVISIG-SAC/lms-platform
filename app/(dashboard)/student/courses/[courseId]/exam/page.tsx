@@ -31,7 +31,7 @@ export default async function ExamPage({ params }: Props) {
     prisma.enrollment.findUnique({
       where: { userId_courseId: { userId: session.userId, courseId } },
       include: {
-        course: { select: { title: true, isFree: true, certificateFee: true } },
+        course: { select: { slug: true, title: true, isFree: true, certificateFee: true } },
         examAttempts: { orderBy: { attemptNumber: "desc" } },
         certificate: {
           select: {
@@ -205,7 +205,7 @@ export default async function ExamPage({ params }: Props) {
               curso para volver a intentarlo.
             </p>
             <Link
-              href={`/cursos/${courseId}`}
+              href={`/cursos/${enrollment.course.slug}`}
               className={cn(
                 buttonVariants(),
                 "mt-5 min-h-11 justify-center font-semibold",
