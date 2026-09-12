@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { Button, buttonVariants } from "@/components/ui/button";
-import { CheckCircle2, XCircle } from "lucide-react";
+import { PetMascot } from "@/components/public/PetMascot";
 import { cn } from "@/lib/utils";
 
 export const metadata = {
@@ -75,18 +75,11 @@ function Result({
 
   return (
     <div className="space-y-6 text-center">
-      <div
-        className={cn(
-          "w-14 h-14 rounded-full flex items-center justify-center mx-auto",
-          isSuccess ? "bg-primary/10" : "bg-destructive/10"
-        )}
-      >
-        {isSuccess ? (
-          <CheckCircle2 className="size-7 text-primary" />
-        ) : (
-          <XCircle className="size-7 text-destructive" />
-        )}
-      </div>
+      <PetMascot
+        pose={isSuccess ? "exito" : "confundido"}
+        size={200}
+        className="mx-auto h-auto w-32"
+      />
 
       <div className="space-y-2">
         <h1 className="text-2xl font-bold text-foreground">
