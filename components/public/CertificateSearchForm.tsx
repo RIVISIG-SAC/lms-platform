@@ -6,13 +6,13 @@ import { Loader2, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
-/** Deja el código en el formato XXXX-XXXX-XXXX mientras se escribe. */
+/**
+ * Limpia el valor sin reformatearlo: los códigos tienen distintos largos y
+ * agrupaciones, así que forzar un formato fijo rompía la búsqueda.
+ * La comparación en el servidor ignora guiones y mayúsculas.
+ */
 function normalizar(valor: string) {
-  const limpio = valor
-    .toUpperCase()
-    .replace(/[^A-Z0-9]/g, "")
-    .slice(0, 12);
-  return limpio.replace(/(.{4})(?=.)/g, "$1-");
+  return valor.toUpperCase().replace(/[^A-Z0-9-]/g, "").slice(0, 24);
 }
 
 export function CertificateSearchForm({
@@ -44,7 +44,7 @@ export function CertificateSearchForm({
         <Input
           value={code}
           onChange={(e) => setCode(normalizar(e.target.value))}
-          placeholder="ABCD-EFGH-IJKL"
+          placeholder="RIVS-ABC-DEF"
           aria-label="Código de verificación"
           className="h-12 rounded-xl border-border bg-background pl-10 font-mono text-sm tracking-widest uppercase placeholder:tracking-widest focus-visible:border-primary focus-visible:ring-primary/25"
           autoComplete="off"

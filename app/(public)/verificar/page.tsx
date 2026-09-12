@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { CheckCircle2, FileSearch, Globe, QrCode, ShieldCheck } from "lucide-react";
 import { CertificateSearchForm } from "@/components/public/CertificateSearchForm";
+import { PetMascot } from "@/components/public/PetMascot";
 
 export const metadata = {
   title: { absolute: "Verificar Certificado | RIVISIG Consultores" },
@@ -15,7 +16,7 @@ const PASOS = [
   {
     icon: QrCode,
     title: "Localiza el código",
-    desc: "Está en la parte inferior del certificado PDF, con el formato XXXX-XXXX-XXXX.",
+    desc: "Está en la parte inferior del certificado PDF, junto al código QR.",
   },
   {
     icon: FileSearch,
@@ -42,6 +43,12 @@ export default function VerificarPage() {
       <section className="border-b border-border">
         <div className="mx-auto max-w-3xl px-4 py-16 sm:px-6 lg:py-20">
           <div className="text-center">
+            <PetMascot
+              pose="certificado"
+              size={220}
+              priority
+              className="mx-auto mb-6 h-auto w-36 sm:w-44"
+            />
             <p className="text-xs font-semibold uppercase tracking-widest text-primary">
               Portal de verificación
             </p>
@@ -58,7 +65,7 @@ export default function VerificarPage() {
           <div className="mx-auto mt-8 max-w-xl rounded-2xl border border-border bg-card p-5 sm:p-6">
             <CertificateSearchForm autoFocus />
             <p className="mt-3 text-center text-xs text-muted-foreground">
-              El código aparece al pie del PDF, con el formato XXXX-XXXX-XXXX.
+              El código aparece al pie del PDF, por ejemplo RIVS-ABC-DEF.
             </p>
           </div>
         </div>

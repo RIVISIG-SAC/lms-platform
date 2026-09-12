@@ -12,6 +12,7 @@ import {
 import Link from 'next/link';
 import { buttonVariants } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { PetMascot } from "@/components/public/PetMascot";
 
 export const metadata = {
   title: { absolute: 'Servicios de Consultoría ISO | RIVISIG' },
@@ -283,8 +284,13 @@ export default function ServiciosPage() {
       {/* CTA */}
       <section className="border-t border-border">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 lg:py-20">
-          <div className="rounded-2xl border border-border bg-muted/30 p-6 sm:p-8">
+          <div className="rounded-2xl border border-border bg-card p-6 sm:p-8">
             <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+              <PetMascot
+                pose="sst"
+                size={220}
+                className="mx-auto h-auto w-32 shrink-0 lg:mx-0 lg:w-36"
+              />
               <div>
                 <p className="text-lg font-bold text-foreground">
                   ¿No sabes qué norma necesita tu empresa?
