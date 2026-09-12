@@ -48,6 +48,7 @@ const nextConfig: NextConfig = {
       "./public/images/logo.png",
       "./public/images/sello-transparent.png",
       "./public/images/icon.png",
+      "./assets/signatures/**",
     ],
   },
   images: {
