@@ -85,6 +85,7 @@ export default async function EditCoursePage({ params }: Props) {
 
       <CourseEditHeader
         courseId={course.id}
+        slug={course.slug}
         title={course.title}
         published={course.published}
         price={Number(course.price)}

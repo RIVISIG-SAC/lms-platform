@@ -12,6 +12,7 @@ import {
   DollarSign,
   EyeOff,
   Gift,
+  Hash,
   ImageIcon,
   Infinity as InfinityIcon,
   Loader2,
@@ -36,7 +37,9 @@ import {
   VALIDITY_OPTIONS,
   type CourseLevelValue,
 } from "@/lib/validations/course";
+import { Badge } from "@/components/ui/badge";
 import { AREA_ADMIN, CONTROL_ADMIN } from "@/components/admin/form-styles";
+import { toSlug } from "@/lib/courses/slug-client";
 import { addDays, cn, formatDate } from "@/lib/utils";
 
 type ActionState = { error?: string; success?: boolean } | null;
@@ -241,6 +244,10 @@ export function CourseForm({ action, course, instructors = [] }: Props) {
   );
 
   const [title, setTitle] = useState(course?.title ?? "");
+  const [slug, setSlug] = useState(course?.slug ?? "");
+  const [slugManuallyEdited, setSlugManuallyEdited] = useState(
+    Boolean(course?.slug),
+  );
   const [description, setDescription] = useState(course?.description ?? "");
   const [certDescription, setCertDescription] = useState(
     course?.certificateDescription ?? "",
@@ -250,6 +257,15 @@ export function CourseForm({ action, course, instructors = [] }: Props) {
     (course?.level as CourseLevelValue | null) ?? "",
   );
   const [isFree, setIsFree] = useState(course?.isFree ?? false);
+
+  // El slug se deriva del titulo mientras nadie lo toque a mano.
+  const onTitleBlur = () => {
+    if (!slugManuallyEdited && title.trim()) setSlug(toSlug(title));
+  };
+  const onSlugChange = (value: string) => {
+    setSlug(value);
+    setSlugManuallyEdited(value.length > 0);
+  };
 
   const [vigencia, setVigencia] = useState<Vigencia>(() => {
     const v = course?.certificateValidityDays;
@@ -306,9 +322,46 @@ export function CourseForm({ action, course, instructors = [] }: Props) {
               maxLength={MAX_TITULO}
               value={title}
               onChange={(e) => setTitle(e.target.value)}
+              onBlur={onTitleBlur}
               placeholder="Ej. Implementación de ISO 9001:2015"
               className={CONTROL_ADMIN}
             />
+          </Campo>
+
+          <Campo
+            id="slug"
+            label={
+              <span className="flex items-center gap-1.5">
+                <Hash className="size-3.5" /> Slug
+                <Badge
+                  variant="outline"
+                  className="ml-2 py-0 text-[10px] font-normal"
+                >
+                  {slugManuallyEdited ? "manual" : "auto"}
+                </Badge>
+              </span>
+            }
+            hint={
+              <p className="text-[11px] leading-relaxed text-muted-foreground">
+                Es la direccion publica del curso. Si lo cambias, la anterior
+                seguira funcionando y redirigira a la nueva.
+              </p>
+            }
+          >
+            <div className="flex items-center gap-2">
+              <span className="shrink-0 text-xs text-muted-foreground">
+                rivisig.com/cursos/
+              </span>
+              <Input
+                id="slug"
+                name="slug"
+                value={slug}
+                onChange={(e) => onSlugChange(e.target.value)}
+                placeholder="implementacion-iso-9001"
+                maxLength={120}
+                className={CONTROL_ADMIN}
+              />
+            </div>
           </Campo>
 
           <Campo

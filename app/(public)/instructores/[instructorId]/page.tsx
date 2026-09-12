@@ -83,6 +83,7 @@ export default async function InstructorPublicPage({
         where: { published: true },
         select: {
           id: true,
+          slug: true,
           title: true,
           thumbnailUrl: true,
           level: true,
@@ -226,7 +227,7 @@ export default async function InstructorPublicPage({
               {courses.map((course) => (
                 <Link
                   key={course.id}
-                  href={`/cursos/${course.id}`}
+                  href={`/cursos/${course.slug}`}
                   className="rounded-xl border border-border bg-card p-4 hover:shadow-md transition-shadow group"
                 >
                   <p className="font-semibold text-sm text-foreground group-hover:text-primary transition-colors">

@@ -307,7 +307,7 @@ export function CoursesTable({ courses }: Props) {
                               <DropdownMenuItem
                                 render={
                                   <Link
-                                    href={`/cursos/${course.id}`}
+                                    href={`/cursos/${course.slug}`}
                                     target="_blank"
                                     rel="noopener noreferrer"
                                   />

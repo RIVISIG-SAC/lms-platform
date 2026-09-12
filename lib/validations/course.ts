@@ -19,6 +19,14 @@ export const COURSE_LEVEL_LABELS: Record<CourseLevelValue, string> = {
 export const courseSchema = z
   .object({
     title: z.string().min(3, { error: "El título debe tener al menos 3 caracteres" }).trim(),
+    slug: z
+      .string()
+      .trim()
+      .min(3, { error: "El slug debe tener al menos 3 caracteres" })
+      .max(120, { error: "El slug es demasiado largo" })
+      .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, {
+        error: "Usa solo minúsculas, números y guiones",
+      }),
     description: z.string().min(10, { error: "La descripción debe tener al menos 10 caracteres" }).trim(),
     price: z.number().min(0, { error: "El precio no puede ser negativo" }),
     isFree: z.boolean().optional().default(false),
