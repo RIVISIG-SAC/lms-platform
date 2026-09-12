@@ -7,7 +7,8 @@ import path from 'path';
 import QRCode from 'qrcode';
 import { prisma } from '@/lib/prisma';
 import { getSession } from '@/lib/auth';
-import { CertificatePDF } from '@/lib/certificate-pdf';
+import { CertificatePDF, SIGNATORIES } from '@/lib/certificate-pdf';
+import { resolveVerificationCode } from '@/lib/certificate-code';
 import { getCertificateEffectiveStatus } from '@/lib/utils';
 import { checkRateLimit } from '@/lib/security/rateLimit';
 import { getClientIp } from '@/lib/security/ip';
@@ -35,6 +36,31 @@ function getBrandAssets() {
   return brandAssets;
 }
 
+// Las firmas viven fuera de `public/` a proposito: no hay URL que las sirva,
+// solo viajan embebidas dentro del PDF. Mismo cache por instancia que la marca.
+let signatureAssets: Record<string, string> | null = null;
+
+function getSignatureAssets() {
+  if (!signatureAssets) {
+    const assets: Record<string, string> = {};
+
+    for (const sig of SIGNATORIES) {
+      const filePath = path.join(process.cwd(), 'assets', 'signatures', sig.file);
+
+      // Una firma que falta no debe tumbar la descarga: el PDF cae al texto
+      // manuscrito de respaldo.
+      if (!fs.existsSync(filePath)) continue;
+
+      const buffer = fs.readFileSync(filePath);
+      assets[sig.file] = `data:image/png;base64,${buffer.toString('base64')}`;
+    }
+
+    signatureAssets = assets;
+  }
+
+  return signatureAssets;
+}
+
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ code: string }> },
@@ -51,23 +77,30 @@ export async function GET(
   const { code } = await params;
   const session = await getSession();
 
-  const certificate = await prisma.certificate.findUnique({
-    where: { verificationCode: code },
-    include: {
-      enrollment: {
+  // Tolera el código escrito sin guiones o en minúsculas.
+  const verificationCode = await resolveVerificationCode(
+    decodeURIComponent(code).trim(),
+  );
+
+  const certificate = verificationCode
+    ? await prisma.certificate.findUnique({
+        where: { verificationCode },
         include: {
-          user: { select: { name: true, dni: true, company: true } },
-          course: { select: { title: true, certificateDescription: true } },
-          examAttempts: {
-            where: { passed: true },
-            orderBy: { createdAt: 'desc' },
-            take: 1,
+          enrollment: {
+            include: {
+              user: { select: { name: true, dni: true, company: true } },
+              course: { select: { title: true, certificateDescription: true } },
+              examAttempts: {
+                where: { passed: true },
+                orderBy: { createdAt: 'desc' },
+                take: 1,
+              },
+            },
           },
+          course: { select: { title: true, certificateDescription: true } },
         },
-      },
-      course: { select: { title: true, certificateDescription: true } },
-    },
-  });
+      })
+    : null;
 
   if (!certificate) {
     return NextResponse.json(
@@ -116,6 +149,7 @@ export async function GET(
   const verificationUrl = `${baseUrl}/verificar/${certificate.verificationCode}`;
 
   const [logoBase64, selloBase64, iconBase64] = getBrandAssets();
+  const signatureBase64 = getSignatureAssets();
 
   const qrCodeBase64 = await QRCode.toDataURL(verificationUrl, {
     errorCorrectionLevel: 'M',
@@ -137,6 +171,7 @@ export async function GET(
       expiresAt: certificate.expiresAt,
       logoBase64,
       selloBase64,
+      signatureBase64,
       qrCodeBase64,
       iconBase64,
     }) as ReactElement<DocumentProps>;

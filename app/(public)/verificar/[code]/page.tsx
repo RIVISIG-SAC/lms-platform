@@ -10,6 +10,7 @@ import {
   User,
 } from "lucide-react";
 import { prisma } from "@/lib/prisma";
+import { resolveVerificationCode } from "@/lib/certificate-code";
 import { formatDate, getCertificateEffectiveStatus } from "@/lib/utils";
 import { CertificateSearchForm } from "@/components/public/CertificateSearchForm";
 import {
@@ -38,23 +39,29 @@ export default async function VerifyCertificateResultPage({ params }: Props) {
   const { code } = await params;
   const decodedCode = decodeURIComponent(code).trim();
 
-  const certificate = await prisma.certificate.findFirst({
-    where: { verificationCode: { equals: decodedCode, mode: "insensitive" } },
-    include: {
-      enrollment: {
+  // El código se compara normalizado (sin guiones ni espacios y en
+  // mayúsculas) para tolerar cualquier formato que escriba el usuario.
+  const verificationCode = await resolveVerificationCode(decodedCode);
+
+  const certificate = verificationCode
+    ? await prisma.certificate.findUnique({
+        where: { verificationCode },
         include: {
-          user: { select: { name: true, dni: true, company: true } },
-          course: { select: { title: true, category: true } },
-          examAttempts: {
-            where: { passed: true },
-            orderBy: { createdAt: "desc" },
-            take: 1,
+          enrollment: {
+            include: {
+              user: { select: { name: true, dni: true, company: true } },
+              course: { select: { title: true, category: true } },
+              examAttempts: {
+                where: { passed: true },
+                orderBy: { createdAt: "desc" },
+                take: 1,
+              },
+            },
           },
+          course: { select: { title: true, category: true } },
         },
-      },
-      course: { select: { title: true, category: true } },
-    },
-  });
+      })
+    : null;
 
   const estado: EstadoVerificacion = certificate
     ? getCertificateEffectiveStatus(certificate.status, certificate.expiresAt)
