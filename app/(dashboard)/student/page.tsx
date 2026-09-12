@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { buttonVariants } from '@/components/ui/button';
 import { SupportResourcesCard } from '@/components/student/SupportResourcesCard';
+import { PetMascot } from "@/components/public/PetMascot";
 
 const DIAS_AVISO_VENCIMIENTO = 30;
 
@@ -253,9 +254,11 @@ export default async function StudentHomePage() {
             </div>
           ) : (
             <div className="rounded-2xl border border-dashed border-border bg-card p-8 sm:p-12 text-center">
-              <span className="mx-auto inline-flex size-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
-                <BookOpen className="size-6" />
-              </span>
+              <PetMascot
+                pose="apuntando"
+                size={200}
+                className="mx-auto h-auto w-32 sm:w-36"
+              />
               <h2 className="mt-4 text-lg font-bold text-foreground">
                 Aún no tienes cursos en progreso
               </h2>

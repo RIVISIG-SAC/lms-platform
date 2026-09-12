@@ -13,7 +13,7 @@ export const metadata = {
 export default function DashboardNotFound() {
   return (
     <div className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-border/60 bg-accent/10 px-6 py-16 text-center">
-      <PetMascot size={180} className="h-auto w-32 sm:w-40" />
+      <PetMascot pose="confundido" size={180} className="h-auto w-32 sm:w-40" />
 
       <p className="mt-5 text-xs font-semibold uppercase tracking-widest text-primary">
         Error 404

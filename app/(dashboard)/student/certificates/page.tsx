@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { buttonVariants } from '@/components/ui/button';
 import { cn, formatDate, getCertificateEffectiveStatus } from '@/lib/utils';
+import { PetMascot } from "@/components/public/PetMascot";
 
 export const metadata = { title: 'Mis Certificados | Estudiante' };
 
@@ -164,9 +165,11 @@ export default async function StudentCertificatesPage() {
 
       {enrollments.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-border bg-card p-10 text-center sm:p-14">
-          <span className="mx-auto inline-flex size-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
-            <Award className="size-6" />
-          </span>
+          <PetMascot
+            pose="certificado"
+            size={200}
+            className="mx-auto h-auto w-32 sm:w-36"
+          />
           <h2 className="mt-4 text-lg font-bold text-foreground">
             Aún no tienes inscripciones
           </h2>

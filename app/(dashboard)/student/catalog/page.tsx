@@ -1,8 +1,9 @@
 import { prisma } from "@/lib/prisma";
 import { getRequiredSession } from "@/lib/auth";
 import { CourseCard } from "@/components/courses/CourseCard";
-import { Search, Library, CheckCircle2, Sparkles } from "lucide-react";
+import { Search, Library, CheckCircle2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { PetMascot } from "@/components/public/PetMascot";
 
 export const metadata = { title: "Catálogo de Cursos | Cursos Pro" };
 
@@ -52,12 +53,16 @@ export default async function StudentCatalogPage() {
       </div>
 
       {courses.length === 0 ? (
-        <div className="py-24 text-center border-2 border-dashed border-border/60 rounded-3xl bg-accent/5">
-          <Sparkles className="size-12 text-muted-foreground/20 mx-auto mb-4" />
-          <p className="text-muted-foreground font-bold">
+        <div className="rounded-3xl border-2 border-dashed border-border/60 bg-card py-20 text-center">
+          <PetMascot
+            pose="buscando"
+            size={200}
+            className="mx-auto h-auto w-32 sm:w-36"
+          />
+          <p className="mt-4 font-bold text-muted-foreground">
             Estamos preparando nuevos cursos para ti.
           </p>
-          <p className="text-sm text-muted-foreground/60 mt-1">Vuelve pronto para ver las novedades.</p>
+          <p className="mt-1 text-sm text-muted-foreground/60">Vuelve pronto para ver las novedades.</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
