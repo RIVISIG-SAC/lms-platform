@@ -1,6 +1,5 @@
 "use client";
 
-import { useMemo, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import {
@@ -11,7 +10,6 @@ import {
   Files,
   MoreVertical,
   Pencil,
-  Search,
   Tag as TagIcon,
   Trash2,
 } from "lucide-react";
@@ -25,7 +23,6 @@ import {
 } from "@/lib/validations/blog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -33,15 +30,13 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { EmptyState } from "@/components/admin/EmptyState";
 import { DeleteConfirmDialog } from "@/components/admin/DeleteConfirmDialog";
+import { Pagination } from "@/components/ui/pagination";
+import { SearchInput } from "@/components/admin/filters/SearchInput";
+import { FilterSelect } from "@/components/admin/filters/FilterSelect";
+import { ClearFiltersButton } from "@/components/admin/filters/ClearFiltersButton";
+import type { PaginationMeta } from "@/lib/pagination";
 
 export type BlogPostRow = {
   id: string;
@@ -65,33 +60,19 @@ const STATUS_BADGE: Record<PostStatusValue, string> = {
   ARCHIVED: "bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-900 dark:text-slate-300",
 };
 
-type StatusFilter = PostStatusValue | "all";
+const STATUS_OPTIONS = POST_STATUSES.map((s) => ({
+  value: s,
+  label: POST_STATUS_LABELS[s],
+}));
 
 type Props = {
   posts: BlogPostRow[];
   categories: { id: string; name: string }[];
+  meta: PaginationMeta;
+  hasFilters: boolean;
 };
 
-export function BlogPostsTable({ posts, categories }: Props) {
-  const [query, setQuery] = useState("");
-  const [status, setStatus] = useState<StatusFilter>("all");
-  const [categoryId, setCategoryId] = useState<string>("all");
-
-  const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    return posts.filter((p) => {
-      if (q) {
-        const haystack = `${p.title} ${p.slug} ${p.excerpt ?? ""} ${p.category?.name ?? ""}`.toLowerCase();
-        if (!haystack.includes(q)) return false;
-      }
-      if (status !== "all" && p.status !== status) return false;
-      if (categoryId !== "all" && p.category?.id !== categoryId) return false;
-      return true;
-    });
-  }, [posts, query, status, categoryId]);
-
-  const hasFilters = query.length > 0 || status !== "all" || categoryId !== "all";
-
+export function BlogPostsTable({ posts, categories, meta, hasFilters }: Props) {
   const handleCopyId = (id: string) => {
     navigator.clipboard.writeText(id);
     toast.success("ID copiado al portapapeles");
@@ -107,63 +88,36 @@ export function BlogPostsTable({ posts, categories }: Props) {
     <div className="space-y-4">
       {/* Toolbar */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 rounded-xl border border-border bg-card p-3 shadow-sm">
-        <div className="relative w-full md:max-w-sm">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none" />
-          <Input
-            type="search"
-            placeholder="Buscar por título, slug o categoría…"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            className="pl-9"
-          />
-        </div>
+        <SearchInput
+          placeholder="Buscar por título, slug o extracto…"
+          className="md:max-w-sm"
+        />
 
         <div className="flex items-center gap-2 flex-wrap">
-          <Select value={status} onValueChange={(v) => setStatus(v as StatusFilter)}>
-            <SelectTrigger className="h-9 min-w-[160px]">
-              <SelectValue placeholder="Estado" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todos los estados</SelectItem>
-              {POST_STATUSES.map((s) => (
-                <SelectItem key={s} value={s}>
-                  {POST_STATUS_LABELS[s]}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-
-          <Select value={categoryId} onValueChange={(v) => setCategoryId(v ?? "all")}>
-            <SelectTrigger className="h-9 min-w-[160px]">
-              <SelectValue placeholder="Categoría" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todas las categorías</SelectItem>
-              {categories.map((c) => (
-                <SelectItem key={c.id} value={c.id}>
-                  {c.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-
+          <FilterSelect
+            param="status"
+            options={STATUS_OPTIONS}
+            allLabel="Todos los estados"
+            placeholder="Estado"
+            className="h-9 min-w-[160px]"
+          />
+          <FilterSelect
+            param="category"
+            options={categories.map((c) => ({ value: c.id, label: c.name }))}
+            allLabel="Todas las categorías"
+            placeholder="Categoría"
+            className="h-9 min-w-[160px]"
+          />
           {hasFilters && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => {
-                setQuery("");
-                setStatus("all");
-                setCategoryId("all");
-              }}
-            >
-              Limpiar
-            </Button>
+            <ClearFiltersButton
+              params={["q", "status", "category"]}
+              label="Limpiar"
+            />
           )}
         </div>
       </div>
 
-      {filtered.length === 0 ? (
+      {posts.length === 0 ? (
         <EmptyState
           icon={FileX}
           title={hasFilters ? "Ningún post coincide con los filtros" : "Aún no hay artículos"}
@@ -174,17 +128,7 @@ export function BlogPostsTable({ posts, categories }: Props) {
           }
           action={
             hasFilters ? (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  setQuery("");
-                  setStatus("all");
-                  setCategoryId("all");
-                }}
-              >
-                Limpiar filtros
-              </Button>
+              <ClearFiltersButton params={["q", "status", "category"]} />
             ) : (
               <Link
                 href="/admin/blog/new"
@@ -196,6 +140,7 @@ export function BlogPostsTable({ posts, categories }: Props) {
           }
         />
       ) : (
+        <>
         <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-sm text-left">
@@ -210,7 +155,7 @@ export function BlogPostsTable({ posts, categories }: Props) {
                 </tr>
               </thead>
               <tbody className="divide-y divide-border/60">
-                {filtered.map((post) => (
+                {posts.map((post) => (
                   <tr key={post.id} className="group hover:bg-accent/20 transition-colors">
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-3 min-w-0">
@@ -347,6 +292,9 @@ export function BlogPostsTable({ posts, categories }: Props) {
             </table>
           </div>
         </div>
+
+        <Pagination meta={meta} itemLabel={{ one: "artículo", many: "artículos" }} />
+        </>
       )}
     </div>
   );

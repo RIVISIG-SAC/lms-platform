@@ -1,6 +1,5 @@
 "use client";
 
-import { useMemo, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import type { CourseLevel } from "@prisma/client";
@@ -14,7 +13,6 @@ import {
   Layers,
   MoreVertical,
   Pencil,
-  Search,
   Tag,
   Trash2,
   Users,
@@ -29,7 +27,6 @@ import {
 } from "@/lib/validations/course";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -37,48 +34,37 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { EmptyState } from "@/components/admin/EmptyState";
 import { DeleteConfirmDialog } from "@/components/admin/DeleteConfirmDialog";
+import { Pagination } from "@/components/ui/pagination";
+import { SearchInput } from "@/components/admin/filters/SearchInput";
+import { FilterSelect } from "@/components/admin/filters/FilterSelect";
+import { SegmentedFilter } from "@/components/admin/filters/SegmentedFilter";
+import { ClearFiltersButton } from "@/components/admin/filters/ClearFiltersButton";
+import type { PaginationMeta } from "@/lib/pagination";
 
 export type CourseRow = SerializedCourse & {
   _count: { enrollments: number; modules: number };
 };
 
-type StatusFilter = "all" | "published" | "draft";
-type LevelFilter = CourseLevelValue | "all";
+const STATUS_OPTIONS = [
+  { value: "all", label: "Todos" },
+  { value: "published", label: "Publicados" },
+  { value: "draft", label: "Borradores" },
+];
+
+const LEVEL_OPTIONS = COURSE_LEVELS.map((l) => ({
+  value: l,
+  label: COURSE_LEVEL_LABELS[l as CourseLevelValue],
+}));
 
 type Props = {
   courses: CourseRow[];
+  meta: PaginationMeta;
+  hasFilters: boolean;
 };
 
-export function CoursesTable({ courses }: Props) {
-  const [query, setQuery] = useState("");
-  const [status, setStatus] = useState<StatusFilter>("all");
-  const [level, setLevel] = useState<LevelFilter>("all");
-
-  const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    return courses.filter((c) => {
-      if (q) {
-        const haystack = `${c.title} ${c.description} ${c.category ?? ""}`.toLowerCase();
-        if (!haystack.includes(q)) return false;
-      }
-      if (status === "published" && !c.published) return false;
-      if (status === "draft" && c.published) return false;
-      if (level !== "all" && c.level !== level) return false;
-      return true;
-    });
-  }, [courses, query, status, level]);
-
-  const hasFilters = query.length > 0 || status !== "all" || level !== "all";
-
+export function CoursesTable({ courses, meta, hasFilters }: Props) {
   function handleCopyId(id: string) {
     navigator.clipboard.writeText(id);
     toast.success("ID copiado al portapapeles");
@@ -88,62 +74,24 @@ export function CoursesTable({ courses }: Props) {
     <div className="space-y-4">
       {/* Toolbar */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 rounded-xl border border-border bg-card p-3 shadow-sm">
-        <div className="relative w-full md:max-w-sm">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none" />
-          <Input
-            type="search"
-            placeholder="Buscar por título, descripción o categoría..."
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            className="pl-9"
-          />
-        </div>
+        <SearchInput
+          placeholder="Buscar por título, descripción o categoría..."
+          className="md:max-w-sm"
+        />
 
         <div className="flex items-center gap-2 flex-wrap">
-          <div className="flex items-center rounded-lg border border-border bg-background p-0.5">
-            {(
-              [
-                { v: "all", label: "Todos" },
-                { v: "published", label: "Publicados" },
-                { v: "draft", label: "Borradores" },
-              ] as const
-            ).map((opt) => (
-              <button
-                key={opt.v}
-                type="button"
-                onClick={() => setStatus(opt.v)}
-                className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-colors ${
-                  status === opt.v
-                    ? "bg-primary text-primary-foreground shadow-sm"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                {opt.label}
-              </button>
-            ))}
-          </div>
-
-          <Select
-            value={level}
-            onValueChange={(v) => setLevel(v as LevelFilter)}
-          >
-            <SelectTrigger className="h-9 min-w-[140px]">
-              <SelectValue placeholder="Nivel" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todos los niveles</SelectItem>
-              {COURSE_LEVELS.map((l) => (
-                <SelectItem key={l} value={l}>
-                  {COURSE_LEVEL_LABELS[l]}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <SegmentedFilter param="status" options={STATUS_OPTIONS} />
+          <FilterSelect
+            param="level"
+            options={LEVEL_OPTIONS}
+            allLabel="Todos los niveles"
+            placeholder="Nivel"
+          />
         </div>
       </div>
 
       {/* Table */}
-      {filtered.length === 0 ? (
+      {courses.length === 0 ? (
         <EmptyState
           icon={BookX}
           title={hasFilters ? "Ningún curso coincide con los filtros" : "No hay cursos disponibles"}
@@ -154,17 +102,7 @@ export function CoursesTable({ courses }: Props) {
           }
           action={
             hasFilters ? (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  setQuery("");
-                  setStatus("all");
-                  setLevel("all");
-                }}
-              >
-                Limpiar filtros
-              </Button>
+              <ClearFiltersButton params={["q", "status", "level"]} />
             ) : (
               <Link
                 href="/admin/courses/new"
@@ -176,6 +114,7 @@ export function CoursesTable({ courses }: Props) {
           }
         />
       ) : (
+        <>
         <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-sm text-left">
@@ -191,7 +130,7 @@ export function CoursesTable({ courses }: Props) {
                 </tr>
               </thead>
               <tbody className="divide-y divide-border/60">
-                {filtered.map((course) => {
+                {courses.map((course) => {
                   const levelLabel = course.level
                     ? COURSE_LEVEL_LABELS[course.level as CourseLevel]
                     : null;
@@ -349,6 +288,9 @@ export function CoursesTable({ courses }: Props) {
             </table>
           </div>
         </div>
+
+        <Pagination meta={meta} itemLabel={{ one: "curso", many: "cursos" }} />
+        </>
       )}
     </div>
   );

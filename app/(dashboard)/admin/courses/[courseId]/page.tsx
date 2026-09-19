@@ -6,7 +6,9 @@ import {
   GraduationCap,
   HelpCircle,
   Layers,
+  Users,
 } from "lucide-react";
+import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { serializeCourse } from "@/lib/serialize";
 import { CourseForm } from "@/components/admin/CourseForm";
@@ -17,19 +19,41 @@ import { deleteCourse, updateCourse } from "@/app/actions/courses";
 import { DeleteConfirmDialog } from "@/components/admin/DeleteConfirmDialog";
 import { ExamManager } from "@/components/admin/ExamManager";
 import { FaqManager } from "@/components/admin/FaqManager";
+import { CourseEnrollmentsTable } from "@/components/admin/CourseEnrollmentsTable";
+import { UrlTabs } from "@/components/admin/UrlTabs";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  buildPagination,
+  getEnumParam,
+  getPageSize,
+  getRequestedPage,
+  getSearchParam,
+  type SearchParamsRecord,
+} from "@/lib/pagination";
 
-type Props = { params: Promise<{ courseId: string }> };
+const ENROLLMENT_STATUSES = [
+  "PENDING",
+  "PAID",
+  "COMPLETED",
+  "FAILED",
+  "EXPIRED",
+] as const;
 
-export async function generateMetadata({ params }: Props) {
+type Props = {
+  params: Promise<{ courseId: string }>;
+  searchParams: Promise<unknown>;
+};
+
+export async function generateMetadata({ params }: Pick<Props, "params">) {
   const { courseId } = await params;
   const course = await prisma.course.findUnique({ where: { id: courseId } });
   return { title: course ? `${course.title} | Admin` : "Curso | Admin" };
 }
 
-export default async function EditCoursePage({ params }: Props) {
+export default async function EditCoursePage({ params, searchParams }: Props) {
   const { courseId } = await params;
+  const sp = (await searchParams) as SearchParamsRecord;
 
   const [course, instructors] = await Promise.all([
     prisma.course.findUnique({
@@ -59,6 +83,55 @@ export default async function EditCoursePage({ params }: Props) {
   ]);
 
   if (!course) notFound();
+
+  // Inscritos: se consulta aparte y paginado; la lista crece sin tope y no
+  // debe cargarse entera para editar el curso.
+  const enrollmentQuery = getSearchParam(sp, "q");
+  const enrollmentStatus = getEnumParam(sp, "estado", ENROLLMENT_STATUSES);
+
+  const enrollmentWhere: Prisma.EnrollmentWhereInput = {
+    courseId,
+    ...(enrollmentStatus !== "all" ? { status: enrollmentStatus } : {}),
+    ...(enrollmentQuery
+      ? {
+          user: {
+            is: {
+              OR: [
+                { name: { contains: enrollmentQuery, mode: "insensitive" } },
+                { email: { contains: enrollmentQuery, mode: "insensitive" } },
+              ],
+            },
+          },
+        }
+      : {}),
+  };
+
+  const filteredEnrollments = await prisma.enrollment.count({
+    where: enrollmentWhere,
+  });
+
+  const enrollmentsMeta = buildPagination({
+    requestedPage: getRequestedPage(sp),
+    pageSize: getPageSize(sp),
+    totalItems: filteredEnrollments,
+  });
+
+  const enrollments = await prisma.enrollment.findMany({
+    where: enrollmentWhere,
+    orderBy: { createdAt: "desc" },
+    skip: enrollmentsMeta.skip,
+    take: enrollmentsMeta.pageSize,
+    select: {
+      id: true,
+      status: true,
+      progressPercentage: true,
+      startDate: true,
+      endDate: true,
+      user: {
+        select: { id: true, name: true, email: true, company: true },
+      },
+    },
+  });
 
   const totalChapters = course.modules.reduce(
     (acc: number, m) => acc + m.chapters.length,
@@ -108,7 +181,7 @@ export default async function EditCoursePage({ params }: Props) {
         }
       />
 
-      <Tabs defaultValue="info">
+      <UrlTabs defaultTab="info" resetParams={["page", "q", "estado"]}>
         <TabsList className="h-13 w-full justify-start gap-1 overflow-x-auto bg-muted p-1.5">
           <TabsTrigger value="info" className="flex-none gap-2 px-5 text-sm font-semibold">
             <FileText className="size-4.5" />
@@ -126,6 +199,13 @@ export default async function EditCoursePage({ params }: Props) {
             Evaluación
             <Badge variant="outline" className="ml-1 text-[11px] font-bold tabular-nums">
               {course.questions.length}
+            </Badge>
+          </TabsTrigger>
+          <TabsTrigger value="inscritos" className="flex-none gap-2 px-5 text-sm font-semibold">
+            <Users className="size-4.5" />
+            Inscritos
+            <Badge variant="outline" className="ml-1 text-[11px] font-bold tabular-nums">
+              {course._count.enrollments}
             </Badge>
           </TabsTrigger>
           <TabsTrigger value="faqs" className="flex-none gap-2 px-5 text-sm font-semibold">
@@ -205,10 +285,18 @@ export default async function EditCoursePage({ params }: Props) {
           <ExamManager courseId={course.id} questions={course.questions} />
         </TabsContent>
 
+        <TabsContent value="inscritos" className="mt-6">
+          <CourseEnrollmentsTable
+            enrollments={enrollments}
+            meta={enrollmentsMeta}
+            hasFilters={Boolean(enrollmentQuery) || enrollmentStatus !== "all"}
+          />
+        </TabsContent>
+
         <TabsContent value="faqs" className="mt-6">
           <FaqManager courseId={course.id} faqs={course.faqs} />
         </TabsContent>
-      </Tabs>
+      </UrlTabs>
     </div>
   );
 }

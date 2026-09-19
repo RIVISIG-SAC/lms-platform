@@ -1,22 +1,115 @@
 import Link from "next/link";
+import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import { Award, Download, ExternalLink, Plus } from "lucide-react";
+import { Award, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import {
   Breadcrumb,
   BreadcrumbItem,
   BreadcrumbList,
   BreadcrumbPage,
 } from "@/components/ui/breadcrumb";
-import { EmptyState } from "@/components/admin/EmptyState";
-import { formatDate, getCertificateEffectiveStatus } from "@/lib/utils";
+import { CertificatesTable } from "@/components/admin/CertificatesTable";
+import {
+  buildPagination,
+  getEnumParam,
+  getPageSize,
+  getRequestedPage,
+  getSearchParam,
+  type SearchParamsRecord,
+} from "@/lib/pagination";
 
 export const metadata = { title: "Certificados | Admin" };
 
-export default async function AdminCertificatesPage() {
+const STATUSES = ["ACTIVE", "EXPIRED", "REVOKED", "PENDING_PAYMENT"] as const;
+const ORIGINS = ["exam", "manual"] as const;
+
+/**
+ * "Vencido" no siempre está guardado en la BD: un certificado ACTIVE con
+ * `expiresAt` en el pasado se muestra como vencido. El filtro replica esa
+ * misma regla en SQL para que lo que se lista coincida con lo que se ve.
+ */
+function statusWhere(
+  status: (typeof STATUSES)[number] | "all",
+): Prisma.CertificateWhereInput {
+  const now = new Date();
+
+  switch (status) {
+    case "ACTIVE":
+      return {
+        status: "ACTIVE",
+        OR: [{ expiresAt: null }, { expiresAt: { gte: now } }],
+      };
+    case "EXPIRED":
+      return {
+        OR: [
+          { status: "EXPIRED" },
+          { status: "ACTIVE", expiresAt: { lt: now } },
+        ],
+      };
+    case "all":
+      return {};
+    default:
+      return { status };
+  }
+}
+
+export default async function AdminCertificatesPage(props: {
+  searchParams: Promise<unknown>;
+}) {
+  const sp = (await props.searchParams) as SearchParamsRecord;
+  const q = getSearchParam(sp, "q");
+  const status = getEnumParam(sp, "status", STATUSES);
+  const origin = getEnumParam(sp, "origin", ORIGINS);
+
+  const where: Prisma.CertificateWhereInput = {
+    AND: [
+      statusWhere(status),
+      origin === "manual"
+        ? { enrollmentId: null }
+        : origin === "exam"
+          ? { enrollmentId: { not: null } }
+          : {},
+      q
+        ? {
+            OR: [
+              { verificationCode: { contains: q, mode: "insensitive" } },
+              { holderName: { contains: q, mode: "insensitive" } },
+              { certificateTitle: { contains: q, mode: "insensitive" } },
+              { course: { title: { contains: q, mode: "insensitive" } } },
+              {
+                enrollment: {
+                  is: { user: { name: { contains: q, mode: "insensitive" } } },
+                },
+              },
+              {
+                enrollment: {
+                  is: { course: { title: { contains: q, mode: "insensitive" } } },
+                },
+              },
+            ],
+          }
+        : {},
+    ],
+  };
+
+  const [totalItems, totalCertificates, manualCount] = await Promise.all([
+    prisma.certificate.count({ where }),
+    prisma.certificate.count(),
+    prisma.certificate.count({ where: { enrollmentId: null } }),
+  ]);
+
+  const meta = buildPagination({
+    requestedPage: getRequestedPage(sp),
+    pageSize: getPageSize(sp),
+    totalItems,
+  });
+
   const certificates = await prisma.certificate.findMany({
+    where,
     orderBy: { issueDate: "desc" },
+    skip: meta.skip,
+    take: meta.pageSize,
     include: {
       enrollment: {
         include: {
@@ -27,8 +120,6 @@ export default async function AdminCertificatesPage() {
       course: { select: { title: true } },
     },
   });
-
-  const manualCount = certificates.filter((c) => c.enrollmentId === null).length;
 
   return (
     <div className="max-w-7xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -52,7 +143,8 @@ export default async function AdminCertificatesPage() {
               Certificados emitidos
             </h1>
             <p className="text-sm text-muted-foreground mt-1">
-              {certificates.length} {certificates.length === 1 ? "certificado" : "certificados"} ·{" "}
+              {totalCertificates}{" "}
+              {totalCertificates === 1 ? "certificado" : "certificados"} ·{" "}
               {manualCount} manual{manualCount === 1 ? "" : "es"}
             </p>
           </div>
@@ -66,125 +158,11 @@ export default async function AdminCertificatesPage() {
         </Button>
       </div>
 
-      {certificates.length === 0 ? (
-        <div className="rounded-2xl border border-border bg-card p-6">
-          <EmptyState
-            icon={Award}
-            title="Aún no hay certificados emitidos"
-            description="Cuando un estudiante apruebe el examen se generará un certificado. También puedes emitir certificados manualmente para personas externas."
-            action={
-              <Button render={<Link href="/admin/certificates/new" />} nativeButton={false}>
-                <Plus className="size-4" /> Crear certificado manual
-              </Button>
-            }
-          />
-        </div>
-      ) : (
-        <div className="rounded-2xl border border-border bg-card shadow-sm overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="bg-muted/40 border-b border-border text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                <tr>
-                  <th className="text-left px-4 py-3">Titular</th>
-                  <th className="text-left px-4 py-3">Título</th>
-                  <th className="text-left px-4 py-3">Emitido</th>
-                  <th className="text-left px-4 py-3">Estado</th>
-                  <th className="text-left px-4 py-3">Tipo</th>
-                  <th className="text-left px-4 py-3">Código</th>
-                  <th className="text-right px-4 py-3">Acciones</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border/60">
-                {certificates.map((cert) => {
-                  const isManual = cert.enrollmentId === null;
-                  const titular =
-                    cert.enrollment?.user.name ?? cert.holderName ?? "—";
-                  const empresa =
-                    cert.enrollment?.user.company ?? cert.holderCompany ?? null;
-                  const curso =
-                    cert.enrollment?.course.title ?? cert.certificateTitle ?? cert.course?.title ?? "—";
-                  const effectiveStatus = getCertificateEffectiveStatus(
-                    cert.status,
-                    cert.expiresAt,
-                  );
-
-                  return (
-                    <tr key={cert.id} className="hover:bg-muted/30 transition-colors">
-                      <td className="px-4 py-3">
-                        <div className="font-semibold text-foreground">{titular}</div>
-                        {empresa && (
-                          <div className="text-xs text-muted-foreground mt-0.5">{empresa}</div>
-                        )}
-                      </td>
-                      <td className="px-4 py-3 text-foreground">{curso}</td>
-                      <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">
-                        {formatDate(cert.issueDate)}
-                      </td>
-                      <td className="px-4 py-3">
-                        <StatusBadge status={effectiveStatus} />
-                      </td>
-                      <td className="px-4 py-3">
-                        <Badge
-                          variant={isManual ? "default" : "outline"}
-                          className="font-semibold"
-                        >
-                          {isManual ? "Manual" : "Examen"}
-                        </Badge>
-                      </td>
-                      <td className="px-4 py-3 font-mono text-xs text-muted-foreground">
-                        {cert.verificationCode}
-                      </td>
-                      <td className="px-4 py-3">
-                        <div className="flex justify-end gap-1">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            render={
-                              <Link href={`/api/certificates/${cert.verificationCode}/download`} />
-                            }
-                            nativeButton={false}
-                            title="Descargar PDF"
-                          >
-                            <Download className="size-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            render={
-                              <Link
-                                href={`/verificar/${cert.verificationCode}`}
-                                target="_blank"
-                              />
-                            }
-                            nativeButton={false}
-                            title="Ver verificación pública"
-                          >
-                            <ExternalLink className="size-4" />
-                          </Button>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
+      <CertificatesTable
+        certificates={certificates}
+        meta={meta}
+        hasFilters={Boolean(q) || status !== "all" || origin !== "all"}
+      />
     </div>
   );
-}
-
-function StatusBadge({ status }: { status: string }) {
-  const map: Record<string, { label: string; className: string }> = {
-    ACTIVE: { label: "Activo", className: "bg-green-600 hover:bg-green-600 text-white" },
-    EXPIRED: { label: "Vencido", className: "bg-amber-500 hover:bg-amber-500 text-white" },
-    REVOKED: { label: "Revocado", className: "bg-destructive text-white" },
-    PENDING_PAYMENT: {
-      label: "Pago pendiente",
-      className: "bg-muted text-foreground border border-border",
-    },
-  };
-  const cfg = map[status] ?? { label: status, className: "" };
-  return <Badge className={`${cfg.className} border-none text-xs`}>{cfg.label}</Badge>;
 }
