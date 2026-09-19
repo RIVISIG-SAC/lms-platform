@@ -237,3 +237,16 @@ function formatPEN(amount: number) {
     currency: "PEN",
   }).format(amount);
 }
+
+export async function notifySupportMessageReceived(params: {
+  messageId: string;
+  fromName: string;
+  subject: string;
+}) {
+  await notifyAdmins({
+    type: "ADMIN_NEW_SUPPORT_MESSAGE",
+    title: "Nueva consulta de soporte",
+    message: `${params.fromName}: ${params.subject}`,
+    link: "/admin/support",
+  });
+}

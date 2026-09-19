@@ -59,6 +59,7 @@ const adminNav: NavSection[] = [
     title: 'Sistema',
     items: [
       { label: 'Usuarios', href: '/admin/users', icon: ShieldCheck },
+      { label: 'Soporte', href: '/admin/support', icon: LifeBuoy },
     ],
   },
   {
