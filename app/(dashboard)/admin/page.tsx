@@ -1,437 +1,493 @@
+import Link from "next/link";
+import {
+  Award,
+  BookOpen,
+  ClipboardList,
+  Clock3,
+  CircleDollarSign,
+  FileQuestion,
+  GraduationCap,
+  LifeBuoy,
+  Plus,
+  TimerOff,
+  Users,
+} from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { cn } from "@/lib/utils";
-import Link from "next/link";
-import { 
-  BookOpen, 
-  Users, 
-  Award, 
-  ArrowRight, 
-  Plus, 
-  TrendingUp,
-  AlertTriangle,
-  CheckCircle2,
-  Clock3,
-  MoreVertical,
-  Briefcase,
-  BarChart3,
-  CircleDollarSign,
-  ClipboardList,
-  GraduationCap,
-} from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { buttonVariants } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import { StatCard } from "@/components/admin/dashboard/StatCard";
+import { TrendChart } from "@/components/admin/dashboard/TrendChart";
+import {
+  AttentionList,
+  type AttentionItem,
+} from "@/components/admin/dashboard/AttentionList";
+import {
+  PERIOD_KEYS,
+  PERIOD_OPTIONS,
+  buildDailySeries,
+  formatSoles,
+  getDelta,
+  getPeriodRanges,
+  type PeriodKey,
+} from "@/lib/admin-dashboard";
+import { getEnumParam, type SearchParamsRecord } from "@/lib/pagination";
+import { APP_TIME_ZONE } from "@/lib/timezone";
 
-type PeriodKey = "today" | "7d" | "30d" | "month";
+export const metadata = { title: "Dashboard | Admin" };
 
-const PERIOD_OPTIONS: { key: PeriodKey; label: string }[] = [
-  { key: "today", label: "Hoy" },
-  { key: "7d", label: "7 días" },
-  { key: "30d", label: "30 días" },
-  { key: "month", label: "Mes actual" },
-];
+/** Aviso con el que se marcan los accesos a punto de vencer. */
+const DIAS_AVISO_VENCIMIENTO = 7;
+/** A partir de aquí un borrador se considera olvidado. */
+const DIAS_BORRADOR_ESTANCADO = 14;
 
-function getRange(period: PeriodKey) {
-  const now = new Date();
-  const start = new Date(now);
-
-  if (period === "today") {
-    start.setHours(0, 0, 0, 0);
-    return { start, end: now, days: 1 };
-  }
-
-  if (period === "7d") {
-    start.setDate(now.getDate() - 6);
-    start.setHours(0, 0, 0, 0);
-    return { start, end: now, days: 7 };
-  }
-
-  if (period === "30d") {
-    start.setDate(now.getDate() - 29);
-    start.setHours(0, 0, 0, 0);
-    return { start, end: now, days: 30 };
-  }
-
-  start.setDate(1);
-  start.setHours(0, 0, 0, 0);
-  const monthDays = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
-  return { start, end: now, days: monthDays };
-}
-
-function buildDailySeries(dates: Date[], days: number) {
-  const now = new Date();
-  const buckets = new Map<string, number>();
-
-  for (let i = days - 1; i >= 0; i -= 1) {
-    const d = new Date(now);
-    d.setDate(now.getDate() - i);
-    d.setHours(0, 0, 0, 0);
-    buckets.set(d.toISOString().slice(0, 10), 0);
-  }
-
-  for (const dt of dates) {
-    const key = new Date(dt).toISOString().slice(0, 10);
-    if (buckets.has(key)) buckets.set(key, (buckets.get(key) ?? 0) + 1);
-  }
-
-  return Array.from(buckets.entries()).map(([key, value]) => {
-    const date = new Date(`${key}T00:00:00`);
-    return {
-      key,
-      value,
-      label: date.toLocaleDateString("es-ES", { weekday: "short" }).replace(".", ""),
-    };
-  });
-}
-
-export default async function AdminDashboardPage({
-  searchParams,
-}: {
-  searchParams?: Promise<{ period?: string }>;
-}) {
-  const resolvedSearchParams = (await searchParams) ?? {};
-  const periodParam = resolvedSearchParams.period;
-  const period: PeriodKey = PERIOD_OPTIONS.some((opt) => opt.key === periodParam)
-    ? (periodParam as PeriodKey)
-    : "7d";
-  const { start, end, days } = getRange(period);
-
-  const [
-    publishedCourses,
-    draftCourses,
-    totalCourses,
-    paidEnrollmentsInRange,
-    completedInRange,
-    totalStudents,
-    certificatesInRange,
-    enrollmentsInRange,
-    recentCourses,
-    coursesWithoutModules,
-    coursesWithoutExam,
-    staleDraftCourses,
-  ] = await Promise.all([
-    prisma.course.count({ where: { published: true } }),
-    prisma.course.count({ where: { published: false } }),
-    prisma.course.count(),
-    prisma.enrollment.count({
-      where: { createdAt: { gte: start, lte: end }, status: { in: ["PAID", "COMPLETED"] } },
-    }),
-    prisma.enrollment.count({
-      where: { updatedAt: { gte: start, lte: end }, status: "COMPLETED" },
-    }),
-    prisma.user.count({ where: { role: "STUDENT" } }),
-    prisma.certificate.count({ where: { issueDate: { gte: start, lte: end } } }),
-    prisma.enrollment.findMany({
-      where: { createdAt: { gte: start, lte: end } },
-      select: { createdAt: true },
-      orderBy: { createdAt: "asc" },
-    }),
-    prisma.course.findMany({
-      orderBy: { createdAt: "desc" },
-      take: 5,
-      include: { _count: { select: { enrollments: true } } },
-    }),
-    prisma.course.count({ where: { modules: { none: {} } } }),
-    prisma.course.count({ where: { questions: { none: {} } } }),
-    prisma.course.count({
+/**
+ * Ingresos estimados del periodo.
+ *
+ * No hay tabla de transacciones, así que la cifra se reconstruye desde el
+ * catálogo: precio del curso por cada inscripción de pago, más la tarifa de
+ * cada certificado que se pagó en el periodo. Es una estimación —un cambio de
+ * precio posterior reescribe el pasado— y la tarjeta lo dice.
+ */
+async function calcularIngresos(range: { start: Date; end: Date }) {
+  const [porCurso, certificadosPagados] = await Promise.all([
+    prisma.enrollment.groupBy({
+      by: ["courseId"],
       where: {
-        published: false,
-        createdAt: { lte: new Date(Date.now() - 1000 * 60 * 60 * 24 * 14) },
+        createdAt: { gte: range.start, lte: range.end },
+        status: { in: ["PAID", "COMPLETED"] },
+        course: { isFree: false },
+      },
+      _count: { _all: true },
+    }),
+    prisma.certificate.findMany({
+      where: { certificatePaidAt: { gte: range.start, lte: range.end } },
+      select: {
+        course: { select: { certificateFee: true } },
+        enrollment: { select: { course: { select: { certificateFee: true } } } },
       },
     }),
   ]);
 
-  const completionRate = paidEnrollmentsInRange > 0
-    ? Math.round((completedInRange / paidEnrollmentsInRange) * 100)
-    : 0;
+  if (porCurso.length === 0 && certificadosPagados.length === 0) return 0;
 
-  const chartData = buildDailySeries(enrollmentsInRange.map((e) => e.createdAt), days);
-  const maxVal = Math.max(1, ...chartData.map((p) => p.value));
+  const cursos = await prisma.course.findMany({
+    where: { id: { in: porCurso.map((row) => row.courseId) } },
+    select: { id: true, price: true },
+  });
+  const precios = new Map(cursos.map((c) => [c.id, Number(c.price)]));
 
-  const stats = [
+  const porInscripciones = porCurso.reduce(
+    (total, row) => total + (precios.get(row.courseId) ?? 0) * row._count._all,
+    0,
+  );
+
+  const porCertificados = certificadosPagados.reduce((total, cert) => {
+    const fee =
+      cert.enrollment?.course.certificateFee ?? cert.course?.certificateFee;
+    return total + Number(fee ?? 0);
+  }, 0);
+
+  return porInscripciones + porCertificados;
+}
+
+export default async function AdminDashboardPage(props: {
+  searchParams?: Promise<unknown>;
+}) {
+  const sp = ((await props.searchParams) ?? {}) as SearchParamsRecord;
+  const periodParam = getEnumParam(sp, "period", PERIOD_KEYS);
+  const period: PeriodKey = periodParam === "all" ? "7d" : periodParam;
+
+  const { current, previous } = getPeriodRanges(period);
+  const ahora = new Date();
+  const limiteVencimiento = new Date(
+    ahora.getTime() + DIAS_AVISO_VENCIMIENTO * 86_400_000,
+  );
+  const limiteBorrador = new Date(
+    ahora.getTime() - DIAS_BORRADOR_ESTANCADO * 86_400_000,
+  );
+
+  const [
+    // Periodo actual
+    inscripcionesPeriodo,
+    inscripcionesSerie,
+    completadasCohorte,
+    certificadosPeriodo,
+    ingresosPeriodo,
+    // Periodo anterior, solo para las comparaciones
+    inscripcionesPrevias,
+    certificadosPrevios,
+    ingresosPrevios,
+    // Estado general del catálogo y la comunidad
+    totalCursos,
+    cursosPublicados,
+    totalEstudiantes,
+    // Cola operativa
+    consultasAbiertas,
+    certificadosPorPagar,
+    cursosSinModulos,
+    cursosSinEvaluacion,
+    borradoresEstancados,
+    accesosPorVencer,
+    // Catálogo con más tracción en el periodo
+    topCursos,
+  ] = await Promise.all([
+    prisma.enrollment.count({
+      where: { createdAt: { gte: current.start, lte: current.end } },
+    }),
+    prisma.enrollment.findMany({
+      where: { createdAt: { gte: current.start, lte: current.end } },
+      select: { createdAt: true },
+    }),
+    // Misma cohorte en numerador y denominador: inscripciones creadas en el
+    // periodo que YA están completadas. Antes se dividían dos conjuntos
+    // distintos y la tasa podía pasar del 100%.
+    prisma.enrollment.count({
+      where: {
+        createdAt: { gte: current.start, lte: current.end },
+        status: "COMPLETED",
+      },
+    }),
+    prisma.certificate.count({
+      where: { issueDate: { gte: current.start, lte: current.end } },
+    }),
+    calcularIngresos(current),
+
+    prisma.enrollment.count({
+      where: { createdAt: { gte: previous.start, lte: previous.end } },
+    }),
+    prisma.certificate.count({
+      where: { issueDate: { gte: previous.start, lte: previous.end } },
+    }),
+    calcularIngresos(previous),
+
+    prisma.course.count(),
+    prisma.course.count({ where: { published: true } }),
+    prisma.user.count({ where: { role: "STUDENT" } }),
+
+    prisma.supportMessage.count({ where: { status: "OPEN" } }),
+    prisma.certificate.count({ where: { status: "PENDING_PAYMENT" } }),
+    prisma.course.count({ where: { published: true, modules: { none: {} } } }),
+    prisma.course.count({ where: { published: true, questions: { none: {} } } }),
+    prisma.course.count({
+      where: { published: false, createdAt: { lte: limiteBorrador } },
+    }),
+    prisma.enrollment.count({
+      where: {
+        status: "PAID",
+        endDate: { gte: ahora, lte: limiteVencimiento },
+      },
+    }),
+
+    prisma.enrollment.groupBy({
+      by: ["courseId"],
+      where: { createdAt: { gte: current.start, lte: current.end } },
+      _count: { _all: true },
+      orderBy: { _count: { courseId: "desc" } },
+      take: 5,
+    }),
+  ]);
+
+  const cursosDelTop = await prisma.course.findMany({
+    where: { id: { in: topCursos.map((row) => row.courseId) } },
+    select: { id: true, title: true, published: true, isFree: true },
+  });
+  const cursoPorId = new Map(cursosDelTop.map((c) => [c.id, c]));
+
+  const tasaFinalizacion =
+    inscripcionesPeriodo > 0
+      ? Math.round((completadasCohorte / inscripcionesPeriodo) * 100)
+      : 0;
+
+  const serie = buildDailySeries(
+    inscripcionesSerie.map((e) => e.createdAt),
+    current,
+  );
+
+  const pendientes: AttentionItem[] = [
     {
-      label: "Inscripciones pagadas",
-      value: paidEnrollmentsInRange.toLocaleString("es-ES"),
-      icon: CircleDollarSign,
-      color: "text-emerald-600",
-      bg: "bg-emerald-100/70",
-      description: "Periodo seleccionado",
+      label: "Consultas sin responder",
+      detail: "Estudiantes esperando respuesta en la bandeja de soporte",
+      count: consultasAbiertas,
+      icon: LifeBuoy,
+      href: "/admin/support",
+      severity: "alta",
     },
     {
-      label: "Finalización",
-      value: `${completionRate}%`,
-      icon: GraduationCap,
-      color: "text-blue-600",
-      bg: "bg-blue-100/70",
-      description: `${completedInRange.toLocaleString("es-ES")} completados`,
-    },
-    {
-      label: "Certificados emitidos",
-      value: certificatesInRange.toLocaleString("es-ES"),
+      label: "Certificados sin pagar",
+      detail: "Aprobaron el examen pero el certificado sigue pendiente de pago",
+      count: certificadosPorPagar,
       icon: Award,
-      color: "text-amber-600",
-      bg: "bg-amber-100/70",
-      description: "Periodo seleccionado",
+      href: "/admin/certificates?status=PENDING_PAYMENT",
+      severity: "media",
     },
     {
-      label: "Ingresos",
-      value: "No disponible",
-      icon: TrendingUp,
-      color: "text-muted-foreground",
-      bg: "bg-muted",
-      description: "Activa tabla de transacciones",
+      label: "Accesos por vencer",
+      detail: `Inscripciones activas que caducan en menos de ${DIAS_AVISO_VENCIMIENTO} días`,
+      count: accesosPorVencer,
+      icon: TimerOff,
+      href: "/admin/students",
+      severity: "media",
+    },
+    {
+      label: "Cursos publicados sin contenido",
+      detail: "Están visibles en el catálogo pero no tienen módulos",
+      count: cursosSinModulos,
+      icon: ClipboardList,
+      href: "/admin/courses?status=published",
+      severity: "alta",
+    },
+    {
+      label: "Cursos publicados sin evaluación",
+      detail: "Sin examen, el alumno no puede obtener su certificado",
+      count: cursosSinEvaluacion,
+      icon: FileQuestion,
+      href: "/admin/courses?status=published",
+      severity: "alta",
+    },
+    {
+      label: `Borradores de más de ${DIAS_BORRADOR_ESTANCADO} días`,
+      detail: "Creados hace tiempo y todavía sin publicar",
+      count: borradoresEstancados,
+      icon: Clock3,
+      href: "/admin/courses?status=draft",
+      severity: "media",
     },
   ];
 
-  const actions = [
-    {
-      label: "Cursos sin módulos",
-      value: coursesWithoutModules,
-      icon: ClipboardList,
-      href: "/admin/courses",
-      tone: coursesWithoutModules > 0 ? "text-amber-700" : "text-emerald-700",
-    },
-    {
-      label: "Cursos sin evaluación",
-      value: coursesWithoutExam,
-      icon: AlertTriangle,
-      href: "/admin/courses",
-      tone: coursesWithoutExam > 0 ? "text-amber-700" : "text-emerald-700",
-    },
-    {
-      label: "Borradores > 14 días",
-      value: staleDraftCourses,
-      icon: Clock3,
-      href: "/admin/courses",
-      tone: staleDraftCourses > 0 ? "text-red-700" : "text-emerald-700",
-    },
-  ];
+  const periodoActual = PERIOD_OPTIONS.find((o) => o.key === period);
 
   return (
-    <div className="max-w-7xl mx-auto space-y-8 animate-in fade-in duration-700">
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+    <div className="mx-auto flex max-w-7xl flex-col gap-8 animate-in fade-in duration-500">
+      <header className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight text-foreground">
-            Dashboard Admin
+            Panel de administración
           </h1>
-          <p className="text-muted-foreground mt-1 text-sm">
-            Vista combinada de negocio y operación para ejecutar decisiones más rápido.
+          <p className="mt-1 text-sm text-muted-foreground">
+            Actividad de{" "}
+            <strong className="font-semibold text-foreground">
+              {periodoActual?.label.toLowerCase()}
+            </strong>{" "}
+            y pendientes operativos. Horario de Perú ({APP_TIME_ZONE}).
           </p>
         </div>
-        <div className="flex flex-wrap gap-2">
-          <div className="flex items-center rounded-xl border border-border bg-card p-1">
-            {PERIOD_OPTIONS.map((opt) => (
+
+        <div className="flex flex-wrap items-center gap-2">
+          <nav aria-label="Periodo de los indicadores">
+            <ul className="flex items-center rounded-xl border border-border bg-card p-1">
+              {PERIOD_OPTIONS.map((opt) => {
+                const activo = period === opt.key;
+                return (
+                  <li key={opt.key}>
+                    <Link
+                      href={`/admin?period=${opt.key}`}
+                      aria-current={activo ? "page" : undefined}
+                      aria-label={opt.srLabel}
+                      className={cn(
+                        "inline-flex min-h-9 items-center rounded-lg px-3 text-xs font-semibold transition-colors",
+                        "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring",
+                        activo
+                          ? "bg-primary text-primary-foreground"
+                          : "text-muted-foreground hover:bg-accent hover:text-foreground",
+                      )}
+                    >
+                      {opt.label}
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
+          </nav>
+
+          <Link
+            href="/admin/courses/new"
+            className={cn(buttonVariants({ size: "lg" }), "gap-2 font-semibold shadow-sm")}
+          >
+            <Plus className="size-4" aria-hidden="true" /> Nuevo curso
+          </Link>
+        </div>
+      </header>
+
+      <section aria-labelledby="kpis-title" className="flex flex-col gap-4">
+        <h2 id="kpis-title" className="sr-only">
+          Indicadores del periodo
+        </h2>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          <StatCard
+            label="Inscripciones"
+            value={inscripcionesPeriodo.toLocaleString("es-PE")}
+            icon={GraduationCap}
+            hint="Nuevas en el periodo, de pago y gratuitas"
+            delta={getDelta(inscripcionesPeriodo, inscripcionesPrevias)}
+            href="/admin/students"
+            linkLabel="Ver estudiantes"
+          />
+          <StatCard
+            label="Ingresos estimados"
+            value={formatSoles(ingresosPeriodo)}
+            icon={CircleDollarSign}
+            hint="Calculado con precios actuales de catálogo y certificados"
+            delta={getDelta(ingresosPeriodo, ingresosPrevios)}
+          />
+          <StatCard
+            label="Certificados emitidos"
+            value={certificadosPeriodo.toLocaleString("es-PE")}
+            icon={Award}
+            hint="Con fecha de emisión dentro del periodo"
+            delta={getDelta(certificadosPeriodo, certificadosPrevios)}
+            href="/admin/certificates"
+            linkLabel="Ver certificados"
+          />
+          <StatCard
+            label="Tasa de finalización"
+            value={`${tasaFinalizacion}%`}
+            icon={BookOpen}
+            hint={`${completadasCohorte} de ${inscripcionesPeriodo} inscripciones del periodo ya completadas`}
+          />
+        </div>
+      </section>
+
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-5">
+        <div className="lg:col-span-3">
+          <TrendChart
+            title="Inscripciones por día"
+            description={`${periodoActual?.label} · una barra por día`}
+            points={serie}
+            unit="inscripciones"
+          />
+        </div>
+        <div className="lg:col-span-2">
+          <AttentionList items={pendientes} />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <section
+          aria-labelledby="top-cursos-title"
+          className="rounded-2xl border border-border bg-card p-5 shadow-sm sm:p-6"
+        >
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <h2 id="top-cursos-title" className="text-base font-bold text-foreground">
+                Cursos con más inscripciones
+              </h2>
+              <p className="mt-1 text-sm text-muted-foreground">
+                En {periodoActual?.label.toLowerCase()}
+              </p>
+            </div>
+            <Link
+              href="/admin/courses"
+              className={cn(buttonVariants({ variant: "outline", size: "sm" }), "shrink-0")}
+            >
+              Ver catálogo
+            </Link>
+          </div>
+
+          {topCursos.length === 0 ? (
+            <p className="mt-5 rounded-xl border border-dashed border-border px-4 py-8 text-center text-sm text-muted-foreground">
+              Ningún curso recibió inscripciones en este periodo.
+            </p>
+          ) : (
+            <ol className="mt-4 flex flex-col gap-2">
+              {topCursos.map((row, i) => {
+                const curso = cursoPorId.get(row.courseId);
+                if (!curso) return null;
+
+                return (
+                  <li key={row.courseId}>
+                    <Link
+                      href={`/admin/courses/${row.courseId}`}
+                      className={cn(
+                        "flex min-h-14 items-center gap-3 rounded-xl border border-border bg-background px-3.5 py-2.5 transition-colors",
+                        "hover:border-primary/40 hover:bg-accent/30",
+                        "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring",
+                      )}
+                    >
+                      <span
+                        className="inline-flex size-7 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-xs font-black tabular-nums text-primary"
+                        aria-hidden="true"
+                      >
+                        {i + 1}
+                      </span>
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate text-sm font-semibold text-foreground">
+                          {curso.title}
+                        </span>
+                        <span className="mt-0.5 block text-xs text-muted-foreground">
+                          {curso.published ? "Publicado" : "Borrador"} ·{" "}
+                          {curso.isFree ? "Gratuito" : "De pago"}
+                        </span>
+                      </span>
+                      <span className="shrink-0 text-sm font-bold tabular-nums text-foreground">
+                        {row._count._all}
+                        <span className="sr-only"> inscripciones</span>
+                      </span>
+                    </Link>
+                  </li>
+                );
+              })}
+            </ol>
+          )}
+        </section>
+
+        <section
+          aria-labelledby="resumen-title"
+          className="rounded-2xl border border-border bg-card p-5 shadow-sm sm:p-6"
+        >
+          <h2 id="resumen-title" className="text-base font-bold text-foreground">
+            Estado de la plataforma
+          </h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Cifras acumuladas, no del periodo
+          </p>
+
+          <dl className="mt-4 grid grid-cols-2 gap-3">
+            <div className="rounded-xl border border-border bg-background p-4">
+              <dt className="text-xs font-semibold text-muted-foreground">
+                Cursos en catálogo
+              </dt>
+              <dd className="mt-1 text-2xl font-black tabular-nums text-foreground">
+                {totalCursos}
+              </dd>
+              <dd className="mt-0.5 text-xs text-muted-foreground">
+                {cursosPublicados} publicados · {totalCursos - cursosPublicados}{" "}
+                {totalCursos - cursosPublicados === 1 ? "borrador" : "borradores"}
+              </dd>
+            </div>
+            <div className="rounded-xl border border-border bg-background p-4">
+              <dt className="text-xs font-semibold text-muted-foreground">
+                Estudiantes registrados
+              </dt>
+              <dd className="mt-1 text-2xl font-black tabular-nums text-foreground">
+                {totalEstudiantes.toLocaleString("es-PE")}
+              </dd>
+              <dd className="mt-0.5 text-xs text-muted-foreground">
+                Cuentas con rol estudiante
+              </dd>
+            </div>
+          </dl>
+
+          <div className="mt-4 flex flex-col gap-2">
+            {[
+              { href: "/admin/courses", icon: BookOpen, label: "Gestionar catálogo" },
+              { href: "/admin/students", icon: Users, label: "Comunidad estudiantil" },
+              { href: "/admin/support", icon: LifeBuoy, label: "Bandeja de soporte" },
+            ].map(({ href, icon: Icon, label }) => (
               <Link
-                key={opt.key}
-                href={`/admin?period=${opt.key}`}
+                key={href}
+                href={href}
                 className={cn(
-                  "rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors",
-                  period === opt.key
-                    ? "bg-primary text-primary-foreground"
-                    : "text-muted-foreground hover:text-foreground",
+                  "inline-flex min-h-11 items-center gap-2.5 rounded-xl border border-border bg-background px-3.5 text-sm font-semibold text-foreground transition-colors",
+                  "hover:border-primary/40 hover:bg-accent/30",
+                  "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring",
                 )}
               >
-                {opt.label}
+                <Icon className="size-4 text-primary" aria-hidden="true" />
+                {label}
               </Link>
             ))}
           </div>
-          <Link href="/admin/courses/new" className={cn(buttonVariants({ size: "sm" }), "font-semibold shadow-sm")}>
-            <Plus className="mr-2 h-4 w-4" /> Nuevo Curso
-          </Link>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="border-border/70 bg-card/70">
-          <CardHeader className="pb-2">
-            <CardDescription>Catálogo</CardDescription>
-            <CardTitle className="text-2xl">{totalCourses}</CardTitle>
-          </CardHeader>
-          <CardContent className="pt-0 text-xs text-muted-foreground">
-            {publishedCourses} publicados · {draftCourses} borradores
-          </CardContent>
-        </Card>
-        <Card className="border-border/70 bg-card/70">
-          <CardHeader className="pb-2">
-            <CardDescription>Estudiantes</CardDescription>
-            <CardTitle className="text-2xl">{totalStudents.toLocaleString("es-ES")}</CardTitle>
-          </CardHeader>
-          <CardContent className="pt-0 text-xs text-muted-foreground">
-            Usuarios con rol estudiante
-          </CardContent>
-        </Card>
-        <Card className="border-border/70 bg-card/70">
-          <CardHeader className="pb-2">
-            <CardDescription>Periodo</CardDescription>
-            <CardTitle className="text-2xl">{paidEnrollmentsInRange.toLocaleString("es-ES")}</CardTitle>
-          </CardHeader>
-          <CardContent className="pt-0 text-xs text-muted-foreground">
-            Inscripciones pagadas/completadas
-          </CardContent>
-        </Card>
-        <Card className="border-border/70 bg-card/70">
-          <CardHeader className="pb-2">
-            <CardDescription>Calidad</CardDescription>
-            <CardTitle className="text-2xl">{completionRate}%</CardTitle>
-          </CardHeader>
-          <CardContent className="pt-0 text-xs text-muted-foreground">
-            Tasa de finalización del periodo
-          </CardContent>
-        </Card>
-      </div>
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {stats.map((stat) => (
-          <Card key={stat.label} className="border-border/70 shadow-sm bg-card/70 hover:bg-card transition-all duration-300">
-            <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-              <CardTitle className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                {stat.label}
-              </CardTitle>
-              <div className={`${stat.bg} ${stat.color} p-2 rounded-lg`}>
-                <stat.icon className="h-4 w-4" />
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold tracking-tight">{stat.value}</div>
-              <p className="text-[10px] text-muted-foreground mt-1 font-medium">
-                {stat.description}
-              </p>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <Card className="lg:col-span-2 border-border/70 shadow-sm bg-card/70">
-          <CardHeader>
-            <CardTitle className="text-base font-semibold flex items-center gap-2">
-              <BarChart3 className="size-4 text-primary" /> Tendencia de inscripciones
-            </CardTitle>
-            <CardDescription>Datos reales del periodo seleccionado</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="h-[200px] flex items-end justify-between gap-2 px-2">
-              {chartData.map((point, i) => (
-                <div key={point.key} className="flex-1 flex flex-col items-center gap-2 group">
-                  <div 
-                    className="w-full bg-primary/20 hover:bg-primary/40 rounded-t-md transition-all duration-500 relative flex justify-center"
-                    style={{ height: `${(point.value / maxVal) * 100}%` }}
-                  >
-                    <div className="absolute -top-8 bg-foreground text-background text-[10px] px-1.5 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity font-bold">
-                      {point.value}
-                    </div>
-                  </div>
-                  <span className="text-[10px] text-muted-foreground font-medium uppercase">
-                    {days > 14 ? `${i + 1}` : point.label}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-border/70 shadow-sm bg-card/70">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0">
-            <div>
-              <CardTitle className="text-base font-semibold flex items-center gap-2">
-                <AlertTriangle className="size-4 text-primary" /> Atención hoy
-              </CardTitle>
-              <CardDescription>Tareas operativas priorizadas</CardDescription>
-            </div>
-            <Link href="/admin/courses" className={buttonVariants({ variant: "ghost", size: "icon-sm" })}>
-              <ArrowRight className="h-4 w-4" />
-            </Link>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            {actions.map((item) => {
-              const Icon = item.icon;
-              return (
-                <Link
-                  key={item.label}
-                  href={item.href}
-                  className="flex items-center justify-between rounded-xl border border-border/70 bg-background px-3 py-2.5 hover:border-primary/40 transition-colors"
-                >
-                  <div className="flex items-center gap-2.5">
-                    <Icon className={cn("size-4", item.tone)} />
-                    <span className="text-sm font-medium text-foreground">{item.label}</span>
-                  </div>
-                  <Badge variant={item.value > 0 ? "outline" : "secondary"} className="font-semibold">
-                    {item.value}
-                  </Badge>
-                </Link>
-              );
-            })}
-            <div className="pt-2">
-              <Link href="/admin/courses/new" className={cn(buttonVariants({ variant: "outline", size: "sm" }), "w-full font-semibold")}>
-                <Plus className="size-4" /> Crear nuevo curso
-              </Link>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      <Card className="border-border/70 shadow-sm bg-card/70">
-        <CardHeader className="flex flex-row items-center justify-between space-y-0">
-          <div>
-            <CardTitle className="text-base font-semibold">Cursos recientes</CardTitle>
-            <CardDescription>Últimas adiciones al catálogo</CardDescription>
-          </div>
-          <Link href="/admin/courses" className={buttonVariants({ variant: "ghost", size: "icon-sm" })}>
-            <ArrowRight className="h-4 w-4" />
-          </Link>
-        </CardHeader>
-        <CardContent className="p-0">
-          {recentCourses.length === 0 ? (
-            <div className="px-6 py-10 text-center space-y-3">
-              <Briefcase className="h-10 w-10 text-muted-foreground/20 mx-auto" />
-              <p className="text-sm text-muted-foreground">Nada por aquí aún.</p>
-            </div>
-          ) : (
-            <div className="divide-y divide-border/50">
-              {recentCourses.map((course) => (
-                <div key={course.id} className="group flex items-center justify-between px-6 py-4 hover:bg-accent/5 transition-colors">
-                  <div className="space-y-1 min-w-0">
-                    <p className="text-sm font-semibold leading-none group-hover:text-primary transition-colors truncate">
-                      {course.title}
-                    </p>
-                    <div className="flex items-center gap-2">
-                      <Badge variant={course.published ? "secondary" : "outline"} className="text-[10px] px-1.5 h-4 font-bold border-none uppercase">
-                        {course.published ? "Público" : "Borrador"}
-                      </Badge>
-                      <span className="text-[10px] text-muted-foreground font-medium uppercase">
-                        {course._count.enrollments} alumnos
-                      </span>
-                    </div>
-                  </div>
-                  <Link href={`/admin/courses/${course.id}`} className={cn(buttonVariants({ variant: "ghost", size: "icon-sm" }), "opacity-0 group-hover:opacity-100 transition-opacity")}>
-                    <MoreVertical className="h-4 w-4" />
-                  </Link>
-                </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Link href="/admin/courses" className="rounded-xl border border-border/70 bg-card px-4 py-3 hover:border-primary/40 transition-colors">
-          <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
-            <BookOpen className="size-4 text-primary" /> Gestionar catálogo
-          </div>
-          <p className="mt-1 text-xs text-muted-foreground">Edita cursos, contenido y estado de publicación.</p>
-        </Link>
-        <Link href="/admin/users" className="rounded-xl border border-border/70 bg-card px-4 py-3 hover:border-primary/40 transition-colors">
-          <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
-            <Users className="size-4 text-primary" /> Gestionar usuarios
-          </div>
-          <p className="mt-1 text-xs text-muted-foreground">Administra roles, accesos y activaciones.</p>
-        </Link>
-        <Link href="/admin/students" className="rounded-xl border border-border/70 bg-card px-4 py-3 hover:border-primary/40 transition-colors">
-          <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
-            <CheckCircle2 className="size-4 text-primary" /> Comunidad estudiantil
-          </div>
-          <p className="mt-1 text-xs text-muted-foreground">Revisa actividad y progreso de alumnos.</p>
-        </Link>
+        </section>
       </div>
     </div>
   );
