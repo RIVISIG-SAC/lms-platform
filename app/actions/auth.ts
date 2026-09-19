@@ -8,6 +8,8 @@ import { createSession, deleteSession } from "@/lib/auth";
 import { loginSchema } from "@/lib/validations/auth";
 import { checkRateLimitDb, pruneExpiredRateLimits } from "@/lib/security/rateLimit";
 import { getClientIp, getRateLimitId } from "@/lib/security/ip";
+import { enrollInFreeCourse } from "@/lib/enrollments";
+import { sanitizeNextPath } from "@/lib/navigation/next-path";
 
 const MAX_FAILED_ATTEMPTS = 3;
 const LOCKOUT_MINUTES = 15;
@@ -107,12 +109,60 @@ export async function loginAction(_prev: unknown, formData: FormData) {
     tokenVersion: user.tokenVersion,
   });
 
-  const next = formData.get("next") as string | null;
-  if (next && next.startsWith("/")) redirect(next);
+  // Inscripción pendiente: el visitante eligió un curso gratuito antes de
+  // tener cuenta. Se consume aquí (no al verificar el correo) porque es el
+  // primer punto del flujo donde ya hay una sesión válida.
+  const pendingCourseId = await consumePendingEnrollment(user);
+  if (pendingCourseId) redirect(`/student/courses/${pendingCourseId}?enrolled=1`);
+
+  const next = sanitizeNextPath(formData.get("next"));
+  if (next) redirect(next);
 
   if (user.role === "ADMIN") redirect("/admin");
   if (user.role === "INSTRUCTOR") redirect("/instructor");
   redirect("/student");
+}
+
+/**
+ * Inscribe al estudiante en el curso gratuito que dejó pendiente al
+ * registrarse y limpia la marca. Devuelve el id del curso si quedó inscrito.
+ *
+ * Nunca hace fallar el login: si la inscripción no se puede completar (curso
+ * despublicado, pasó a ser de pago, error transitorio) sólo se limpia la
+ * intención y el usuario entra normalmente.
+ */
+async function consumePendingEnrollment(user: {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  pendingCourseId: string | null;
+}): Promise<string | null> {
+  if (!user.pendingCourseId) return null;
+
+  const courseId = user.pendingCourseId;
+
+  // Se limpia siempre y antes de inscribir: así un curso que ya no aplica no
+  // vuelve a intentarse en cada login.
+  await prisma.user.update({
+    where: { id: user.id },
+    data: { pendingCourseId: null },
+  });
+
+  if (user.role !== "STUDENT") return null;
+
+  try {
+    const result = await enrollInFreeCourse({
+      userId: user.id,
+      userName: user.name,
+      userEmail: user.email,
+      courseId,
+    });
+    return result.ok ? result.courseId : null;
+  } catch (err) {
+    console.error("[loginAction] Error inscribiendo curso pendiente:", err);
+    return null;
+  }
 }
 
 export async function logoutAction() {

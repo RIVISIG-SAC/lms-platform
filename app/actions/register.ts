@@ -11,6 +11,11 @@ import { sendVerificationEmail } from "@/lib/email";
 import { getLegalAcceptanceVersion } from "@/lib/legal/company";
 import { getClientIp, getRateLimitId } from "@/lib/security/ip";
 import { checkRateLimitDb } from "@/lib/security/rateLimit";
+import {
+  courseSlugFromNextPath,
+  sanitizeNextPath,
+  withNextParam,
+} from "@/lib/navigation/next-path";
 
 export async function registerAction(_prev: unknown, formData: FormData) {
   const headersList = await headers();
@@ -51,6 +56,21 @@ export async function registerAction(_prev: unknown, formData: FormData) {
     return { error: "Ya existe una cuenta con este correo electrónico." };
   }
 
+  // El visitante llegó desde un curso ("Inscribirse gratis"). Guardamos esa
+  // intención en el usuario para poder inscribirlo solo al iniciar sesión: el
+  // `next` de la URL no sobrevive al salto por el correo de verificación.
+  const next = sanitizeNextPath(formData.get("next"));
+  const courseSlug = courseSlugFromNextPath(next);
+  let pendingCourseId: string | null = null;
+
+  if (courseSlug) {
+    const course = await prisma.course.findFirst({
+      where: { published: true, isFree: true, OR: [{ slug: courseSlug }, { id: courseSlug }] },
+      select: { id: true },
+    });
+    pendingCourseId = course?.id ?? null;
+  }
+
   const passwordHash = await bcrypt.hash(password, 12);
   const verificationToken = crypto.randomBytes(32).toString("hex");
   const verificationTokenExp = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24h
@@ -73,10 +93,11 @@ export async function registerAction(_prev: unknown, formData: FormData) {
       acceptedTermsAt: new Date(),
       acceptedTermsIp,
       acceptedTermsVersion,
+      pendingCourseId,
     },
   });
 
-  await sendVerificationEmail(email, name, verificationToken);
+  await sendVerificationEmail(email, name, verificationToken, next);
 
-  redirect("/registro/verificar");
+  redirect(withNextParam("/registro/verificar", next));
 }

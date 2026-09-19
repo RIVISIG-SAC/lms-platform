@@ -3,17 +3,22 @@ import { prisma } from "@/lib/prisma";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { PetMascot } from "@/components/public/PetMascot";
 import { cn } from "@/lib/utils";
+import { sanitizeNextPath, withNextParam } from "@/lib/navigation/next-path";
 
 export const metadata = {
   title: "Verificando cuenta — RIVISIG Consultores",
 };
 
 type Props = {
-  searchParams: Promise<{ token?: string }>;
+  searchParams: Promise<{ token?: string; next?: string }>;
 };
 
 export default async function VerifyEmailPage({ searchParams }: Props) {
-  const { token } = await searchParams;
+  const { token, next: rawNext } = await searchParams;
+  const next = sanitizeNextPath(rawNext);
+  // Conservamos el destino en el enlace de login: ahí se consume la
+  // inscripción pendiente y se devuelve al estudiante a su curso.
+  const loginHref = withNextParam("/login", next);
 
   if (!token) {
     return <Result error="Enlace de verificación inválido." />;
@@ -31,7 +36,7 @@ export default async function VerifyEmailPage({ searchParams }: Props) {
     return (
       <Result
         success="Tu correo ya fue verificado anteriormente."
-        action={{ href: "/login", label: "Iniciar sesión" }}
+        action={{ href: loginHref, label: "Iniciar sesión" }}
       />
     );
   }
@@ -57,7 +62,7 @@ export default async function VerifyEmailPage({ searchParams }: Props) {
   return (
     <Result
       success="¡Tu correo ha sido verificado exitosamente!"
-      action={{ href: "/login", label: "Iniciar sesión" }}
+      action={{ href: loginHref, label: "Iniciar sesión" }}
     />
   );
 }

@@ -6,6 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { sendVerificationEmail } from "@/lib/email";
 import { getRateLimitId } from "@/lib/security/ip";
 import { checkRateLimitDb } from "@/lib/security/rateLimit";
+import { sanitizeNextPath } from "@/lib/navigation/next-path";
 
 export async function resendVerificationAction(_prev: unknown, formData: FormData) {
   const email = (formData.get("email") as string | null)?.trim().toLowerCase();
@@ -41,7 +42,8 @@ export async function resendVerificationAction(_prev: unknown, formData: FormDat
     data: { verificationToken, verificationTokenExp },
   });
 
-  await sendVerificationEmail(user.email, user.name, verificationToken);
+  const next = sanitizeNextPath(formData.get("next"));
+  await sendVerificationEmail(user.email, user.name, verificationToken, next);
 
   return { success: true };
 }

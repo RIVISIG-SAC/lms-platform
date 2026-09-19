@@ -10,8 +10,13 @@ export async function sendVerificationEmail(
   email: string,
   name: string,
   token: string,
+  next?: string,
 ) {
-  const verifyUrl = `${getAppUrl()}/verify-email?token=${token}`;
+  // `next` viaja en el enlace para que el estudiante vuelva a lo que estaba
+  // haciendo (p. ej. el curso que quería) incluso si abre el correo en otro
+  // dispositivo.
+  const nextParam = next ? `&next=${encodeURIComponent(next)}` : "";
+  const verifyUrl = `${getAppUrl()}/verify-email?token=${token}${nextParam}`;
 
   await resend.emails.send({
     from: 'RIVISIG Consultores <info@rivisig.com>',
@@ -185,22 +190,29 @@ export async function sendSupportEmail({
   fromName,
   subject,
   message,
+  courseTitle,
 }: {
   fromEmail: string;
   fromName: string;
   subject: string;
   message: string;
+  /** Curso desde el que se escribio, si la consulta salio de uno. */
+  courseTitle?: string | null;
 }) {
   const safeSubject = escapeHtml(subject);
   const safeName = escapeHtml(fromName);
   const safeEmail = escapeHtml(fromEmail);
   const safeMessage = escapeHtml(message).replace(/\n/g, '<br />');
+  const safeCourse = courseTitle ? escapeHtml(courseTitle) : null;
 
   await resend.emails.send({
     from: 'RIVISIG Consultores <info@rivisig.com>',
     to: getSupportEmail(),
     replyTo: fromEmail,
-    subject: `[Soporte] ${subject} — ${fromName}`,
+    // El curso viaja en el asunto para poder triar sin abrir el correo.
+    subject: courseTitle
+      ? `[Soporte] ${subject} — ${fromName} (${courseTitle})`
+      : `[Soporte] ${subject} — ${fromName}`,
     html: `
 <!DOCTYPE html>
 <html lang="es">
@@ -227,6 +239,12 @@ export async function sendSupportEmail({
                 <p style="margin:0 0 4px;font-size:14px;color:#18181b;"><strong>${safeName}</strong></p>
                 <p style="margin:0;font-size:13px;color:#2563eb;">${safeEmail}</p>
               </div>
+              ${
+                safeCourse
+                  ? `<p style="margin:0 0 6px;font-size:12px;font-weight:700;color:#71717a;text-transform:uppercase;letter-spacing:0.5px;">Curso</p>
+              <p style="margin:0 0 20px;font-size:14px;color:#18181b;">${safeCourse}</p>`
+                  : ''
+              }
               <p style="margin:0 0 6px;font-size:12px;font-weight:700;color:#71717a;text-transform:uppercase;letter-spacing:0.5px;">Asunto</p>
               <p style="margin:0 0 20px;font-size:15px;color:#18181b;font-weight:600;">${safeSubject}</p>
               <p style="margin:0 0 6px;font-size:12px;font-weight:700;color:#71717a;text-transform:uppercase;letter-spacing:0.5px;">Mensaje</p>
