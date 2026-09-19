@@ -2,16 +2,23 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import { PetMascot } from "@/components/public/PetMascot";
+import { sanitizeNextPath, withNextParam } from "@/lib/navigation/next-path";
 
 export const metadata = {
   title: "Revisa tu correo — RIVISIG Consultores",
 };
 
-export default async function VerificarPage() {
+export default async function VerificarPage(props: {
+  searchParams: Promise<unknown>;
+}) {
   const session = await getSession();
   if (session) {
     redirect(session.role === "ADMIN" ? "/admin" : "/student");
   }
+
+  const sp = (await props.searchParams) as Record<string, string | undefined>;
+  const next = sanitizeNextPath(sp.next);
+  const loginHref = withNextParam("/login", next);
 
   return (
     <div className="space-y-6 text-center">
@@ -28,7 +35,7 @@ export default async function VerificarPage() {
       <p className="text-sm text-muted-foreground">
         ¿No recibiste el correo?{" "}
         <Link
-          href="/registro/reenviar"
+          href={withNextParam("/registro/reenviar", next)}
           className="text-primary hover:underline font-medium"
         >
           Reenviar verificación
@@ -36,7 +43,7 @@ export default async function VerificarPage() {
       </p>
 
       <Link
-        href="/login"
+        href={loginHref}
         className="block text-sm text-muted-foreground hover:text-foreground transition-colors"
       >
         Volver al inicio de sesión

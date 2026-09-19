@@ -38,3 +38,16 @@ export function getCertificateEffectiveStatus(
   }
   return status;
 }
+
+/**
+ * Nombre del titular tal como debe aparecer en un certificado: siempre en
+ * mayúsculas.
+ *
+ * La base de datos conserva el nombre como lo escribió la persona ("José
+ * Pérez"), porque en el resto de la plataforma se lee mejor así; la conversión
+ * ocurre solo al presentar el certificado. Se usa el locale español para que
+ * las vocales acentuadas suban a Á/É/Í/Ó/Ú y no pierdan la tilde.
+ */
+export function toCertificateHolderName(name: string): string {
+  return name.toLocaleUpperCase("es-PE");
+}

@@ -4,6 +4,32 @@ type Bucket = { count: number; resetAt: number };
 
 const buckets = new Map<string, Bucket>();
 
+/** Cada cuánto, como mucho, se barren las ventanas vencidas del Map. */
+const PRUNE_INTERVAL_MS = 60_000;
+
+let lastPrune = 0;
+
+/**
+ * Borra las ventanas ya vencidas para que el Map no crezca sin límite.
+ *
+ * Sin esto, cada IP/email distinto deja un bucket residente para siempre en un
+ * proceso de larga vida (servidor Node persistente o `next dev`), que es una
+ * fuga de memoria lenta pero real durante un ataque o un pico de tráfico.
+ *
+ * Barrido perezoso en vez de `setInterval`: un timer global mantendría vivo el
+ * event loop y se duplicaría en cada recarga de HMR. El coste es O(n) como
+ * mucho una vez por minuto, y tras el barrido el Map sólo retiene las ventanas
+ * realmente activas.
+ */
+function pruneExpiredBuckets(now: number): void {
+  if (now - lastPrune < PRUNE_INTERVAL_MS) return;
+  lastPrune = now;
+
+  for (const [key, bucket] of buckets) {
+    if (bucket.resetAt <= now) buckets.delete(key);
+  }
+}
+
 const LIMITS = {
   "blog:mutation":       { max: 30, windowMs: 60_000 },
   "blog:upload":         { max: 10, windowMs: 60_000 },
@@ -18,6 +44,7 @@ const LIMITS = {
   "auth:password-reset:email":   { max: 3,  windowMs: 60 * 60_000 },
   "auth:password-reset:confirm": { max: 10, windowMs: 60 * 60_000 },
   "auth:verification-resend":    { max: 3,  windowMs: 60 * 60_000 },
+  "support:message":             { max: 5,  windowMs: 60 * 60_000 },
 } as const;
 
 export type RateLimitKey = keyof typeof LIMITS;
@@ -38,6 +65,9 @@ export function checkRateLimit(
 
   const bucketKey = `${key}:${identifier}`;
   const now = Date.now();
+
+  pruneExpiredBuckets(now);
+
   const bucket = buckets.get(bucketKey);
 
   if (!bucket || bucket.resetAt <= now) {

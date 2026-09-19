@@ -221,8 +221,8 @@ export function RegisterForm({ next }: Props) {
               className="font-semibold text-primary hover:underline"
             >
               Términos y Condiciones
-            </Link>{" "}
-            y la{" "}
+            </Link>
+            , la{" "}
             <Link
               href="/politica-de-privacidad"
               target="_blank"
@@ -230,6 +230,15 @@ export function RegisterForm({ next }: Props) {
               className="font-semibold text-primary hover:underline"
             >
               Política de Privacidad
+            </Link>{" "}
+            y la{" "}
+            <Link
+              href="/politica-de-cookies"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-semibold text-primary hover:underline"
+            >
+              Política de Cookies
             </Link>
             .
           </span>

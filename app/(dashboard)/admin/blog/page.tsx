@@ -1,5 +1,15 @@
 import Link from "next/link";
+import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { POST_STATUSES } from "@/lib/validations/blog";
+import {
+  buildPagination,
+  getEnumParam,
+  getPageSize,
+  getRequestedPage,
+  getSearchParam,
+  type SearchParamsRecord,
+} from "@/lib/pagination";
 import { BlogPostsTable } from "@/components/admin/blog/BlogPostsTable";
 import { Button } from "@/components/ui/button";
 import {
@@ -12,10 +22,51 @@ import { NotebookPen, Plus, Tag as TagIcon } from "lucide-react";
 
 export const metadata = { title: "Blog | Admin" };
 
-export default async function AdminBlogPage() {
-  const [posts, categories] = await Promise.all([
-    prisma.blogPost.findMany({
+export default async function AdminBlogPage(props: {
+  searchParams: Promise<unknown>;
+}) {
+  const sp = (await props.searchParams) as SearchParamsRecord;
+  const q = getSearchParam(sp, "q");
+  const status = getEnumParam(sp, "status", POST_STATUSES);
+  const categoryId = getSearchParam(sp, "category");
+
+  const where: Prisma.BlogPostWhereInput = {
+    ...(status !== "all" ? { status } : {}),
+    ...(categoryId ? { categoryId } : {}),
+    ...(q
+      ? {
+          OR: [
+            { title: { contains: q, mode: "insensitive" } },
+            { slug: { contains: q, mode: "insensitive" } },
+            { excerpt: { contains: q, mode: "insensitive" } },
+          ],
+        }
+      : {}),
+  };
+
+  const [totalItems, totalPosts, publishedCount, draftCount, categories] =
+    await Promise.all([
+      prisma.blogPost.count({ where }),
+      prisma.blogPost.count(),
+      prisma.blogPost.count({ where: { status: "PUBLISHED" } }),
+      prisma.blogPost.count({ where: { status: "DRAFT" } }),
+      prisma.blogCategory.findMany({
+        orderBy: { name: "asc" },
+        select: { id: true, name: true },
+      }),
+    ]);
+
+  const meta = buildPagination({
+    requestedPage: getRequestedPage(sp),
+    pageSize: getPageSize(sp),
+    totalItems,
+  });
+
+  const posts = await prisma.blogPost.findMany({
+      where,
       orderBy: [{ updatedAt: "desc" }],
+      skip: meta.skip,
+      take: meta.pageSize,
       select: {
         id: true,
         title: true,
@@ -30,15 +81,7 @@ export default async function AdminBlogPage() {
         author: { select: { id: true, name: true } },
         _count: { select: { tags: true } },
       },
-    }),
-    prisma.blogCategory.findMany({
-      orderBy: { name: "asc" },
-      select: { id: true, name: true },
-    }),
-  ]);
-
-  const publishedCount = posts.filter((p) => p.status === "PUBLISHED").length;
-  const draftCount = posts.filter((p) => p.status === "DRAFT").length;
+  });
 
   return (
     <div className="max-w-7xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -58,7 +101,7 @@ export default async function AdminBlogPage() {
           <div className="min-w-0">
             <h1 className="text-2xl font-bold tracking-tight text-foreground">Blog editorial</h1>
             <p className="text-sm text-muted-foreground mt-1">
-              {posts.length} {posts.length === 1 ? "artículo" : "artículos"} · {publishedCount} publicado
+              {totalPosts} {totalPosts === 1 ? "artículo" : "artículos"} · {publishedCount} publicado
               {publishedCount === 1 ? "" : "s"} · {draftCount} borrador{draftCount === 1 ? "" : "es"}
             </p>
           </div>
@@ -81,7 +124,12 @@ export default async function AdminBlogPage() {
         </div>
       </div>
 
-      <BlogPostsTable posts={posts} categories={categories} />
+      <BlogPostsTable
+        posts={posts}
+        categories={categories}
+        meta={meta}
+        hasFilters={Boolean(q) || status !== "all" || Boolean(categoryId)}
+      />
     </div>
   );
 }

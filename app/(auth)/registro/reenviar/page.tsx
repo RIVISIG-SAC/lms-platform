@@ -1,16 +1,22 @@
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import { ResendVerificationForm } from "@/components/auth/ResendVerificationForm";
+import { sanitizeNextPath } from "@/lib/navigation/next-path";
 
 export const metadata = {
   title: "Reenviar verificación — RIVISIG Consultores",
 };
 
-export default async function ReenviarPage() {
+export default async function ReenviarPage(props: {
+  searchParams: Promise<unknown>;
+}) {
   const session = await getSession();
   if (session) {
     redirect(session.role === "ADMIN" ? "/admin" : "/student");
   }
+
+  const sp = (await props.searchParams) as Record<string, string | undefined>;
+  const next = sanitizeNextPath(sp.next);
 
   return (
     <div className="space-y-6">
@@ -21,7 +27,7 @@ export default async function ReenviarPage() {
         </p>
       </div>
 
-      <ResendVerificationForm />
+      <ResendVerificationForm next={next} />
     </div>
   );
 }

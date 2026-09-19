@@ -1,5 +1,8 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
+import { getRequiredSession } from "@/lib/auth";
+import { Button } from "@/components/ui/button";
+import { ContactTutorDialog } from "@/components/student/ContactTutorDialog";
 import {
   Accordion,
   AccordionContent,
@@ -13,6 +16,7 @@ import { EmptyState } from "@/components/admin/EmptyState";
 export const metadata = { title: "FAQ y ayuda | Estudiante" };
 
 export default async function StudentFaqPage() {
+  const session = await getRequiredSession();
   const faqs = await prisma.systemFaq.findMany({
     where: { published: true },
     orderBy: [{ order: "asc" }, { createdAt: "asc" }],
@@ -57,8 +61,7 @@ export default async function StudentFaqPage() {
               Preguntas frecuentes
             </h1>
             <p className="text-sm text-muted-foreground mt-2 max-w-2xl">
-              Resuelve las dudas más comunes sobre tu cuenta, cursos, certificados y pagos. ¿No encuentras
-              lo que buscas? Escríbenos desde el botón <strong>Contactar tutor</strong> del panel.
+              Resuelve las dudas más comunes sobre tu cuenta, cursos, certificados y pagos.
             </p>
           </div>
         </div>
@@ -68,7 +71,7 @@ export default async function StudentFaqPage() {
         <EmptyState
           icon={LifeBuoy}
           title="Aún no hay preguntas frecuentes"
-          description="Estamos preparando contenido de ayuda. Mientras tanto, puedes contactarnos directamente desde tu panel."
+          description="Estamos preparando contenido de ayuda. Mientras tanto, escríbenos con el botón de abajo."
         />
       ) : (
         <div className="space-y-6">
@@ -103,6 +106,30 @@ export default async function StudentFaqPage() {
           ))}
         </div>
       )}
+
+      <div className="rounded-2xl border border-border bg-card p-6 text-center shadow-sm sm:p-8">
+        <span className="mx-auto inline-flex size-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
+          <LifeBuoy className="size-6" />
+        </span>
+        <h2 className="mt-4 text-base font-bold text-foreground">
+          ¿No encontraste tu respuesta?
+        </h2>
+        <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-muted-foreground">
+          Escríbenos tu duda y te respondemos por correo en horario hábil.
+        </p>
+        <div className="mt-5 flex justify-center">
+          <ContactTutorDialog
+            userEmail={session.email}
+            userName={session.name}
+            trigger={
+              <Button type="button" className="gap-2 font-semibold">
+                <LifeBuoy className="size-4" />
+                Contactar tutor
+              </Button>
+            }
+          />
+        </div>
+      </div>
     </div>
   );
 }

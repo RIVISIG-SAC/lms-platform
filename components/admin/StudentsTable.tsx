@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
+import Link from "next/link";
 import {
   BookOpen,
   Calendar,
@@ -8,14 +9,12 @@ import {
   GraduationCap,
   Mail,
   MoreVertical,
-  Search,
   UserCircle,
   UserSearch,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -24,6 +23,10 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { EmptyState } from "@/components/admin/EmptyState";
+import { Pagination } from "@/components/ui/pagination";
+import { SearchInput } from "@/components/admin/filters/SearchInput";
+import { ClearFiltersButton } from "@/components/admin/filters/ClearFiltersButton";
+import type { PaginationMeta } from "@/lib/pagination";
 import {
   EnrollStudentDialog,
   type EnrollCourseOption,
@@ -41,20 +44,12 @@ export type StudentRow = {
 type Props = {
   students: StudentRow[];
   courses: EnrollCourseOption[];
+  meta: PaginationMeta;
+  hasFilters: boolean;
 };
 
-export function StudentsTable({ students, courses }: Props) {
-  const [query, setQuery] = useState("");
+export function StudentsTable({ students, courses, meta, hasFilters }: Props) {
   const [enrollStudent, setEnrollStudent] = useState<StudentRow | null>(null);
-
-  const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    if (!q) return students;
-    return students.filter((s) => {
-      const haystack = `${s.name} ${s.email}`.toLowerCase();
-      return haystack.includes(q);
-    });
-  }, [students, query]);
 
   function handleCopyEmail(email: string) {
     navigator.clipboard.writeText(email);
@@ -64,39 +59,26 @@ export function StudentsTable({ students, courses }: Props) {
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-3 rounded-xl border border-border bg-card p-3 shadow-sm">
-        <div className="relative w-full md:max-w-md">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none" />
-          <Input
-            type="search"
-            placeholder="Buscar por nombre o correo..."
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            className="pl-9"
-          />
-        </div>
-        <div className="ml-auto text-xs font-semibold text-muted-foreground">
-          {filtered.length} de {students.length}
-        </div>
+        <SearchInput placeholder="Buscar por nombre o correo..." />
       </div>
 
-      {filtered.length === 0 ? (
+      {students.length === 0 ? (
         <EmptyState
-          icon={query ? UserSearch : UserCircle}
-          title={query ? "Ningún estudiante coincide" : "Aún no hay estudiantes"}
+          icon={hasFilters ? UserSearch : UserCircle}
+          title={hasFilters ? "Ningún estudiante coincide" : "Aún no hay estudiantes"}
           description={
-            query
+            hasFilters
               ? "Prueba con otro nombre o dirección de correo."
               : "Los alumnos aparecerán aquí cuando se registren o sean inscritos en un curso."
           }
           action={
-            query ? (
-              <Button variant="outline" size="sm" onClick={() => setQuery("")}>
-                Limpiar búsqueda
-              </Button>
+            hasFilters ? (
+              <ClearFiltersButton params={["q"]} label="Limpiar búsqueda" />
             ) : undefined
           }
         />
       ) : (
+        <>
         <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-sm text-left">
@@ -110,7 +92,7 @@ export function StudentsTable({ students, courses }: Props) {
                 </tr>
               </thead>
               <tbody className="divide-y divide-border/60">
-                {filtered.map((student) => {
+                {students.map((student) => {
                   const lastEnrollment = student.enrollments[0];
                   return (
                     <tr
@@ -183,15 +165,15 @@ export function StudentsTable({ students, courses }: Props) {
                               }
                             />
                             <DropdownMenuContent align="end" className="w-56">
-                              <DropdownMenuItem disabled>
+                              <DropdownMenuItem
+                                render={
+                                  <Link
+                                    href={`/admin/users/${student.id}?from=students`}
+                                  />
+                                }
+                              >
                                 <UserCircle className="size-4" />
                                 Ver perfil
-                                <Badge
-                                  variant="outline"
-                                  className="ml-auto text-[9px] font-semibold uppercase"
-                                >
-                                  Próximamente
-                                </Badge>
                               </DropdownMenuItem>
                               <DropdownMenuItem onClick={() => setEnrollStudent(student)}>
                                 <GraduationCap className="size-4" />
@@ -221,6 +203,9 @@ export function StudentsTable({ students, courses }: Props) {
             </table>
           </div>
         </div>
+
+        <Pagination meta={meta} itemLabel={{ one: "estudiante", many: "estudiantes" }} />
+        </>
       )}
 
       <EnrollStudentDialog

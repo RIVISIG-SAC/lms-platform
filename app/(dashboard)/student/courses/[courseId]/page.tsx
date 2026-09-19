@@ -65,6 +65,9 @@ export default async function CoursePlayerPage({ params, searchParams }: Props) 
   return (
     <CoursePlayerClient
       courseId={courseId}
+      courseTitle={course.title}
+      userName={session.name}
+      userEmail={session.email}
       modules={course.modules}
       progressPercentage={enrollment.progressPercentage}
       activeChapter={{

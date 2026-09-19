@@ -10,26 +10,27 @@ import {
 import { addDays } from "@/lib/utils";
 import { notifyCertificateIssued } from "@/lib/notifications";
 import { generateUniqueCertificateCode } from "@/lib/certificate-code";
+import {
+  EXAM_MAX_ATTEMPTS,
+  EXAM_PASSING_SCORE,
+  isAnswerCorrect,
+  questionSchema,
+  type QuestionTypeValue,
+} from "@/lib/validations/exam";
 
 // ─── Gestión de preguntas: admin e instructor propietario ───────────────────
 
-export async function createQuestion(
-  _prev: unknown,
-  formData: FormData
-): Promise<{ error?: string; success?: boolean }> {
-  const courseId = formData.get("courseId") as string;
-  try {
-    await assertCourseAccess(courseId);
-  } catch {
-    return { error: "No autorizado" };
-  }
+type QuestionResult = { error?: string; success?: boolean };
 
-  const text = (formData.get("text") as string)?.trim();
-  const order = Number(formData.get("order"));
-
-  if (!text || text.length < 5) return { error: "La pregunta debe tener al menos 5 caracteres" };
-
-  // Recopilar opciones dinámicamente desde el form
+/**
+ * Lee el borrador de pregunta que envía el diálogo del admin y lo valida.
+ *
+ * Las opciones llegan como `options[i][text]` / `options[i][isCorrect]`, así
+ * que hay que recorrerlas hasta que se agoten.
+ */
+function parseQuestionForm(
+  formData: FormData,
+): { data: { text: string; type: QuestionTypeValue; order: number; options: { text: string; isCorrect: boolean }[] } } | { error: string } {
   const options: { text: string; isCorrect: boolean }[] = [];
   let i = 0;
   while (formData.get(`options[${i}][text]`) !== null) {
@@ -40,15 +41,41 @@ export async function createQuestion(
     i++;
   }
 
-  if (options.length < 2) return { error: "Debe tener al menos 2 opciones" };
-  if (options.filter((o) => o.isCorrect).length !== 1)
-    return { error: "Debe haber exactamente una respuesta correcta" };
-  if (options.some((o) => !o.text)) return { error: "Todas las opciones deben tener texto" };
+  const parsed = questionSchema.safeParse({
+    text: (formData.get("text") as string)?.trim() ?? "",
+    type: (formData.get("type") as string) ?? "SINGLE",
+    order: Number(formData.get("order") ?? 0),
+    options,
+  });
+
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? "Datos inválidos" };
+  }
+
+  return { data: parsed.data };
+}
+
+export async function createQuestion(
+  _prev: unknown,
+  formData: FormData
+): Promise<QuestionResult> {
+  const courseId = formData.get("courseId") as string;
+  try {
+    await assertCourseAccess(courseId);
+  } catch {
+    return { error: "No autorizado" };
+  }
+
+  const parsed = parseQuestionForm(formData);
+  if ("error" in parsed) return { error: parsed.error };
+
+  const { text, type, order, options } = parsed.data;
 
   await prisma.question.create({
     data: {
       courseId,
       text,
+      type,
       order,
       options: { create: options },
     },
@@ -61,7 +88,7 @@ export async function createQuestion(
 export async function updateQuestion(
   _prev: unknown,
   formData: FormData
-): Promise<{ error?: string; success?: boolean }> {
+): Promise<QuestionResult> {
   const courseId = formData.get("courseId") as string;
   try {
     await assertCourseAccess(courseId);
@@ -70,26 +97,12 @@ export async function updateQuestion(
   }
 
   const questionId = formData.get("questionId") as string;
-  const text = (formData.get("text") as string)?.trim();
-
   if (!questionId) return { error: "Pregunta no encontrada" };
-  if (!text || text.length < 5) return { error: "La pregunta debe tener al menos 5 caracteres" };
 
-  const options: { text: string; isCorrect: boolean }[] = [];
-  let i = 0;
-  while (formData.get(`options[${i}][text]`) !== null) {
-    options.push({
-      text: (formData.get(`options[${i}][text]`) as string).trim(),
-      isCorrect: formData.get(`options[${i}][isCorrect]`) === "true",
-    });
-    i++;
-  }
+  const parsed = parseQuestionForm(formData);
+  if ("error" in parsed) return { error: parsed.error };
 
-  if (options.length < 2) return { error: "Debe tener al menos 2 opciones" };
-  if (options.length > 6) return { error: "Máximo 6 opciones" };
-  if (options.filter((o) => o.isCorrect).length !== 1)
-    return { error: "Debe haber exactamente una respuesta correcta" };
-  if (options.some((o) => !o.text)) return { error: "Todas las opciones deben tener texto" };
+  const { text, type, options } = parsed.data;
 
   await prisma.$transaction([
     prisma.questionOption.deleteMany({ where: { questionId } }),
@@ -97,6 +110,7 @@ export async function updateQuestion(
       where: { id: questionId },
       data: {
         text,
+        type,
         options: { create: options },
       },
     }),
@@ -121,13 +135,19 @@ export async function deleteQuestion(questionId: string, courseId: string) {
 
 export async function submitExam(
   courseId: string,
-  answers: Record<string, string> // { questionId: selectedOptionId }
+  // { questionId: [optionId, ...] } — las de respuesta única traen un solo id
+  answers: Record<string, string[]>
 ): Promise<{ error?: string; score?: number; passed?: boolean; requiresCertPayment?: boolean }> {
   const session = await getRequiredSession();
 
   const enrollment = await prisma.enrollment.findUnique({
     where: { userId_courseId: { userId: session.userId, courseId } },
-    include: { course: { select: { title: true, isFree: true, certificateValidityDays: true } } },
+    include: {
+      course: { select: { title: true, isFree: true, certificateValidityDays: true } },
+      // Los datos del titular se copian al certificado al emitirlo, así que se
+      // leen de la BD y no de la sesión (el JWT puede traer un nombre viejo).
+      user: { select: { name: true, dni: true, company: true } },
+    },
   });
 
   if (!enrollment || enrollment.status !== "COMPLETED") {
@@ -137,8 +157,8 @@ export async function submitExam(
   const attemptCount = await prisma.examAttempt.count({
     where: { enrollmentId: enrollment.id },
   });
-  if (attemptCount >= 2) {
-    return { error: "Has agotado tus 2 intentos permitidos" };
+  if (attemptCount >= EXAM_MAX_ATTEMPTS) {
+    return { error: `Has agotado tus ${EXAM_MAX_ATTEMPTS} intentos permitidos` };
   }
 
   // Evaluar respuestas
@@ -151,15 +171,21 @@ export async function submitExam(
 
   let correct = 0;
   for (const question of questions) {
-    const selectedId = answers[question.id];
-    const correctOption = question.options.find((o) => o.isCorrect);
-    if (selectedId && correctOption && selectedId === correctOption.id) {
-      correct++;
-    }
+    const correctIds = question.options
+      .filter((o) => o.isCorrect)
+      .map((o) => o.id);
+    const validOptionIds = new Set(question.options.map((o) => o.id));
+    // Se descartan ids que no pertenezcan a la pregunta: el cliente no decide
+    // qué cuenta como respuesta válida.
+    const selectedIds = (answers[question.id] ?? []).filter((id) =>
+      validOptionIds.has(id),
+    );
+
+    if (isAnswerCorrect(correctIds, selectedIds)) correct++;
   }
 
   const score = (correct / questions.length) * 100;
-  const passed = score >= 70;
+  const passed = score >= EXAM_PASSING_SCORE;
 
   // Registrar intento
   await prisma.examAttempt.create({
@@ -179,10 +205,26 @@ export async function submitExam(
       enrollment.course.certificateValidityDays != null
         ? addDays(issueDate, enrollment.course.certificateValidityDays)
         : null;
+    // El nombre queda congelado en el certificado: es la evidencia de quién
+    // aprobó, y editar el perfil después no debe reescribir lo ya emitido.
+    // Solo un admin puede corregirlo (`updateCertificateHolderAction`).
+    const holder = {
+      holderName: enrollment.user.name,
+      holderDni: enrollment.user.dni,
+      holderCompany: enrollment.user.company,
+    };
+
     await prisma.certificate.upsert({
       where: { enrollmentId: enrollment.id },
-      create: { enrollmentId: enrollment.id, verificationCode, status: certStatus, issueDate, expiresAt },
-      update: { status: certStatus, expiresAt },
+      create: {
+        enrollmentId: enrollment.id,
+        verificationCode,
+        status: certStatus,
+        issueDate,
+        expiresAt,
+        ...holder,
+      },
+      update: { status: certStatus, expiresAt, ...holder },
     });
 
     // Solo notificar cuando el certificado ya queda emitido (curso de pago).
@@ -202,8 +244,8 @@ export async function submitExam(
     revalidatePath(`/student/courses/${courseId}/exam`);
     revalidatePath("/student/my-courses");
     revalidatePath("/student");
-  } else if (attemptCount + 1 >= 2) {
-    // Agotó los 2 intentos: se retira el acceso al curso. La inscripción se
+  } else if (attemptCount + 1 >= EXAM_MAX_ATTEMPTS) {
+    // Agotó todos los intentos: se retira el acceso al curso. La inscripción se
     // conserva en estado FAILED para que siga visible en el historial; el
     // progreso y los intentos se reinician recién al volver a inscribirse.
     await prisma.enrollment.update({

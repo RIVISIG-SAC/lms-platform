@@ -1,4 +1,12 @@
+import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import {
+  buildPagination,
+  getPageSize,
+  getRequestedPage,
+  getSearchParam,
+  type SearchParamsRecord,
+} from "@/lib/pagination";
 import { StudentsTable } from "@/components/admin/StudentsTable";
 import { EnrollStudentDialog } from "@/components/admin/EnrollStudentDialog";
 import { Button } from "@/components/ui/button";
@@ -12,26 +20,54 @@ import { GraduationCap, Users } from "lucide-react";
 
 export const metadata = { title: "Estudiantes | Admin" };
 
-export default async function AdminStudentsPage() {
-  const [students, courses] = await Promise.all([
-    prisma.user.findMany({
-      where: { role: "STUDENT" },
-      orderBy: { createdAt: "desc" },
-      include: {
-        _count: { select: { enrollments: true } },
-        enrollments: {
-          include: { course: { select: { title: true } } },
-          take: 1,
-          orderBy: { createdAt: "desc" },
-        },
-      },
-    }),
+export default async function AdminStudentsPage(props: {
+  searchParams: Promise<unknown>;
+}) {
+  const sp = (await props.searchParams) as SearchParamsRecord;
+  const q = getSearchParam(sp, "q");
+
+  const where: Prisma.UserWhereInput = {
+    role: "STUDENT",
+    ...(q
+      ? {
+          OR: [
+            { name: { contains: q, mode: "insensitive" } },
+            { email: { contains: q, mode: "insensitive" } },
+          ],
+        }
+      : {}),
+  };
+
+  const [totalItems, totalStudents, courses] = await Promise.all([
+    prisma.user.count({ where }),
+    prisma.user.count({ where: { role: "STUDENT" } }),
     prisma.course.findMany({
       where: { published: true },
       select: { id: true, title: true },
       orderBy: { title: "asc" },
     }),
   ]);
+
+  const meta = buildPagination({
+    requestedPage: getRequestedPage(sp),
+    pageSize: getPageSize(sp),
+    totalItems,
+  });
+
+  const students = await prisma.user.findMany({
+    where,
+    orderBy: { createdAt: "desc" },
+    skip: meta.skip,
+    take: meta.pageSize,
+    include: {
+      _count: { select: { enrollments: true } },
+      enrollments: {
+        include: { course: { select: { title: true } } },
+        take: 1,
+        orderBy: { createdAt: "desc" },
+      },
+    },
+  });
 
   return (
     <div className="max-w-7xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -54,7 +90,7 @@ export default async function AdminStudentsPage() {
             Comunidad de estudiantes
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            {students.length} {students.length === 1 ? "alumno registrado" : "alumnos registrados"}
+            {totalStudents} {totalStudents === 1 ? "alumno registrado" : "alumnos registrados"}
           </p>
         </div>
         <EnrollStudentDialog
@@ -68,7 +104,12 @@ export default async function AdminStudentsPage() {
         />
       </div>
 
-      <StudentsTable students={students} courses={courses} />
+      <StudentsTable
+        students={students}
+        courses={courses}
+        meta={meta}
+        hasFilters={Boolean(q)}
+      />
     </div>
   );
 }

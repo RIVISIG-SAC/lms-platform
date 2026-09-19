@@ -9,14 +9,17 @@ import {
   Download,
   FileSpreadsheet,
   FileText,
+  LifeBuoy,
   Paperclip,
   Presentation,
   Video,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 import { VimeoPlayer } from "@/components/student/VimeoPlayer";
 import { MarkCompleteButton } from "@/components/student/MarkCompleteButton";
 import { InstructorCard } from "@/components/instructor/InstructorCard";
+import { ContactTutorDialog } from "@/components/student/ContactTutorDialog";
 import { ChapterSidebar } from "@/components/student/ChapterSidebar";
 
 type Resource = {
@@ -65,6 +68,10 @@ type InstructorData = {
 
 type Props = {
   courseId: string;
+  courseTitle: string;
+  /** Datos del estudiante, para el diálogo de soporte. */
+  userName: string;
+  userEmail: string;
   modules: CourseModule[];
   progressPercentage: number;
   activeChapter: ChapterData;
@@ -85,6 +92,9 @@ const RESOURCE_ICONS: Record<string, typeof FileText> = {
 
 export function CoursePlayerClient({
   courseId,
+  courseTitle,
+  userName,
+  userEmail,
   modules,
   progressPercentage,
   activeChapter,
@@ -236,6 +246,31 @@ export function CoursePlayerClient({
                   />
                 </section>
               )}
+
+              <section className="rounded-2xl border border-border bg-card p-5 sm:p-6">
+                <h3 className="flex items-center gap-2 text-sm font-bold text-foreground">
+                  <LifeBuoy className="size-4 text-primary" />
+                  ¿Te trabaste con esta clase?
+                </h3>
+                <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+                  Escríbenos y te respondemos por correo. Tu consulta llega ya
+                  identificada con este curso.
+                </p>
+                <div className="mt-4">
+                  <ContactTutorDialog
+                    userEmail={userEmail}
+                    userName={userName}
+                    courseId={courseId}
+                    courseTitle={courseTitle}
+                    trigger={
+                      <Button type="button" variant="outline" className="gap-2 font-semibold">
+                        <LifeBuoy className="size-4" />
+                        Contactar tutor
+                      </Button>
+                    }
+                  />
+                </div>
+              </section>
             </div>
 
             {hasResources && (

@@ -4,7 +4,9 @@ import { useRef, useState, useTransition } from "react";
 import {
   AlertCircle,
   ArrowRight,
+  Check,
   CheckCircle2,
+  ListChecks,
   Loader2,
   RotateCcw,
   Send,
@@ -21,9 +23,19 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
+import type { QuestionTypeValue } from "@/lib/validations/exam";
 
 type Option = { id: string; text: string };
-type Question = { id: string; text: string; order: number; options: Option[] };
+type Question = {
+  id: string;
+  text: string;
+  type: QuestionTypeValue;
+  order: number;
+  options: Option[];
+};
+
+/** Respuestas marcadas por pregunta; las de respuesta única guardan un solo id. */
+type Answers = Record<string, string[]>;
 
 type Props = {
   courseId: string;
@@ -37,7 +49,7 @@ const PUNTAJE_MINIMO = 70;
 const LETRAS = "ABCDEFGH";
 
 export function ExamForm({ courseId, questions, attemptNumber }: Props) {
-  const [answers, setAnswers] = useState<Record<string, string>>({});
+  const [answers, setAnswers] = useState<Answers>({});
   const [result, setResult] = useState<Result>(null);
   const [error, setError] = useState<string | null>(null);
   const [resaltarFaltantes, setResaltarFaltantes] = useState(false);
@@ -46,7 +58,10 @@ export function ExamForm({ courseId, questions, attemptNumber }: Props) {
 
   const refs = useRef<Record<string, HTMLDivElement | null>>({});
 
-  const respondidas = Object.keys(answers).length;
+  // Una pregunta cuenta como respondida en cuanto tiene al menos una marca.
+  const respondidas = questions.filter(
+    (q) => (answers[q.id]?.length ?? 0) > 0,
+  ).length;
   const total = questions.length;
   const allAnswered = respondidas === total;
   const avance = total > 0 ? Math.round((respondidas / total) * 100) : 0;
@@ -57,7 +72,9 @@ export function ExamForm({ courseId, questions, attemptNumber }: Props) {
       setError(
         `Te faltan ${total - respondidas} ${total - respondidas === 1 ? "pregunta" : "preguntas"} por responder.`,
       );
-      const faltante = questions.find((q) => !answers[q.id]);
+      const faltante = questions.find(
+        (q) => (answers[q.id]?.length ?? 0) === 0,
+      );
       if (faltante) {
         refs.current[faltante.id]?.scrollIntoView({
           behavior: "smooth",
@@ -68,6 +85,24 @@ export function ExamForm({ courseId, questions, attemptNumber }: Props) {
     }
     setError(null);
     setConfirmando(true);
+  }
+
+  function toggleOption(question: Question, optionId: string) {
+    setAnswers((prev) => {
+      const actuales = prev[question.id] ?? [];
+
+      if (question.type !== "MULTIPLE") {
+        return { ...prev, [question.id]: [optionId] };
+      }
+
+      return {
+        ...prev,
+        [question.id]: actuales.includes(optionId)
+          ? actuales.filter((id) => id !== optionId)
+          : [...actuales, optionId],
+      };
+    });
+    setError(null);
   }
 
   function enviar() {
@@ -187,7 +222,9 @@ export function ExamForm({ courseId, questions, attemptNumber }: Props) {
       {/* Preguntas */}
       <div className="space-y-4">
         {questions.map((question, qi) => {
-          const sinResponder = resaltarFaltantes && !answers[question.id];
+          const seleccionadas = answers[question.id] ?? [];
+          const esMultiple = question.type === "MULTIPLE";
+          const sinResponder = resaltarFaltantes && seleccionadas.length === 0;
 
           return (
             <div
@@ -208,6 +245,12 @@ export function ExamForm({ courseId, questions, attemptNumber }: Props) {
                   <p className="text-sm font-semibold leading-relaxed text-foreground sm:text-base">
                     {question.text}
                   </p>
+                  {esMultiple && (
+                    <p className="mt-1.5 inline-flex items-center gap-1.5 text-xs font-semibold text-primary">
+                      <ListChecks className="size-3.5" />
+                      Selecciona todas las que correspondan
+                    </p>
+                  )}
                   {sinResponder && (
                     <p className="mt-1.5 inline-flex items-center gap-1.5 text-xs font-semibold text-amber-700">
                       <AlertCircle className="size-3.5" />
@@ -219,7 +262,7 @@ export function ExamForm({ courseId, questions, attemptNumber }: Props) {
 
               <div className="mt-4 space-y-2 sm:pl-10">
                 {question.options.map((opt, oi) => {
-                  const selected = answers[question.id] === opt.id;
+                  const selected = seleccionadas.includes(opt.id);
                   return (
                     <label
                       key={opt.id}
@@ -232,30 +275,30 @@ export function ExamForm({ courseId, questions, attemptNumber }: Props) {
                       )}
                     >
                       <input
-                        type="radio"
-                        name={question.id}
+                        type={esMultiple ? "checkbox" : "radio"}
+                        name={esMultiple ? `${question.id}[]` : question.id}
                         value={opt.id}
                         checked={selected}
-                        onChange={() => {
-                          setAnswers((prev) => ({
-                            ...prev,
-                            [question.id]: opt.id,
-                          }));
-                          setError(null);
-                        }}
+                        onChange={() => toggleOption(question, opt.id)}
                         className="absolute inset-0 size-full cursor-pointer appearance-none opacity-0"
                       />
                       <span
                         className={cn(
-                          "flex size-5 shrink-0 items-center justify-center rounded-full border-2 transition-colors",
+                          "flex size-5 shrink-0 items-center justify-center border-2 transition-colors",
+                          // Cuadrado en las de respuesta múltiple: la forma ya
+                          // anticipa que se puede marcar más de una.
+                          esMultiple ? "rounded-[6px]" : "rounded-full",
                           selected
                             ? "border-primary bg-primary"
                             : "border-border",
                         )}
                       >
-                        {selected && (
-                          <span className="size-1.5 rounded-full bg-primary-foreground" />
-                        )}
+                        {selected &&
+                          (esMultiple ? (
+                            <Check className="size-3 text-primary-foreground" />
+                          ) : (
+                            <span className="size-1.5 rounded-full bg-primary-foreground" />
+                          ))}
                       </span>
                       <span
                         className={cn(

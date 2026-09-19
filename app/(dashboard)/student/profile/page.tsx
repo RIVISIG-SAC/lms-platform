@@ -16,7 +16,16 @@ export default async function StudentProfilePage() {
   const session = await getSession();
   if (!session || session.role !== 'STUDENT') redirect('/login');
 
-  const user = await prisma.user.findUnique({ where: { id: session.userId } });
+  const [user, issuedCertificates] = await Promise.all([
+    prisma.user.findUnique({ where: { id: session.userId } }),
+    // El aviso del formulario solo aparece si hay algo ya emitido a su nombre.
+    prisma.certificate.count({
+      where: {
+        status: { in: ['ACTIVE', 'EXPIRED'] },
+        enrollment: { is: { userId: session.userId } },
+      },
+    }),
+  ]);
   if (!user) redirect('/login');
 
   return (
@@ -40,6 +49,7 @@ export default async function StudentProfilePage() {
           email={user.email}
           dni={user.dni}
           company={user.company}
+          issuedCertificates={issuedCertificates}
         />
       </ProfileSection>
 

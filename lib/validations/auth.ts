@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { personNameSchema } from "@/lib/validations/person-name";
 
 export const loginSchema = z.object({
   email: z.email({ error: "Email inválido" }).trim().toLowerCase(),
@@ -6,7 +7,7 @@ export const loginSchema = z.object({
 });
 
 export const registerSchema = z.object({
-  name: z.string().min(2, { error: "El nombre debe tener al menos 2 caracteres" }).trim(),
+  name: personNameSchema,
   email: z.email({ error: "Email inválido" }).trim().toLowerCase(),
   password: z
     .string()

@@ -9,8 +9,11 @@ import { getRequiredSession } from "@/lib/auth";
 import { addDays } from "@/lib/utils";
 import { sendAdminEnrollmentEmail } from "@/lib/email";
 import { notifyEnrollmentConfirmed } from "@/lib/notifications";
+import { parsePersonName } from "@/lib/validations/person-name";
 import {
+  ENROLLMENT_ACCESS_DAYS,
   REENROLLABLE_STATUSES,
+  enrollInFreeCourse,
   resetEnrollmentProgress,
 } from "@/lib/enrollments";
 
@@ -18,42 +21,20 @@ export async function enrollFree(courseId: string, _formData: FormData): Promise
   const session = await getRequiredSession();
   if (session.role !== "STUDENT") throw new Error("No autorizado");
 
-  const course = await prisma.course.findUnique({ where: { id: courseId } });
-  if (!course || !course.published || !course.isFree) {
-    throw new Error("Curso no disponible");
-  }
-
-  const existing = await prisma.enrollment.findUnique({
-    where: { userId_courseId: { userId: session.userId, courseId } },
-  });
-
-  if (existing && ["PAID", "COMPLETED"].includes(existing.status)) {
-    redirect(`/student/courses/${courseId}`);
-  }
-
-  if (existing && REENROLLABLE_STATUSES.includes(existing.status as never)) {
-    await resetEnrollmentProgress(existing.id);
-  }
-
-  const startDate = new Date();
-  const endDate = addDays(startDate, 180);
-
-  await prisma.enrollment.upsert({
-    where: { userId_courseId: { userId: session.userId, courseId } },
-    create: { userId: session.userId, courseId, status: "PAID", startDate, endDate },
-    update: { status: "PAID", startDate, endDate, progressPercentage: 0 },
-  });
-
-  await notifyEnrollmentConfirmed({
+  const result = await enrollInFreeCourse({
     userId: session.userId,
     userName: session.name,
     userEmail: session.email,
-    courseId: course.id,
-    courseTitle: course.title,
-    notifyAdminsAlso: true,
+    courseId,
   });
 
-  redirect(`/student/courses/${courseId}?enrolled=1`);
+  if (!result.ok) throw new Error("Curso no disponible");
+
+  redirect(
+    result.alreadyEnrolled
+      ? `/student/courses/${courseId}`
+      : `/student/courses/${courseId}?enrolled=1`,
+  );
 }
 
 function generateTempPassword(): string {
@@ -80,7 +61,7 @@ export async function adminEnrollUserAction(
 
   const courseId = (formData.get("courseId") as string)?.trim();
   const email = (formData.get("email") as string)?.trim().toLowerCase();
-  const name = (formData.get("name") as string)?.trim();
+  const rawName = (formData.get("name") as string)?.trim();
 
   if (!courseId || !email) {
     return { error: "Curso y correo son obligatorios." };
@@ -102,9 +83,13 @@ export async function adminEnrollUserAction(
   let created = false;
 
   if (!user) {
-    if (!name) {
+    if (!rawName) {
       return { error: "Para crear una cuenta nueva, el nombre es obligatorio." };
     }
+    const parsedName = parsePersonName(rawName);
+    if ("error" in parsedName) return { error: parsedName.error };
+    const name = parsedName.name;
+
     tempPassword = generateTempPassword();
     const passwordHash = await bcrypt.hash(tempPassword, 12);
     const passwordExpiresAt = new Date(Date.now() + 90 * 24 * 60 * 60 * 1000);
@@ -143,7 +128,7 @@ export async function adminEnrollUserAction(
   }
 
   const startDate = new Date();
-  const endDate = addDays(startDate, 180);
+  const endDate = addDays(startDate, ENROLLMENT_ACCESS_DAYS);
 
   await prisma.enrollment.upsert({
     where: { userId_courseId: { userId: user.id, courseId } },
@@ -169,6 +154,9 @@ export async function adminEnrollUserAction(
 
   revalidatePath("/admin/students");
   revalidatePath(`/admin/courses/${courseId}`);
+  // La ficha del alumno también ofrece inscribirlo: sin esto la nueva
+  // inscripción no aparecería al cerrar el diálogo.
+  revalidatePath(`/admin/users/${user.id}`);
 
   return { success: true, userId: user.id, created };
 }

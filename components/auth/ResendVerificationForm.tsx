@@ -8,8 +8,11 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { resendVerificationAction } from "@/app/actions/resend-verification";
 
-export function ResendVerificationForm() {
+type Props = { next?: string };
+
+export function ResendVerificationForm({ next }: Props) {
   const [state, action, pending] = useActionState(resendVerificationAction, null);
+  const loginHref = next ? `/login?next=${encodeURIComponent(next)}` : "/login";
 
   if (state?.success) {
     return (
@@ -18,7 +21,7 @@ export function ResendVerificationForm() {
           <CheckCircle2 className="w-4 h-4 text-primary shrink-0" aria-hidden="true" />
           <span>Si existe una cuenta sin verificar, te enviamos un nuevo enlace. Revisa tu bandeja de entrada.</span>
         </div>
-        <Link href="/login" className="block text-sm text-primary hover:underline font-medium">
+        <Link href={loginHref} className="block text-sm text-primary hover:underline font-medium">
           Volver al inicio de sesión
         </Link>
       </div>
@@ -27,6 +30,8 @@ export function ResendVerificationForm() {
 
   return (
     <form action={action} className="space-y-5">
+      {next && <input type="hidden" name="next" value={next} />}
+
       <div className="space-y-1.5">
         <Label htmlFor="email">Correo electrónico</Label>
         <Input
@@ -51,7 +56,7 @@ export function ResendVerificationForm() {
       </Button>
 
       <div className="text-center">
-        <Link href="/login" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+        <Link href={loginHref} className="text-sm text-muted-foreground hover:text-foreground transition-colors">
           Volver al inicio de sesión
         </Link>
       </div>

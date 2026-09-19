@@ -3,6 +3,8 @@
 import { useActionState, useEffect, useState } from "react";
 import {
   Check,
+  CheckCheck,
+  CircleDot,
   GraduationCap,
   Loader2,
   Pencil,
@@ -38,19 +40,40 @@ import {
   DialogIcon,
 } from "@/components/admin/AdminField";
 import { AREA_ADMIN, CONTROL_ADMIN } from "@/components/admin/form-styles";
+import {
+  MAX_OPCIONES,
+  MIN_CORRECTAS_MULTIPLE,
+  MIN_OPCIONES,
+  type QuestionTypeValue,
+} from "@/lib/validations/exam";
 import { cn } from "@/lib/utils";
 
 type Option = { id: string; text: string; isCorrect: boolean };
-type Question = { id: string; text: string; order: number; options: Option[] };
+type Question = {
+  id: string;
+  text: string;
+  type: QuestionTypeValue;
+  order: number;
+  options: Option[];
+};
 type ActionState = { error?: string; success?: boolean } | null;
 
 type DraftOption = { text: string; isCorrect: boolean };
-type QuestionType = "multiple" | "boolean";
+
+/**
+ * Variantes de la interfaz. `single` y `boolean` guardan el mismo tipo en BD
+ * (`SINGLE`): verdadero/falso es solo un atajo con dos opciones fijas.
+ */
+type UiType = "single" | "boolean" | "checkbox";
 
 const PUNTAJE_MINIMO = 70;
-const MAX_OPCIONES = 6;
-const MIN_OPCIONES = 2;
 const LETRAS = "ABCDEF";
+
+const DB_TYPE: Record<UiType, QuestionTypeValue> = {
+  single: "SINGLE",
+  boolean: "SINGLE",
+  checkbox: "MULTIPLE",
+};
 
 const DEFAULT_MC_OPTIONS: DraftOption[] = [
   { text: "", isCorrect: true },
@@ -59,12 +82,18 @@ const DEFAULT_MC_OPTIONS: DraftOption[] = [
   { text: "", isCorrect: false },
 ];
 
-function detectType(options: Option[]): QuestionType {
-  if (options.length !== 2) return "multiple";
-  const texts = options.map((o) => o.text.trim().toLowerCase()).sort();
-  return texts[0] === "falso" && texts[1] === "verdadero"
-    ? "boolean"
-    : "multiple";
+const DEFAULT_CHECKBOX_OPTIONS: DraftOption[] = [
+  { text: "", isCorrect: true },
+  { text: "", isCorrect: true },
+  { text: "", isCorrect: false },
+  { text: "", isCorrect: false },
+];
+
+function detectType(question: Question): UiType {
+  if (question.type === "MULTIPLE") return "checkbox";
+  if (question.options.length !== 2) return "single";
+  const texts = question.options.map((o) => o.text.trim().toLowerCase()).sort();
+  return texts[0] === "falso" && texts[1] === "verdadero" ? "boolean" : "single";
 }
 
 function QuestionDialog({
@@ -80,16 +109,14 @@ function QuestionDialog({
   nextOrder?: number;
   trigger: React.ReactElement;
 }) {
-  const initialType: QuestionType = question
-    ? detectType(question.options)
-    : "multiple";
+  const initialType: UiType = question ? detectType(question) : "single";
   const initialOptions: DraftOption[] = question
     ? question.options.map((o) => ({ text: o.text, isCorrect: o.isCorrect }))
     : DEFAULT_MC_OPTIONS;
   const initialText = question?.text ?? "";
 
   const [open, setOpen] = useState(false);
-  const [type, setType] = useState<QuestionType>(initialType);
+  const [type, setType] = useState<UiType>(initialType);
   const [text, setText] = useState(initialText);
   const [options, setOptions] = useState<DraftOption[]>(initialOptions);
 
@@ -121,9 +148,11 @@ function QuestionDialog({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
-  function switchType(next: QuestionType) {
+  function switchType(next: UiType) {
     if (next === type) return;
+    const anterior = type;
     setType(next);
+
     if (next === "boolean") {
       // Conservamos qué lado era el correcto si se puede
       const wasTrueCorrect = options[0]?.isCorrect ?? true;
@@ -131,13 +160,47 @@ function QuestionDialog({
         { text: "Verdadero", isCorrect: wasTrueCorrect },
         { text: "Falso", isCorrect: !wasTrueCorrect },
       ]);
-    } else {
-      setOptions(DEFAULT_MC_OPTIONS);
+      return;
     }
+
+    if (anterior === "boolean") {
+      setOptions(
+        next === "checkbox" ? DEFAULT_CHECKBOX_OPTIONS : DEFAULT_MC_OPTIONS,
+      );
+      return;
+    }
+
+    // Entre respuesta única y múltiple se conserva lo ya escrito: solo se
+    // ajustan las marcas para que el borrador no nazca inválido.
+    if (next === "single") {
+      const primera = options.findIndex((o) => o.isCorrect);
+      setOptions((prev) =>
+        prev.map((o, i) => ({
+          ...o,
+          isCorrect: i === (primera === -1 ? 0 : primera),
+        })),
+      );
+      return;
+    }
+
+    setOptions((prev) => {
+      const draft = [...prev];
+      for (let i = 0; i < draft.length; i++) {
+        if (draft.filter((o) => o.isCorrect).length >= MIN_CORRECTAS_MULTIPLE) {
+          break;
+        }
+        if (!draft[i].isCorrect) draft[i] = { ...draft[i], isCorrect: true };
+      }
+      return draft;
+    });
   }
 
   function setCorrect(idx: number) {
-    setOptions((prev) => prev.map((o, i) => ({ ...o, isCorrect: i === idx })));
+    setOptions((prev) =>
+      isMultiAnswer
+        ? prev.map((o, i) => (i === idx ? { ...o, isCorrect: !o.isCorrect } : o))
+        : prev.map((o, i) => ({ ...o, isCorrect: i === idx })),
+    );
   }
 
   function setOptionText(idx: number, value: string) {
@@ -155,18 +218,26 @@ function QuestionDialog({
     if (options.length <= MIN_OPCIONES) return;
     setOptions((prev) => {
       const removed = prev[idx];
-      const next = prev.filter((_, i) => i !== idx);
-      // Si quitamos la correcta, marca la primera como correcta
-      if (removed.isCorrect && next.length > 0) {
-        next[0] = { ...next[0], isCorrect: true };
+      const draft = prev.filter((_, i) => i !== idx);
+      // Si quitamos una correcta y ya no quedan suficientes, se marcan las
+      // primeras para no dejar la pregunta sin respuesta válida.
+      const minimo = isMultiAnswer ? MIN_CORRECTAS_MULTIPLE : 1;
+      if (removed.isCorrect) {
+        for (let i = 0; i < draft.length; i++) {
+          if (draft.filter((o) => o.isCorrect).length >= minimo) break;
+          if (!draft[i].isCorrect) draft[i] = { ...draft[i], isCorrect: true };
+        }
       }
-      return next;
+      return draft;
     });
   }
 
   const isBoolean = type === "boolean";
+  const isMultiAnswer = type === "checkbox";
+  const correctas = options.filter((o) => o.isCorrect).length;
   const vacias = options.filter((o) => !o.text.trim()).length;
-  const listo = text.trim().length >= 3 && vacias === 0;
+  const faltanCorrectas = isMultiAnswer && correctas < MIN_CORRECTAS_MULTIPLE;
+  const listo = text.trim().length >= 3 && vacias === 0 && !faltanCorrectas;
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -178,8 +249,11 @@ function QuestionDialog({
             {mode === "create" ? "Nueva pregunta" : "Editar pregunta"}
           </DialogTitle>
           <DialogDescription className="leading-relaxed">
-            Marca la opción correcta. Los estudiantes necesitan{" "}
-            {PUNTAJE_MINIMO}% para aprobar y tienen 2 intentos.
+            {isMultiAnswer
+              ? "Marca todas las opciones correctas."
+              : "Marca la opción correcta."}{" "}
+            Los estudiantes necesitan {PUNTAJE_MINIMO}% para aprobar y tienen 2
+            intentos.
           </DialogDescription>
         </DialogHeader>
 
@@ -194,6 +268,7 @@ function QuestionDialog({
           className="space-y-4"
         >
           <input type="hidden" name="courseId" value={courseId} />
+          <input type="hidden" name="type" value={DB_TYPE[type]} />
           {mode === "create" ? (
             <input type="hidden" name="order" value={nextOrder ?? 0} />
           ) : (
@@ -207,8 +282,9 @@ function QuestionDialog({
               value={type}
               onChange={switchType}
               options={[
-                { value: "multiple" as QuestionType, label: "Opción múltiple" },
-                { value: "boolean" as QuestionType, label: "Verdadero / Falso" },
+                { value: "single" as UiType, label: "Opción múltiple" },
+                { value: "boolean" as UiType, label: "Verdadero / Falso" },
+                { value: "checkbox" as UiType, label: "Respuesta múltiple" },
               ]}
             />
           </AdminField>
@@ -228,14 +304,14 @@ function QuestionDialog({
           </AdminField>
 
           <AdminField
-            label={
-              isBoolean ? "Respuesta correcta" : "Opciones de respuesta"
-            }
+            label={isBoolean ? "Respuesta correcta" : "Opciones de respuesta"}
             hint={
               <AdminHint>
                 {isBoolean
                   ? "Elige cuál de las dos afirmaciones es la verdadera."
-                  : `Pulsa el círculo para marcar la correcta. Entre ${MIN_OPCIONES} y ${MAX_OPCIONES} opciones.`}
+                  : isMultiAnswer
+                    ? `Marca todas las correctas (mínimo ${MIN_CORRECTAS_MULTIPLE}). Se corrige todo o nada: el estudiante acierta solo si las marca todas y ninguna de más.`
+                    : `Pulsa el círculo para marcar la correcta. Entre ${MIN_OPCIONES} y ${MAX_OPCIONES} opciones.`}
               </AdminHint>
             }
           >
@@ -252,11 +328,14 @@ function QuestionDialog({
                 >
                   <button
                     type="button"
+                    role={isMultiAnswer ? "checkbox" : "radio"}
+                    aria-checked={opt.isCorrect}
                     onClick={() => setCorrect(i)}
                     aria-label={`Marcar la opción ${LETRAS[i]} como correcta`}
-                    aria-pressed={opt.isCorrect}
                     className={cn(
-                      "flex size-5 shrink-0 items-center justify-center rounded-full border-2 transition-colors",
+                      "flex size-5 shrink-0 items-center justify-center border-2 transition-colors",
+                      // El cuadrado anticipa que se pueden marcar varias.
+                      isMultiAnswer ? "rounded-[6px]" : "rounded-full",
                       opt.isCorrect
                         ? "border-emerald-600 bg-emerald-600 text-white"
                         : "border-input hover:border-foreground/40",
@@ -300,6 +379,13 @@ function QuestionDialog({
                 </div>
               ))}
             </div>
+
+            {faltanCorrectas && (
+              <p className="mt-2 text-xs font-medium text-amber-700">
+                Marca al menos {MIN_CORRECTAS_MULTIPLE} respuestas correctas o
+                cambia el tipo a &ldquo;Opción múltiple&rdquo;.
+              </p>
+            )}
 
             {!isBoolean && options.length < MAX_OPCIONES && (
               <Button
@@ -359,15 +445,34 @@ function QuestionCard({
   numero: number;
   courseId: string;
 }) {
+  const esMultiple = question.type === "MULTIPLE";
+
   return (
     <div className="rounded-2xl border border-border bg-card p-4 sm:p-5">
       <div className="flex items-start gap-3">
         <span className="inline-flex size-7 shrink-0 items-center justify-center rounded-lg bg-primary text-xs font-black tabular-nums text-primary-foreground">
           {numero}
         </span>
-        <p className="min-w-0 flex-1 text-sm font-semibold leading-relaxed text-foreground">
-          {question.text}
-        </p>
+        <div className="min-w-0 flex-1">
+          <p className="text-sm font-semibold leading-relaxed text-foreground">
+            {question.text}
+          </p>
+          <span
+            className={cn(
+              "mt-1.5 inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide",
+              esMultiple
+                ? "border-primary/25 bg-primary/10 text-primary"
+                : "border-border text-muted-foreground",
+            )}
+          >
+            {esMultiple ? (
+              <CheckCheck className="size-3" />
+            ) : (
+              <CircleDot className="size-3" />
+            )}
+            {esMultiple ? "Respuesta múltiple" : "Respuesta única"}
+          </span>
+        </div>
         <div className="flex shrink-0 items-center gap-0.5">
           <QuestionDialog
             courseId={courseId}
@@ -409,7 +514,8 @@ function QuestionCard({
           >
             <span
               className={cn(
-                "flex size-4 shrink-0 items-center justify-center rounded-full",
+                "flex size-4 shrink-0 items-center justify-center",
+                esMultiple ? "rounded-[5px]" : "rounded-full",
                 opt.isCorrect
                   ? "bg-emerald-600 text-white"
                   : "border border-muted-foreground/30",

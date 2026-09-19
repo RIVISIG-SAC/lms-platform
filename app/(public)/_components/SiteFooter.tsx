@@ -16,6 +16,7 @@ const PLATFORM_LINKS = [
 const LEGAL_LINKS = [
   { href: '/terminos-y-condiciones', label: 'Términos y Condiciones' },
   { href: '/politica-de-privacidad', label: 'Política de Privacidad' },
+  { href: '/politica-de-cookies', label: 'Política de Cookies' },
 ];
 
 export function SiteFooter() {

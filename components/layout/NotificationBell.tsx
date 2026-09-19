@@ -2,69 +2,31 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useState, useTransition } from "react";
-import type { Notification, NotificationType } from "@prisma/client";
-import {
-  Award,
-  Bell,
-  CheckCheck,
-  Clock,
-  CreditCard,
-  GraduationCap,
-  KeyRound,
-  Info,
-} from "lucide-react";
+import type { Notification } from "@prisma/client";
+import { Bell, CheckCheck } from "lucide-react";
+import { toast } from "sonner";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { cn } from "@/lib/utils";
 import {
+  deleteNotification,
   getRecentNotifications,
   getUnreadCount,
   markAllAsRead,
   markAsRead,
+  markAsUnread,
 } from "@/app/actions/notifications";
+import { NotificationRow } from "@/components/notifications/NotificationRow";
 
 const POLL_INTERVAL_MS = 60_000;
-
-const typeIcon: Record<NotificationType, React.ElementType> = {
-  CERTIFICATE_ISSUED: Award,
-  PAYMENT_RECEIVED: CreditCard,
-  ENROLLMENT_CONFIRMED: GraduationCap,
-  ACCESS_EXPIRING: Clock,
-  ACCESS_EXPIRED: Clock,
-  PASSWORD_EXPIRING: KeyRound,
-  ADMIN_NEW_ENROLLMENT: GraduationCap,
-  ADMIN_NEW_PAYMENT: CreditCard,
-  ADMIN_CERTIFICATE_ISSUED: Award,
-};
-
-function getIcon(type: NotificationType): React.ElementType {
-  return typeIcon[type] ?? Info;
-}
-
-function timeAgo(date: Date | string): string {
-  const d = typeof date === "string" ? new Date(date) : date;
-  const seconds = Math.floor((Date.now() - d.getTime()) / 1000);
-  if (seconds < 60) return "hace instantes";
-  const minutes = Math.floor(seconds / 60);
-  if (minutes < 60) return `hace ${minutes} min`;
-  const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `hace ${hours} h`;
-  const days = Math.floor(hours / 24);
-  if (days < 7) return `hace ${days} d`;
-  return d.toLocaleDateString("es-PE", {
-    day: "2-digit",
-    month: "short",
-  });
-}
 
 export function NotificationBell() {
   const [unread, setUnread] = useState<number>(0);
   const [items, setItems] = useState<Notification[]>([]);
   const [open, setOpen] = useState(false);
-  const [, startTransition] = useTransition();
+  const [pending, startTransition] = useTransition();
 
   const refresh = useCallback(async () => {
     try {
@@ -90,18 +52,63 @@ export function NotificationBell() {
   }, [open, refresh]);
 
   const handleMarkAllRead = () => {
+    setItems((current) =>
+      current.map((item) =>
+        item.read ? item : { ...item, read: true, readAt: new Date() },
+      ),
+    );
+    setUnread(0);
     startTransition(async () => {
-      await markAllAsRead();
-      await refresh();
+      try {
+        await markAllAsRead();
+      } catch {
+        toast.error("No se pudieron marcar las notificaciones.");
+        await refresh();
+      }
     });
   };
 
-  const handleItemClick = (id: string, read: boolean) => {
-    if (read) return;
+  // El estado se actualiza antes de llamar al servidor; si la acción falla se
+  // vuelve a pedir la lista, que es la única fuente de verdad.
+  const handleToggleRead = (notification: Notification) => {
+    const read = !notification.read;
+    setItems((current) =>
+      current.map((item) =>
+        item.id === notification.id
+          ? { ...item, read, readAt: read ? new Date() : null }
+          : item,
+      ),
+    );
+    setUnread((count) => Math.max(0, count + (read ? -1 : 1)));
+
     startTransition(async () => {
-      await markAsRead(id);
-      await refresh();
+      try {
+        if (read) await markAsRead(notification.id);
+        else await markAsUnread(notification.id);
+      } catch {
+        toast.error("No se pudo actualizar la notificación.");
+        await refresh();
+      }
     });
+  };
+
+  const handleDelete = (notification: Notification) => {
+    setItems((current) => current.filter((item) => item.id !== notification.id));
+    if (!notification.read) setUnread((count) => Math.max(0, count - 1));
+
+    startTransition(async () => {
+      try {
+        await deleteNotification(notification.id);
+      } catch {
+        toast.error("No se pudo eliminar la notificación.");
+        await refresh();
+      }
+    });
+  };
+
+  const handleOpen = (notification: Notification) => {
+    if (!notification.read) handleToggleRead(notification);
+    setOpen(false);
   };
 
   return (
@@ -128,7 +135,8 @@ export function NotificationBell() {
             <button
               type="button"
               onClick={handleMarkAllRead}
-              className="inline-flex items-center gap-1.5 text-[11px] font-medium text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+              disabled={pending}
+              className="inline-flex items-center gap-1.5 text-[11px] font-medium text-muted-foreground hover:text-foreground transition-colors cursor-pointer disabled:opacity-50"
             >
               <CheckCheck className="size-3.5" aria-hidden="true" />
               Marcar todas
@@ -139,77 +147,26 @@ export function NotificationBell() {
         <div className="max-h-96 overflow-y-auto">
           {items.length === 0 ? (
             <div className="px-4 py-10 text-center">
-              <Bell className="size-6 mx-auto text-muted-foreground/40 mb-2" aria-hidden="true" />
+              <Bell
+                className="size-6 mx-auto text-muted-foreground/40 mb-2"
+                aria-hidden="true"
+              />
               <p className="text-sm text-muted-foreground">
                 No tienes notificaciones por ahora.
               </p>
             </div>
           ) : (
             <ul className="divide-y divide-border">
-              {items.map((n) => {
-                const Icon = getIcon(n.type);
-                const content = (
-                  <div className="flex gap-3 px-4 py-3">
-                    <div
-                      className={cn(
-                        "shrink-0 size-8 rounded-full flex items-center justify-center",
-                        n.read
-                          ? "bg-muted text-muted-foreground"
-                          : "bg-primary/10 text-primary",
-                      )}
-                    >
-                      <Icon className="size-4" aria-hidden="true" />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <p
-                        className={cn(
-                          "text-sm leading-snug",
-                          n.read ? "text-muted-foreground" : "text-foreground font-semibold",
-                        )}
-                      >
-                        {n.title}
-                      </p>
-                      <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">
-                        {n.message}
-                      </p>
-                      <p className="text-[10px] text-muted-foreground/70 mt-1.5 uppercase tracking-wider font-medium">
-                        {timeAgo(n.createdAt)}
-                      </p>
-                    </div>
-                    {!n.read && (
-                      <span
-                        className="shrink-0 mt-1.5 size-2 rounded-full bg-primary"
-                        aria-label="No leída"
-                      />
-                    )}
-                  </div>
-                );
-
-                return (
-                  <li key={n.id}>
-                    {n.link ? (
-                      <Link
-                        href={n.link}
-                        onClick={() => {
-                          handleItemClick(n.id, n.read);
-                          setOpen(false);
-                        }}
-                        className="block hover:bg-accent/40 transition-colors"
-                      >
-                        {content}
-                      </Link>
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={() => handleItemClick(n.id, n.read)}
-                        className="w-full text-left hover:bg-accent/40 transition-colors cursor-pointer"
-                      >
-                        {content}
-                      </button>
-                    )}
-                  </li>
-                );
-              })}
+              {items.map((notification) => (
+                <NotificationRow
+                  key={notification.id}
+                  notification={notification}
+                  variant="bell"
+                  onToggleRead={handleToggleRead}
+                  onDelete={handleDelete}
+                  onOpen={handleOpen}
+                />
+              ))}
             </ul>
           )}
         </div>

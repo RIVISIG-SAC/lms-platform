@@ -1,6 +1,16 @@
 import Link from "next/link";
+import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { serializeCourse } from "@/lib/serialize";
+import { COURSE_LEVELS } from "@/lib/validations/course";
+import {
+  buildPagination,
+  getEnumParam,
+  getPageSize,
+  getRequestedPage,
+  getSearchParam,
+  type SearchParamsRecord,
+} from "@/lib/pagination";
 import { CoursesTable } from "@/components/admin/CoursesTable";
 import { Button } from "@/components/ui/button";
 import {
@@ -13,16 +23,51 @@ import { FolderOpen, Plus } from "lucide-react";
 
 export const metadata = { title: "Cursos | Admin" };
 
-export default async function AdminCoursesPage() {
+export default async function AdminCoursesPage(props: {
+  searchParams: Promise<unknown>;
+}) {
+  const sp = (await props.searchParams) as SearchParamsRecord;
+  const q = getSearchParam(sp, "q");
+  const status = getEnumParam(sp, "status", ["published", "draft"] as const);
+  const level = getEnumParam(sp, "level", COURSE_LEVELS);
+
+  const where: Prisma.CourseWhereInput = {
+    ...(status !== "all" ? { published: status === "published" } : {}),
+    ...(level !== "all" ? { level } : {}),
+    ...(q
+      ? {
+          OR: [
+            { title: { contains: q, mode: "insensitive" } },
+            { description: { contains: q, mode: "insensitive" } },
+            { category: { contains: q, mode: "insensitive" } },
+          ],
+        }
+      : {}),
+  };
+
+  const [totalItems, totalCourses, publishedCount] = await Promise.all([
+    prisma.course.count({ where }),
+    prisma.course.count(),
+    prisma.course.count({ where: { published: true } }),
+  ]);
+
+  const meta = buildPagination({
+    requestedPage: getRequestedPage(sp),
+    pageSize: getPageSize(sp),
+    totalItems,
+  });
+
   const rawCourses = await prisma.course.findMany({
+    where,
     orderBy: { createdAt: "desc" },
+    skip: meta.skip,
+    take: meta.pageSize,
     include: {
       _count: { select: { enrollments: true, modules: true } },
     },
   });
 
   const courses = rawCourses.map(serializeCourse);
-  const publishedCount = courses.filter((c) => c.published).length;
 
   return (
     <div className="max-w-7xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -46,7 +91,7 @@ export default async function AdminCoursesPage() {
               Catálogo de cursos
             </h1>
             <p className="text-sm text-muted-foreground mt-1">
-              {courses.length} {courses.length === 1 ? "curso" : "cursos"} ·{" "}
+              {totalCourses} {totalCourses === 1 ? "curso" : "cursos"} ·{" "}
               {publishedCount} publicado{publishedCount === 1 ? "" : "s"}
             </p>
           </div>
@@ -60,7 +105,11 @@ export default async function AdminCoursesPage() {
         </Button>
       </div>
 
-      <CoursesTable courses={courses} />
+      <CoursesTable
+        courses={courses}
+        meta={meta}
+        hasFilters={Boolean(q) || status !== "all" || level !== "all"}
+      />
     </div>
   );
 }

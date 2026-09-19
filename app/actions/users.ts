@@ -3,21 +3,25 @@
 import { revalidatePath } from "next/cache";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
-import { getRequiredSession } from "@/lib/auth";
+import { createSession, getRequiredSession } from "@/lib/auth";
 import { Role } from "@prisma/client";
+import { parsePersonName } from "@/lib/validations/person-name";
 
 export async function createUserAction(_prev: unknown, formData: FormData) {
   const session = await getRequiredSession();
   if (session.role !== "ADMIN") return { error: "No autorizado." };
 
-  const name = (formData.get("name") as string)?.trim();
   const email = (formData.get("email") as string)?.trim().toLowerCase();
   const password = formData.get("password") as string;
   const role = formData.get("role") as Role;
 
-  if (!name || !email || !password || !role) {
+  if (!email || !password || !role) {
     return { error: "Todos los campos son obligatorios." };
   }
+
+  const parsedName = parsePersonName(formData.get("name"));
+  if ("error" in parsedName) return { error: parsedName.error };
+  const { name } = parsedName;
 
   if (!["ADMIN", "STUDENT", "INSTRUCTOR"].includes(role)) {
     return { error: "Rol inválido." };
@@ -124,12 +128,17 @@ export async function changePasswordAction(_prev: unknown, formData: FormData) {
 export async function updateUserProfileAction(_prev: unknown, formData: FormData) {
   const session = await getRequiredSession();
 
-  const name = (formData.get("name") as string)?.trim();
   const email = (formData.get("email") as string)?.trim().toLowerCase();
   const dni = (formData.get("dni") as string)?.trim() || null;
   const company = (formData.get("company") as string)?.trim() || null;
 
-  if (!name || !email) return { error: "Nombre y correo son obligatorios." };
+  if (!email) return { error: "El correo es obligatorio." };
+
+  // El nombre acaba impreso en los certificados, así que pasa por las mismas
+  // reglas en todos los puntos donde se puede escribir.
+  const parsedName = parsePersonName(formData.get("name"));
+  if ("error" in parsedName) return { error: parsedName.error };
+  const { name } = parsedName;
 
   if (dni && !/^\d{6,12}$/.test(dni)) {
     return { error: "El DNI debe tener entre 6 y 12 dígitos." };
@@ -140,9 +149,21 @@ export async function updateUserProfileAction(_prev: unknown, formData: FormData
   });
   if (existing) return { error: "Ese correo ya está en uso." };
 
-  await prisma.user.update({
+  const updated = await prisma.user.update({
     where: { id: session.userId },
     data: { name, email, dni, company },
+    select: { name: true, email: true, role: true, tokenVersion: true },
+  });
+
+  // El nombre y el correo viajan dentro del JWT: sin reemitir la sesión, la
+  // cabecera y las notificaciones seguirían mostrando los datos anteriores
+  // hasta el próximo inicio de sesión.
+  await createSession({
+    userId: session.userId,
+    role: updated.role,
+    email: updated.email,
+    name: updated.name,
+    tokenVersion: updated.tokenVersion,
   });
 
   const profilePath =
@@ -150,6 +171,6 @@ export async function updateUserProfileAction(_prev: unknown, formData: FormData
     session.role === "INSTRUCTOR" ? "/instructor/profile" :
     "/student/profile";
 
-  revalidatePath(profilePath);
+  revalidatePath(profilePath, "layout");
   return { success: true };
 }
