@@ -130,12 +130,15 @@ export async function GET(
     return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
   }
 
+  // El titular guardado en el certificado manda sobre el perfil actual: es el
+  // nombre con el que se emitió. El perfil solo cubre los certificados
+  // anteriores a que se empezara a guardar esa copia.
   const studentName =
-    enrollment?.user.name ?? certificate.holderName ?? '—';
+    certificate.holderName ?? enrollment?.user.name ?? '—';
   const studentDni =
-    enrollment?.user.dni ?? certificate.holderDni ?? null;
+    certificate.holderDni ?? enrollment?.user.dni ?? null;
   const studentCompany =
-    enrollment?.user.company ?? certificate.holderCompany ?? null;
+    certificate.holderCompany ?? enrollment?.user.company ?? null;
   const courseTitle =
     enrollment?.course.title ?? certificate.course?.title ?? '—';
   const certificateTitle =

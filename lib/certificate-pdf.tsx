@@ -9,7 +9,7 @@ import {
   Text,
   View,
 } from '@react-pdf/renderer';
-import { formatDate } from './utils';
+import { formatDate, toCertificateHolderName } from './utils';
 
 Font.registerHyphenationCallback((word) => [word]);
 
@@ -607,7 +607,12 @@ export function CertificatePDF({
       ? introText
       : 'POR HABER COMPLETADO EXITOSAMENTE EL CURSO';
 
-  const nameSize = fitFontSize(studentName, NAME_STEPS, 17);
+  // El nombre se pasa a mayúsculas ANTES de medirlo: las versalitas son más
+  // anchas, y ajustar el cuerpo sobre el texto original dejaba nombres largos
+  // desbordando la línea (el estilo recorta con maxLines: 1).
+  const holderName = toCertificateHolderName(studentName);
+
+  const nameSize = fitFontSize(holderName, NAME_STEPS, 17);
   const courseSize = fitFontSize(courseTitle, COURSE_STEPS, 10.5);
   const descriptionSize = resolvedDescription.length > 300 ? 8.2 : 8.8;
 
@@ -665,7 +670,7 @@ export function CertificatePDF({
             ) : null}
 
             <Text style={[styles.studentName, { fontSize: nameSize }]}>
-              {studentName}
+              {holderName}
             </Text>
 
             <View style={styles.nameLine} />

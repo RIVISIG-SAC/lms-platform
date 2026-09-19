@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { personNameSchema } from "@/lib/validations/person-name";
 
 export const manualCertificateSchema = z.object({
   certificateTitle: z
@@ -6,11 +7,7 @@ export const manualCertificateSchema = z.object({
     .trim()
     .min(3, { error: "El título debe tener al menos 3 caracteres" })
     .max(160, { error: "Máximo 160 caracteres" }),
-  holderName: z
-    .string()
-    .trim()
-    .min(3, { error: "El nombre debe tener al menos 3 caracteres" })
-    .max(120, { error: "Máximo 120 caracteres" }),
+  holderName: personNameSchema,
   holderDni: z
     .string()
     .trim()

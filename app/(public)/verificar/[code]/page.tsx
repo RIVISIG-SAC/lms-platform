@@ -11,7 +11,11 @@ import {
 } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { resolveVerificationCode } from "@/lib/certificate-code";
-import { formatDate, getCertificateEffectiveStatus } from "@/lib/utils";
+import {
+  formatDate,
+  getCertificateEffectiveStatus,
+  toCertificateHolderName,
+} from "@/lib/utils";
 import { CertificateSearchForm } from "@/components/public/CertificateSearchForm";
 import {
   CertificateResult,
@@ -68,7 +72,10 @@ export default async function VerifyCertificateResultPage({ params }: Props) {
     : "NOT_FOUND";
 
   const enrollment = certificate?.enrollment ?? null;
-  const holderName = enrollment?.user.name ?? certificate?.holderName ?? "—";
+  // Misma fuente de verdad que el PDF, y en mayúsculas: lo que se verifica es
+  // el certificado, no el perfil actual de la persona.
+  const rawHolderName = certificate?.holderName ?? enrollment?.user.name ?? null;
+  const holderName = rawHolderName ? toCertificateHolderName(rawHolderName) : "—";
   const holderDni = enrollment?.user.dni ?? certificate?.holderDni ?? null;
   const holderCompany =
     enrollment?.user.company ?? certificate?.holderCompany ?? null;
