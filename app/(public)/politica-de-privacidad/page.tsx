@@ -314,19 +314,24 @@ export default function PoliticaDePrivacidadPage() {
       <section id="cap-10">
         <h2>10. Cookies y tecnologías similares</h2>
         <p>
-          Utilizamos exclusivamente cookies <strong>estrictamente
-          necesarias</strong> para el funcionamiento de la Plataforma. No
-          utilizamos cookies de publicidad, perfilado ni análisis de terceros.
+          La Plataforma instala una única cookie propia,{" "}
+          <code>session</code>, <strong>estrictamente necesaria</strong> para
+          mantener la sesión iniciada. No utilizamos cookies de publicidad,
+          perfilado ni analítica identificativa, ni almacenamiento local del
+          navegador.
         </p>
         <p>
-          <strong>Cookies usadas:</strong>
+          Determinados servicios embebidos pueden instalar cookies propias
+          cuando el Usuario emplea la funcionalidad correspondiente: el
+          reproductor de video de Vimeo dentro de un curso y la pasarela de
+          pagos de Culqi durante una transacción. Ambos son necesarios para
+          prestar el servicio solicitado.
         </p>
         <p>
-          Dado que únicamente empleamos cookies estrictamente necesarias, no se
-          requiere un banner de consentimiento previo conforme a la normativa
-          aplicable. El Usuario puede deshabilitar las cookies desde la
-          configuración de su navegador, sin embargo, ello impedirá el inicio
-          de sesión en la Plataforma.
+          El detalle completo &mdash;nombre de cada cookie, proveedor,
+          finalidad, duración y cómo gestionarlas o eliminarlas&mdash; está en
+          nuestra{" "}
+          <Link href="/politica-de-cookies">Política de Cookies</Link>.
         </p>
       </section>
 

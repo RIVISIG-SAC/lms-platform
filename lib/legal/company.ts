@@ -22,11 +22,24 @@ export const COMPANY_SOCIALS = [
 
 export const LEGAL_LAST_UPDATED = {
   terminos: "2026-05-15",
-  privacidad: "2026-05-15",
+  privacidad: "2026-09-19",
+  cookies: "2026-09-19",
 } as const;
 
+/**
+ * Versión de los documentos legales que el usuario aceptó al registrarse.
+ *
+ * Se guarda en `User.acceptedTermsVersion` y tiene valor probatorio: identifica
+ * exactamente qué redacción estaba vigente en ese momento. Cada documento que
+ * aparezca aquí debe estar enlazado en la casilla de aceptación del registro,
+ * o estaríamos registrando un consentimiento que nunca se mostró.
+ */
 export function getLegalAcceptanceVersion(): string {
-  return `tyc:${LEGAL_LAST_UPDATED.terminos}|priv:${LEGAL_LAST_UPDATED.privacidad}`;
+  return [
+    `tyc:${LEGAL_LAST_UPDATED.terminos}`,
+    `priv:${LEGAL_LAST_UPDATED.privacidad}`,
+    `cookies:${LEGAL_LAST_UPDATED.cookies}`,
+  ].join("|");
 }
 
 export function formatLegalDate(iso: string): string {

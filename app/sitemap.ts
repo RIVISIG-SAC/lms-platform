@@ -17,6 +17,7 @@ const STATIC_ROUTES: { path: string; changeFrequency: MetadataRoute.Sitemap[numb
   { path: "/verificar", changeFrequency: "yearly", priority: 0.4 },
   { path: "/terminos-y-condiciones", changeFrequency: "yearly", priority: 0.3 },
   { path: "/politica-de-privacidad", changeFrequency: "yearly", priority: 0.3 },
+  { path: "/politica-de-cookies", changeFrequency: "yearly", priority: 0.3 },
 ];
 
 const getPublishedCoursesForSitemap = unstable_cache(

@@ -416,6 +416,11 @@ export default function TerminosYCondicionesPage() {
           a la Ley N.&nbsp;29733, Ley de Protección de Datos Personales del
           Perú, y su Reglamento.
         </p>
+        <p>
+          El uso de cookies y tecnologías similares se detalla en la{" "}
+          <Link href="/politica-de-cookies">Política de Cookies</Link>, que
+          también forma parte integral de estos Términos.
+        </p>
       </section>
 
       <section id="cap-16">
