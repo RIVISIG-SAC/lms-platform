@@ -374,7 +374,7 @@ export default async function CompanyPage({ params }: { params: Params }) {
             <SectionHeading eyebrow="En sus palabras" title="Testimonio" />
             <div className="mt-12">
               <TestimonialVideo
-                vimeoId={company.testimonialVimeoId}
+                vimeoRef={company.testimonialVimeoId}
                 title={`Testimonio de ${company.name}`}
                 quote={company.testimonialQuote}
                 authorName={company.testimonialAuthorName}

@@ -61,6 +61,7 @@ function parseCoursePayload(formData: FormData) {
     isFree,
     certificateFee,
     thumbnailUrl: formData.get("thumbnailUrl") || undefined,
+    previewVimeoId: ((formData.get("previewVimeoId") as string) || "").trim(),
     category: rawCategory,
     level: rawLevel,
     durationHours,
@@ -74,10 +75,11 @@ function buildCourseData(
   parsed: ReturnType<typeof courseSchema.safeParse> & { success: true },
   instructorId: string | null,
 ) {
-  const { category, level, durationHours, thumbnailUrl, certificateFee, certificateValidityDays, certificateDescription, ...rest } = parsed.data;
+  const { category, level, durationHours, thumbnailUrl, previewVimeoId, certificateFee, certificateValidityDays, certificateDescription, ...rest } = parsed.data;
   return {
     ...rest,
     thumbnailUrl: thumbnailUrl && thumbnailUrl !== "" ? thumbnailUrl : null,
+    previewVimeoId: previewVimeoId && previewVimeoId !== "" ? previewVimeoId : null,
     category: category && category !== "" ? category : null,
     level: level ? (level as CourseLevel) : null,
     durationHours: typeof durationHours === "number" ? durationHours : null,
@@ -241,12 +243,15 @@ export async function createChapter(_prev: unknown, formData: FormData) {
   const parsed = chapterSchema.safeParse({
     title: formData.get("title"),
     content: formData.get("content") || undefined,
-    vimeoVideoId: formData.get("vimeoVideoId") || undefined,
+    vimeoVideoId: ((formData.get("vimeoVideoId") as string) || "").trim(),
     order: Number(formData.get("order")),
   });
   if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Datos inválidos" };
 
-  await prisma.chapter.create({ data: { ...parsed.data, moduleId } });
+  // "" significa "sin video": hay que guardarlo como null, no como cadena vacía.
+  await prisma.chapter.create({
+    data: { ...parsed.data, vimeoVideoId: parsed.data.vimeoVideoId || null, moduleId },
+  });
   revalidateCourseEditors(courseId);
   return { success: true };
 }
@@ -259,12 +264,15 @@ export async function updateChapter(_prev: unknown, formData: FormData) {
   const parsed = chapterSchema.safeParse({
     title: formData.get("title"),
     content: formData.get("content") || undefined,
-    vimeoVideoId: formData.get("vimeoVideoId") || undefined,
+    vimeoVideoId: ((formData.get("vimeoVideoId") as string) || "").trim(),
     order: Number(formData.get("order")),
   });
   if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Datos inválidos" };
 
-  await prisma.chapter.update({ where: { id }, data: parsed.data });
+  await prisma.chapter.update({
+    where: { id },
+    data: { ...parsed.data, vimeoVideoId: parsed.data.vimeoVideoId || null },
+  });
   revalidateCourseEditors(courseId);
   return { success: true };
 }

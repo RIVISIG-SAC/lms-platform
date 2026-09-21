@@ -2,21 +2,21 @@ import { Quote } from "lucide-react";
 import { VimeoPlayer } from "@/components/student/VimeoPlayer";
 
 type Props = {
-  vimeoId: string;
+  vimeoRef: string;
   title: string;
   quote?: string | null;
   authorName?: string | null;
   authorRole?: string | null;
 };
 
-export function TestimonialVideo({ vimeoId, title, quote, authorName, authorRole }: Props) {
+export function TestimonialVideo({ vimeoRef, title, quote, authorName, authorRole }: Props) {
   const hasText = Boolean(quote || authorName || authorRole);
 
   return (
     <div className="overflow-hidden rounded-2xl border border-border/70 bg-white shadow-sm">
       <div className={`grid grid-cols-1 ${hasText ? "lg:grid-cols-12" : ""}`}>
         <div className={`p-4 sm:p-6 ${hasText ? "lg:col-span-7 lg:pr-3" : ""}`}>
-          <VimeoPlayer videoId={vimeoId} title={title} />
+          <VimeoPlayer video={vimeoRef} title={title} />
         </div>
 
         {hasText && (

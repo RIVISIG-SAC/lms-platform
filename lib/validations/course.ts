@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { normalizeVimeoInput } from "@/lib/vimeo";
 
 export const COURSE_LEVELS = ["BEGINNER", "INTERMEDIATE", "ADVANCED"] as const;
 
@@ -16,6 +17,26 @@ export const COURSE_LEVEL_LABELS: Record<CourseLevelValue, string> = {
   ADVANCED: "Avanzado",
 };
 
+/**
+ * Campo de video de Vimeo: acepta el ID, la URL de la barra de direcciones, el
+ * enlace de "Compartir" o el iframe de inserción, y guarda siempre el formato
+ * canónico de `lib/vimeo.ts`. Vacío significa "sin video".
+ */
+const vimeoField = z
+  .string()
+  .trim()
+  .transform((value, ctx) => {
+    const normalized = normalizeVimeoInput(value);
+    if (normalized === null) {
+      ctx.addIssue({
+        code: "custom",
+        message: "No reconocemos ese video: pega el enlace de Vimeo o su ID",
+      });
+      return z.NEVER;
+    }
+    return normalized;
+  });
+
 export const courseSchema = z
   .object({
     title: z.string().min(3, { error: "El título debe tener al menos 3 caracteres" }).trim(),
@@ -32,6 +53,7 @@ export const courseSchema = z
     isFree: z.boolean().optional().default(false),
     certificateFee: z.number().min(1, { error: "El costo del certificado debe ser mayor a 0" }).optional(),
     thumbnailUrl: z.url({ error: "URL de imagen inválida" }).optional().or(z.literal("")),
+    previewVimeoId: vimeoField.optional(),
     category: z.string().trim().max(80).optional().or(z.literal("")),
     level: z.enum(COURSE_LEVELS).optional().or(z.literal("")),
     durationHours: z
@@ -72,7 +94,7 @@ export const moduleSchema = z.object({
 export const chapterSchema = z.object({
   title: z.string().min(2, { error: "El título debe tener al menos 2 caracteres" }).trim(),
   content: z.string().optional(),
-  vimeoVideoId: z.string().optional(),
+  vimeoVideoId: vimeoField.optional(),
   order: z.number().int().min(0),
 });
 

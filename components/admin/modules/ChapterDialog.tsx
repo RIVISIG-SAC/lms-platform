@@ -2,7 +2,7 @@
 
 import { useActionState, useEffect, useState, type ReactNode } from "react";
 import type { Chapter } from "@prisma/client";
-import { Loader2, PlayCircle, Save } from "lucide-react";
+import { AlertCircle, Loader2, PlayCircle, Save } from "lucide-react";
 import { toast } from "sonner";
 import { createChapter, updateChapter } from "@/app/actions/courses";
 import { Button } from "@/components/ui/button";
@@ -25,6 +25,8 @@ import {
 } from "@/components/admin/AdminField";
 import { AREA_ADMIN, CONTROL_ADMIN } from "@/components/admin/form-styles";
 import { cn } from "@/lib/utils";
+import { normalizeVimeoInput } from "@/lib/vimeo";
+import { VimeoPlayer } from "@/components/student/VimeoPlayer";
 
 type ActionState = { error?: string; success?: boolean } | null;
 
@@ -49,12 +51,6 @@ type EditProps = BaseProps & {
 
 type Props = CreateProps | EditProps;
 
-/** Acepta el ID pelado o una URL de Vimeo, y se queda con el ID numérico. */
-function normalizarVimeo(valor: string) {
-  const soloDigitos = valor.match(/(\d{6,})/);
-  return soloDigitos ? soloDigitos[1] : valor.replace(/\D/g, "");
-}
-
 export function ChapterDialog(props: Props) {
   const { mode, courseId, trigger } = props;
   const isCreate = mode === "create";
@@ -67,6 +63,8 @@ export function ChapterDialog(props: Props) {
 
   const chapter = !isCreate ? props.chapter : null;
   const [vimeo, setVimeo] = useState(chapter?.vimeoVideoId ?? "");
+  const vimeoRef = normalizeVimeoInput(vimeo);
+  const vimeoInvalido = vimeoRef === null;
 
   useEffect(() => {
     if (!state) return;
@@ -133,21 +131,33 @@ export function ChapterDialog(props: Props) {
             }
             hint={
               <AdminHint>
-                Pega el ID o la URL completa: nos quedamos con el ID
-                automáticamente.
+                Pega el enlace de Vimeo tal cual lo copias del navegador. El ID
+                suelto también vale.
               </AdminHint>
             }
           >
             <Input
               id="chapter-vimeo"
               name="vimeoVideoId"
-              inputMode="numeric"
               value={vimeo}
               onChange={(e) => setVimeo(e.target.value)}
-              onBlur={(e) => setVimeo(normalizarVimeo(e.target.value))}
-              placeholder="123456789"
-              className={cn(CONTROL_ADMIN, "font-mono")}
+              placeholder="https://vimeo.com/123456789"
+              aria-invalid={vimeoInvalido}
+              className={cn(CONTROL_ADMIN, vimeoInvalido && "border-destructive")}
             />
+            {vimeoInvalido ? (
+              <p className="flex items-center gap-1.5 text-[11px] font-medium text-destructive">
+                <AlertCircle className="size-3.5 shrink-0" />
+                No reconocemos ese video. Copia el enlace desde la página del
+                video en Vimeo.
+              </p>
+            ) : (
+              vimeoRef && (
+                <div className="pt-1">
+                  <VimeoPlayer video={vimeoRef} title="Vista previa del video" />
+                </div>
+              )
+            )}
           </AdminField>
 
           <AdminField

@@ -114,7 +114,7 @@ export default async function CourseDetailPage(props: {
     (acc, m) => acc + m.chapters.length,
     0,
   );
-  const previewVideoId = course.modules[0]?.chapters[0]?.vimeoVideoId ?? null;
+  const previewVideoId = course.previewVimeoId;
 
   const enrollment = session
     ? await prisma.enrollment.findUnique({

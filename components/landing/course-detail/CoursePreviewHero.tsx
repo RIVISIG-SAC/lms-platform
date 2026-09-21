@@ -147,7 +147,7 @@ export function CoursePreviewHero({
             <div className="border border-border rounded-2xl overflow-hidden shadow-xl shadow-black/5 bg-white">
               {previewVideoId ? (
                 <div className="relative">
-                  <VimeoPlayer videoId={previewVideoId} title={`Preview de ${course.title}`} />
+                  <VimeoPlayer video={previewVideoId} title={`Preview de ${course.title}`} />
                   <span className="absolute top-3 left-3 inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide bg-black/65 text-white backdrop-blur px-2.5 py-1 rounded-full">
                     <PlayCircle className="size-3.5" /> Preview
                   </span>

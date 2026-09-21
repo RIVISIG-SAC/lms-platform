@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { normalizeVimeoInput } from "@/lib/vimeo";
 
 export const POST_STATUSES = ["DRAFT", "SCHEDULED", "PUBLISHED", "ARCHIVED"] as const;
 export type PostStatusValue = (typeof POST_STATUSES)[number];
@@ -54,9 +55,18 @@ export const companySchema = z
     testimonialVimeoId: z
       .string()
       .trim()
-      .regex(/^\d+$/, { error: "Solo el ID numérico del video de Vimeo" })
-      .optional()
-      .or(z.literal("")),
+      .transform((value, ctx) => {
+        const normalized = normalizeVimeoInput(value);
+        if (normalized === null) {
+          ctx.addIssue({
+            code: "custom",
+            message: "No reconocemos ese video: pega el enlace de Vimeo o su ID",
+          });
+          return z.NEVER;
+        }
+        return normalized;
+      })
+      .optional(),
     testimonialQuote: z.string().trim().max(600).optional().or(z.literal("")),
     testimonialAuthorName: z.string().trim().max(120).optional().or(z.literal("")),
     testimonialAuthorRole: z.string().trim().max(120).optional().or(z.literal("")),

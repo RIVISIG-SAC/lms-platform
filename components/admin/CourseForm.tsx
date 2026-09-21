@@ -18,11 +18,14 @@ import {
   Loader2,
   Save,
   Tag,
+  Trash2,
+  Video,
   Type,
   type LucideIcon,
 } from "lucide-react";
 import type { SerializedCourse } from "@/lib/serialize";
 import { CloudinaryUpload } from "@/components/admin/CloudinaryUpload";
+import { VimeoPlayer } from "@/components/student/VimeoPlayer";
 import {
   InstructorSelect,
   type InstructorOption,
@@ -40,6 +43,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { AREA_ADMIN, CONTROL_ADMIN } from "@/components/admin/form-styles";
 import { toSlug } from "@/lib/courses/slug-client";
+import { normalizeVimeoInput } from "@/lib/vimeo";
 import { addDays, cn, formatDate } from "@/lib/utils";
 
 type ActionState = { error?: string; success?: boolean } | null;
@@ -113,6 +117,64 @@ function Campo({
       </Label>
       {children}
       {hint}
+    </div>
+  );
+}
+
+/**
+ * Campo del video de presentación. Acepta el enlace de Vimeo pegado tal cual
+ * (o el ID) y muestra el reproductor en cuanto reconoce el video, para que el
+ * admin confirme que es el correcto sin salir del formulario.
+ */
+function VideoPresentacion({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+}) {
+  const normalized = normalizeVimeoInput(value);
+  const invalido = normalized === null;
+
+  return (
+    <div className="space-y-2.5">
+      <div className="flex gap-2">
+        <Input
+          id="previewVimeoId"
+          name="previewVimeoId"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder="https://vimeo.com/123456789"
+          aria-invalid={invalido}
+          className={cn(CONTROL_ADMIN, invalido && "border-destructive")}
+        />
+        {value && (
+          <Button
+            type="button"
+            variant="outline"
+            size="icon"
+            onClick={() => onChange("")}
+            aria-label="Quitar video de presentación"
+            className="shrink-0"
+          >
+            <Trash2 className="size-4" />
+          </Button>
+        )}
+      </div>
+
+      {invalido ? (
+        <p className="flex items-center gap-1.5 text-[11px] font-medium text-destructive">
+          <AlertCircle className="size-3.5 shrink-0" />
+          No reconocemos ese video. Copia el enlace desde la página del video en
+          Vimeo.
+        </p>
+      ) : (
+        normalized && (
+          <div className="max-w-sm">
+            <VimeoPlayer video={normalized} title="Video de presentación" />
+          </div>
+        )
+      )}
     </div>
   );
 }
@@ -253,6 +315,7 @@ export function CourseForm({ action, course, instructors = [] }: Props) {
     course?.certificateDescription ?? "",
   );
   const [thumbnailUrl, setThumbnailUrl] = useState(course?.thumbnailUrl ?? "");
+  const [previewVimeo, setPreviewVimeo] = useState(course?.previewVimeoId ?? "");
   const [level, setLevel] = useState<CourseLevelValue | "">(
     (course?.level as CourseLevelValue | null) ?? "",
   );
@@ -412,6 +475,28 @@ export function CourseForm({ action, course, instructors = [] }: Props) {
               folder="lms/thumbnails"
               compact
             />
+          </Campo>
+
+          <Campo
+            id="previewVimeoId"
+            label={
+              <span className="inline-flex items-center gap-1.5">
+                <Video className="size-3.5" />
+                Video de presentación{" "}
+                <span className="font-normal normal-case text-muted-foreground/60">
+                  (opcional)
+                </span>
+              </span>
+            }
+            hint={
+              <p className="text-[11px] text-muted-foreground">
+                Se muestra en la ficha pública del curso. Pega el enlace de
+                Vimeo tal cual lo copias del navegador. Si lo dejas vacío, se
+                muestra la imagen de portada.
+              </p>
+            }
+          >
+            <VideoPresentacion value={previewVimeo} onChange={setPreviewVimeo} />
           </Campo>
         </div>
       </Seccion>
