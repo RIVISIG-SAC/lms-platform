@@ -3,14 +3,11 @@
 import { useRef, useState, useTransition } from "react";
 import {
   AlertCircle,
-  ArrowRight,
   Check,
   CheckCircle2,
   ListChecks,
   Loader2,
-  RotateCcw,
   Send,
-  Trophy,
 } from "lucide-react";
 import { submitExam } from "@/app/actions/exam";
 import { Button } from "@/components/ui/button";
@@ -23,10 +20,17 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
-import type { QuestionTypeValue } from "@/lib/validations/exam";
+import {
+  EXAM_PASSING_SCORE,
+  type QuestionTypeValue,
+} from "@/lib/validations/exam";
 
 type Option = { id: string; text: string };
-type Question = {
+
+/** Respuestas marcadas por pregunta; las de respuesta única guardan un solo id. */
+type Answers = Record<string, string[]>;
+
+export type Question = {
   id: string;
   text: string;
   type: QuestionTypeValue;
@@ -34,23 +38,31 @@ type Question = {
   options: Option[];
 };
 
-/** Respuestas marcadas por pregunta; las de respuesta única guardan un solo id. */
-type Answers = Record<string, string[]>;
+/** Resultado tal y como lo devuelve el servidor, ya con los intentos restantes. */
+export type ExamResult = {
+  score: number;
+  passed: boolean;
+  attemptsLeft: number;
+};
 
 type Props = {
   courseId: string;
   questions: Question[];
   attemptNumber: number;
+  maxAttempts: number;
+  onFinish: (result: ExamResult) => void;
 };
 
-type Result = { score: number; passed: boolean } | null;
-
-const PUNTAJE_MINIMO = 70;
 const LETRAS = "ABCDEFGH";
 
-export function ExamForm({ courseId, questions, attemptNumber }: Props) {
+export function ExamForm({
+  courseId,
+  questions,
+  attemptNumber,
+  maxAttempts,
+  onFinish,
+}: Props) {
   const [answers, setAnswers] = useState<Answers>({});
-  const [result, setResult] = useState<Result>(null);
   const [error, setError] = useState<string | null>(null);
   const [resaltarFaltantes, setResaltarFaltantes] = useState(false);
   const [confirmando, setConfirmando] = useState(false);
@@ -112,86 +124,13 @@ export function ExamForm({ courseId, questions, attemptNumber }: Props) {
       if (res.error) {
         setError(res.error);
       } else if (res.score !== undefined && res.passed !== undefined) {
-        setResult({ score: res.score, passed: res.passed });
+        onFinish({
+          score: res.score,
+          passed: res.passed,
+          attemptsLeft: res.attemptsLeft ?? 0,
+        });
       }
     });
-  }
-
-  if (result) {
-    const aprobado = result.passed;
-    return (
-      <div
-        className={cn(
-          "rounded-2xl border p-8 text-center",
-          aprobado
-            ? "border-emerald-200 bg-emerald-50/60"
-            : "border-destructive/20 bg-destructive/5",
-        )}
-      >
-        <span
-          className={cn(
-            "mx-auto inline-flex size-14 items-center justify-center rounded-2xl",
-            aprobado
-              ? "bg-emerald-100 text-emerald-700"
-              : "bg-destructive/10 text-destructive",
-          )}
-        >
-          {aprobado ? (
-            <Trophy className="size-7" />
-          ) : (
-            <RotateCcw className="size-7" />
-          )}
-        </span>
-
-        <p
-          className={cn(
-            "mt-5 text-4xl font-black tabular-nums tracking-tight",
-            aprobado ? "text-emerald-700" : "text-destructive",
-          )}
-        >
-          {result.score.toFixed(0)}%
-        </p>
-        <p
-          className={cn(
-            "mt-1 text-lg font-bold",
-            aprobado ? "text-emerald-800" : "text-foreground",
-          )}
-        >
-          {aprobado ? "¡Evaluación aprobada!" : "No aprobaste esta vez"}
-        </p>
-
-        <p className="mx-auto mt-3 max-w-sm text-sm leading-relaxed text-muted-foreground">
-          {aprobado
-            ? "Tu certificado ha sido generado. Puedes descargarlo desde Mis cursos."
-            : attemptNumber >= 2
-              ? "Has agotado tus 2 intentos, por lo que perdiste el acceso al curso. Seguirá en tu historial y, si te vuelves a inscribir, empezarás desde cero."
-              : `Necesitas al menos ${PUNTAJE_MINIMO}% para aprobar. Te queda 1 intento: repasa el material y vuelve a intentarlo.`}
-        </p>
-
-        <a
-          href={
-            aprobado
-              ? "/student/certificates"
-              : attemptNumber >= 2
-                ? "/student/my-courses"
-                : `/student/courses/${courseId}`
-          }
-          className={cn(
-            "mt-6 inline-flex min-h-11 items-center justify-center gap-2 rounded-lg px-5 text-sm font-semibold transition-opacity hover:opacity-90",
-            aprobado
-              ? "bg-emerald-600 text-white"
-              : "bg-primary text-primary-foreground",
-          )}
-        >
-          {aprobado
-            ? "Ver mi certificado"
-            : attemptNumber >= 2
-              ? "Ir a mis cursos"
-              : "Volver al curso"}
-          <ArrowRight className="size-4" />
-        </a>
-      </div>
-    );
   }
 
   return (
@@ -201,11 +140,13 @@ export function ExamForm({ courseId, questions, attemptNumber }: Props) {
         <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 text-xs font-semibold">
           <span className="text-muted-foreground">
             Intento{" "}
-            <span className="text-foreground">{attemptNumber} de 2</span>
+            <span className="text-foreground">
+              {attemptNumber} de {maxAttempts}
+            </span>
           </span>
           <span className="text-muted-foreground">
             Mínimo{" "}
-            <span className="text-foreground">{PUNTAJE_MINIMO}%</span>
+            <span className="text-foreground">{EXAM_PASSING_SCORE}%</span>
           </span>
           <span className="tabular-nums text-foreground">
             {respondidas} / {total} respondidas
@@ -363,8 +304,8 @@ export function ExamForm({ courseId, questions, attemptNumber }: Props) {
             <DialogDescription className="leading-relaxed">
               Respondiste las {total} preguntas. Una vez enviada no podrás
               modificar tus respuestas
-              {attemptNumber < 2
-                ? " y usarás uno de tus 2 intentos."
+              {attemptNumber < maxAttempts
+                ? ` y usarás uno de tus ${maxAttempts} intentos.`
                 : ". Este es tu último intento."}
             </DialogDescription>
           </DialogHeader>

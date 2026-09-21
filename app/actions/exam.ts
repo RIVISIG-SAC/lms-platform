@@ -133,11 +133,22 @@ export async function deleteQuestion(questionId: string, courseId: string) {
 
 // ─── Student: rendir evaluación ─────────────────────────────────────────────
 
+export type SubmitExamResult = {
+  error?: string;
+  score?: number;
+  passed?: boolean;
+  /** Número del intento que se acaba de registrar (1-based). */
+  attemptNumber?: number;
+  /** Intentos que le quedan al estudiante DESPUÉS de este. */
+  attemptsLeft?: number;
+  requiresCertPayment?: boolean;
+};
+
 export async function submitExam(
   courseId: string,
   // { questionId: [optionId, ...] } — las de respuesta única traen un solo id
   answers: Record<string, string[]>
-): Promise<{ error?: string; score?: number; passed?: boolean; requiresCertPayment?: boolean }> {
+): Promise<SubmitExamResult> {
   const session = await getRequiredSession();
 
   const enrollment = await prisma.enrollment.findUnique({
@@ -259,6 +270,15 @@ export async function submitExam(
     revalidatePath(`/student/courses/${courseId}/exam`);
   }
 
-  return { score, passed, requiresCertPayment: passed && enrollment.course.isFree };
+  // Los intentos restantes los decide el servidor y viajan con el resultado:
+  // el cliente no puede deducirlos de sus props, porque la revalidación se los
+  // cambia debajo mientras sigue mostrando la pantalla de resultado.
+  return {
+    score,
+    passed,
+    attemptNumber: attemptCount + 1,
+    attemptsLeft: Math.max(0, EXAM_MAX_ATTEMPTS - (attemptCount + 1)),
+    requiresCertPayment: passed && enrollment.course.isFree,
+  };
 }
 

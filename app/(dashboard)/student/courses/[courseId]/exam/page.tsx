@@ -6,22 +6,17 @@ import {
   ChevronLeft,
   Download,
   FileQuestion,
-  ListChecks,
-  RefreshCcw,
-  Target,
   Trophy,
 } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { getRequiredSession } from "@/lib/auth";
-import { ExamForm } from "@/components/student/ExamForm";
+import { ExamRunner } from "@/components/student/ExamRunner";
+import { EXAM_MAX_ATTEMPTS, EXAM_PASSING_SCORE } from "@/lib/validations/exam";
 import { CertificateCheckout } from "@/components/student/CertificateCheckout";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 type Props = { params: Promise<{ courseId: string }> };
-
-const PUNTAJE_MINIMO = 70;
-const MAX_INTENTOS = 2;
 
 export default async function ExamPage({ params }: Props) {
   const { courseId } = await params;
@@ -62,7 +57,7 @@ export default async function ExamPage({ params }: Props) {
   const attemptsDone = enrollment.examAttempts.length;
   const lastAttempt = enrollment.examAttempts[0];
   const hasPassed = lastAttempt?.passed ?? false;
-  const maxAttemptsReached = attemptsDone >= MAX_INTENTOS;
+  const maxAttemptsReached = attemptsDone >= EXAM_MAX_ATTEMPTS;
   const puedeRendir = !hasPassed && !maxAttemptsReached;
 
   return (
@@ -84,44 +79,6 @@ export default async function ExamPage({ params }: Props) {
             {enrollment.course.title}
           </h1>
         </div>
-
-        {/* Reglas de la evaluación */}
-        {puedeRendir && questions.length > 0 && (
-          <div className="grid grid-cols-3 gap-3">
-            {[
-              {
-                icon: ListChecks,
-                label: "Preguntas",
-                value: String(questions.length),
-              },
-              {
-                icon: Target,
-                label: "Para aprobar",
-                value: `${PUNTAJE_MINIMO}%`,
-              },
-              {
-                icon: RefreshCcw,
-                label: "Intentos",
-                value: `${attemptsDone + 1} de ${MAX_INTENTOS}`,
-              },
-            ].map(({ icon: Icon, label, value }) => (
-              <div
-                key={label}
-                className="rounded-xl border border-border bg-card p-3 sm:p-4"
-              >
-                <span className="inline-flex size-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                  <Icon className="size-4" />
-                </span>
-                <p className="mt-2 text-base font-black tabular-nums text-foreground sm:text-lg">
-                  {value}
-                </p>
-                <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                  {label}
-                </p>
-              </div>
-            ))}
-          </div>
-        )}
 
         {/* Aprobado — certificado pendiente de pago */}
         {hasPassed && enrollment.certificate?.status === "PENDING_PAYMENT" && (
@@ -201,7 +158,7 @@ export default async function ExamPage({ params }: Props) {
               <span className="font-semibold text-foreground">
                 {lastAttempt?.score.toFixed(0)}%
               </span>{" "}
-              y el mínimo requerido es {PUNTAJE_MINIMO}%. Debes reinscribirte al
+              y el mínimo requerido es {EXAM_PASSING_SCORE}%. Debes reinscribirte al
               curso para volver a intentarlo.
             </p>
             <Link
@@ -232,25 +189,14 @@ export default async function ExamPage({ params }: Props) {
           </div>
         )}
 
-        {/* Formulario */}
+        {/* Reglas, aviso del intento anterior, formulario y resultado */}
         {puedeRendir && questions.length > 0 && (
-          <>
-            {attemptsDone > 0 && (
-              <div className="flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-                <AlertCircle className="mt-0.5 size-4 shrink-0" />
-                <p className="leading-relaxed">
-                  En tu intento anterior obtuviste{" "}
-                  <strong>{lastAttempt.score.toFixed(0)}%</strong> y no
-                  aprobaste. Este es tu <strong>último intento</strong>.
-                </p>
-              </div>
-            )}
-            <ExamForm
-              courseId={courseId}
-              questions={questions}
-              attemptNumber={attemptsDone + 1}
-            />
-          </>
+          <ExamRunner
+            courseId={courseId}
+            questions={questions}
+            attemptsDone={attemptsDone}
+            lastScore={lastAttempt?.score ?? null}
+          />
         )}
       </div>
     </main>
