@@ -166,7 +166,7 @@ export function CoursePlayerClient({
           {/* Video */}
           {activeChapter.vimeoVideoId ? (
             <VimeoPlayer
-              videoId={activeChapter.vimeoVideoId}
+              video={activeChapter.vimeoVideoId}
               title={activeChapter.title}
             />
           ) : (

@@ -1,15 +1,21 @@
 "use client";
 
+import { vimeoEmbedUrl } from "@/lib/vimeo";
+
 type Props = {
-  videoId: string;
+  /** Referencia guardada: `"123456789"` o `"123456789/hash"`. */
+  video: string;
   title: string;
 };
 
-export function VimeoPlayer({ videoId, title }: Props) {
+export function VimeoPlayer({ video, title }: Props) {
+  const src = vimeoEmbedUrl(video);
+  if (!src) return null;
+
   return (
     <div className="aspect-video w-full overflow-hidden rounded-xl border border-border bg-black shadow-sm">
       <iframe
-        src={`https://player.vimeo.com/video/${videoId}?color=cd3429&title=0&byline=0&portrait=0`}
+        src={src}
         className="h-full w-full"
         allow="autoplay; fullscreen; picture-in-picture"
         allowFullScreen

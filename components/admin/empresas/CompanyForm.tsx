@@ -902,17 +902,19 @@ export function CompanyForm({ action, company }: Props) {
             <div className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="testimonialVimeoId" className={fieldLabelClassName}>
-                  ID de video de Vimeo
+                  Video de Vimeo
                 </Label>
                 <Input
                   id="testimonialVimeoId"
                   name="testimonialVimeoId"
                   value={testimonialVimeoId}
                   onChange={(e) => setTestimonialVimeoId(e.target.value)}
-                  placeholder="123456789"
+                  placeholder="https://vimeo.com/123456789"
                   className={controlClassName}
                 />
-                <p className="text-xs text-muted-foreground">Sólo el ID numérico del video, no la URL completa.</p>
+                <p className="text-xs text-muted-foreground">
+                  Pega el enlace de Vimeo tal cual lo copias del navegador. El ID suelto también vale.
+                </p>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="testimonialQuote" className={fieldLabelClassName}>

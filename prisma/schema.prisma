@@ -130,6 +130,9 @@ model Course {
   isFree                  Boolean      @default(false)
   certificateFee          Decimal?     @db.Decimal(10, 2)
   thumbnailUrl            String?
+  /// Video de presentación del curso, opcional. Guarda "id" o "id/hash" de
+  /// Vimeo (ver lib/vimeo.ts); si está vacío, la ficha cae en la portada.
+  previewVimeoId          String?
   category                String?
   level                   CourseLevel?
   durationHours           Int?
