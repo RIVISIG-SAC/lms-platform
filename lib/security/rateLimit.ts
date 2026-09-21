@@ -45,6 +45,7 @@ const LIMITS = {
   "auth:password-reset:confirm": { max: 10, windowMs: 60 * 60_000 },
   "auth:verification-resend":    { max: 3,  windowMs: 60 * 60_000 },
   "support:message":             { max: 5,  windowMs: 60 * 60_000 },
+  "resource:download":           { max: 60, windowMs: 60_000 },
 } as const;
 
 export type RateLimitKey = keyof typeof LIMITS;

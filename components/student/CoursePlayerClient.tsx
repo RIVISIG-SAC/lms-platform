@@ -286,9 +286,7 @@ export function CoursePlayerClient({
                       return (
                         <a
                           key={r.id}
-                          href={r.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
+                          href={`/api/resources/${r.id}`}
                           download
                           className="group flex items-center gap-3 rounded-xl border border-border px-3 py-2.5 transition-colors hover:border-primary/40 hover:bg-primary/5"
                         >

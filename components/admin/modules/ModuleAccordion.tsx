@@ -61,7 +61,7 @@ function ResourceRow({
       </div>
       <div className="flex shrink-0 items-center gap-0.5 transition-opacity md:opacity-0 md:group-hover/res:opacity-100">
         <a
-          href={resource.url}
+          href={`/api/resources/${resource.id}`}
           target="_blank"
           rel="noopener noreferrer"
           className="inline-flex size-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
