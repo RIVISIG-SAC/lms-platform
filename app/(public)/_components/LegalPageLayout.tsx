@@ -18,6 +18,8 @@ type LegalPageLayoutProps = {
   lastUpdatedIso: string;
   documentTitle: string;
   children: React.ReactNode;
+  /** Contenido fuera del bloque de prosa (p. ej. un formulario), bajo el texto. */
+  after?: React.ReactNode;
 };
 
 export function LegalPageLayout({
@@ -27,6 +29,7 @@ export function LegalPageLayout({
   lastUpdatedIso,
   documentTitle,
   children,
+  after,
 }: LegalPageLayoutProps) {
   return (
     <>
@@ -85,6 +88,12 @@ export function LegalPageLayout({
       <article className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-12 prose-blog">
         {children}
       </article>
+
+      {after && (
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 pb-16">
+          {after}
+        </div>
+      )}
     </>
   );
 }

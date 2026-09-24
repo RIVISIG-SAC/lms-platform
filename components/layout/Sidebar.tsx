@@ -16,6 +16,7 @@ import {
   ShieldCheck,
   HelpCircle,
   LifeBuoy,
+  BookOpenText,
   LogOut,
   X,
 } from 'lucide-react';
@@ -60,6 +61,7 @@ const adminNav: NavSection[] = [
     items: [
       { label: 'Usuarios', href: '/admin/users', icon: ShieldCheck },
       { label: 'Soporte', href: '/admin/support', icon: LifeBuoy },
+      { label: 'Reclamaciones', href: '/admin/complaints', icon: BookOpenText },
     ],
   },
   {

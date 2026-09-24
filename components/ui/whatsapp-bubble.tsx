@@ -14,17 +14,22 @@ export function WhatsAppBubble() {
       target="_blank"
       rel="noopener noreferrer"
       aria-label="Contactar por WhatsApp"
-      className="group fixed bottom-6 right-6 z-50 flex items-center gap-3"
+      // El enlace mide lo mismo que el círculo: el tooltip va en absoluto para
+      // no ensanchar el área de clic sobre el contenido que queda debajo.
+      className="group fixed bottom-6 right-6 z-50 size-14 rounded-full focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#25D366]"
     >
       {/* Tooltip */}
-      <span className="pointer-events-none hidden sm:block translate-x-2 scale-95 rounded-lg bg-[#075E54] px-3 py-1.5 text-sm font-medium text-white opacity-0 shadow-md transition-all duration-200 group-hover:translate-x-0 group-hover:scale-100 group-hover:opacity-100 whitespace-nowrap">
+      <span
+        aria-hidden="true"
+        className="pointer-events-none absolute right-full top-1/2 mr-3 hidden -translate-y-1/2 translate-x-2 scale-95 whitespace-nowrap rounded-lg bg-[#075E54] px-3 py-1.5 text-sm font-medium text-white opacity-0 shadow-md transition-all duration-200 group-hover:translate-x-0 group-hover:scale-100 group-hover:opacity-100 group-focus-visible:translate-x-0 group-focus-visible:scale-100 group-focus-visible:opacity-100 sm:block"
+      >
         Contáctanos por WhatsApp
       </span>
 
       {/* Botón burbuja */}
-      <span className="relative flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-[#25D366] shadow-lg transition-transform duration-200 hover:scale-110 active:scale-95">
+      <span className="relative flex size-14 items-center justify-center rounded-full bg-[#25D366] shadow-lg transition-transform duration-200 group-hover:scale-110 group-active:scale-95 motion-reduce:transition-none">
         {/* Anillo ping */}
-        <span className="absolute inset-0 animate-ping rounded-full bg-[#25D366] opacity-30" />
+        <span className="absolute inset-0 rounded-full bg-[#25D366] opacity-30 motion-safe:animate-ping" />
         {/* Icono WhatsApp */}
         <svg
           viewBox="0 0 24 24"

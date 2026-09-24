@@ -18,6 +18,8 @@ const STATIC_ROUTES: { path: string; changeFrequency: MetadataRoute.Sitemap[numb
   { path: "/terminos-y-condiciones", changeFrequency: "yearly", priority: 0.3 },
   { path: "/politica-de-privacidad", changeFrequency: "yearly", priority: 0.3 },
   { path: "/politica-de-cookies", changeFrequency: "yearly", priority: 0.3 },
+  { path: "/politica-de-devoluciones", changeFrequency: "yearly", priority: 0.3 },
+  { path: "/libro-de-reclamaciones", changeFrequency: "yearly", priority: 0.3 },
 ];
 
 const getPublishedCoursesForSitemap = unstable_cache(
