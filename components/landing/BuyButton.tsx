@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { RefundPolicyNotice } from "@/components/legal/RefundPolicyNotice";
 
 type Props = {
   courseId: string;
@@ -79,6 +80,7 @@ export function BuyButton({ courseId, price }: Props) {
       {error && (
         <p className="text-xs text-destructive text-center">{error}</p>
       )}
+      <RefundPolicyNotice />
       <script src="https://checkout.culqi.com/js/v4" async />
     </div>
   );

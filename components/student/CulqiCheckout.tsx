@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { RefundPolicyNotice } from "@/components/legal/RefundPolicyNotice";
 
 // Culqi.js se carga como script externo (ver layout o Script component)
 declare global {
@@ -117,6 +118,7 @@ export function CulqiCheckout({ courseId, courseTitle, priceInSoles }: Props) {
       <p className="text-xs text-center text-muted-foreground">
         Pago seguro procesado por Culqi · Acceso por 180 días
       </p>
+      <RefundPolicyNotice />
     </div>
   );
 }
