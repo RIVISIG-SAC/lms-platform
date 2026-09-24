@@ -1,7 +1,9 @@
 import Link from 'next/link';
-import { Phone, Mail, Globe, MapPin } from 'lucide-react';
+import Image from 'next/image';
+import { Phone, Mail, MapPin } from 'lucide-react';
 import { SiteLogo } from '@/components/public/SiteLogo';
 import { SocialLinks } from './SocialLinks';
+import { FooterLegalLinks } from './FooterLegalLinks';
 import { LEGAL_COMPANY } from '@/lib/legal/company';
 
 const PLATFORM_LINKS = [
@@ -13,11 +15,6 @@ const PLATFORM_LINKS = [
   { href: '/registro', label: 'Crear cuenta' },
 ];
 
-const LEGAL_LINKS = [
-  { href: '/terminos-y-condiciones', label: 'Términos y Condiciones' },
-  { href: '/politica-de-privacidad', label: 'Política de Privacidad' },
-  { href: '/politica-de-cookies', label: 'Política de Cookies' },
-];
 
 export function SiteFooter() {
   return (
@@ -76,39 +73,33 @@ export function SiteFooter() {
                 Lima — Perú
               </div>
             </div>
+            {/* INDECOPI exige que el Libro de Reclamaciones sea visible en la web. */}
+            <Link
+              href="/libro-de-reclamaciones"
+              className="mt-2 inline-block rounded-lg border border-border p-1.5 transition-colors hover:border-primary/40 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+            >
+              <Image
+                src="/images/libro_reclamaciones.webp"
+                alt="Libro de Reclamaciones"
+                width={883}
+                height={565}
+                sizes="140px"
+                className="h-auto w-[140px]"
+              />
+            </Link>
           </div>
         </div>
 
-        <div className="border-t border-border pt-6 space-y-4">
-          <nav aria-label="Enlaces legales">
-            <ul className="flex flex-wrap items-center justify-center sm:justify-start gap-x-3 gap-y-1 text-xs text-muted-foreground">
-              {LEGAL_LINKS.map(({ href, label }, idx) => (
-                <li key={href} className="flex items-center gap-3">
-                  <Link
-                    href={href}
-                    className="hover:text-foreground transition-colors"
-                  >
-                    {label}
-                  </Link>
-                  {idx < LEGAL_LINKS.length - 1 && (
-                    <span aria-hidden="true" className="text-border">
-                      ·
-                    </span>
-                  )}
-                </li>
-              ))}
-            </ul>
-          </nav>
-
-          <div className="flex flex-col sm:flex-row items-center justify-center text-xs text-muted-foreground">
-            <p className="text-center sm:text-left">
-              © {new Date().getFullYear()} {LEGAL_COMPANY.razonSocial}
-              <span aria-hidden="true" className="mx-2 text-border">
-                ·
-              </span>
-              Todos los derechos reservados
-            </p>
-          </div>
+        {/* pb-8 + el py-12 del contenedor = 5rem, la altura que ocupa el botón (bottom-6 + size-14). Hueco para que el botón flotante de WhatsApp no tape esta fila al final de la página. */}
+        <div className="flex flex-col-reverse items-center gap-3 border-t border-border pt-6 pb-8 text-xs text-muted-foreground sm:flex-row sm:justify-between">
+          <p className="text-center sm:text-left">
+            © {new Date().getFullYear()} {LEGAL_COMPANY.razonSocial}
+            <span aria-hidden="true" className="mx-2 text-border">
+              ·
+            </span>
+            RUC {LEGAL_COMPANY.ruc}
+          </p>
+          <FooterLegalLinks />
         </div>
       </div>
     </footer>

@@ -250,3 +250,16 @@ export async function notifySupportMessageReceived(params: {
     link: "/admin/support",
   });
 }
+
+export async function notifyComplaintReceived(params: {
+  code: string;
+  typeLabel: string;
+  consumerName: string;
+}) {
+  await notifyAdmins({
+    type: "ADMIN_NEW_COMPLAINT",
+    title: `Nueva hoja de reclamación (${params.typeLabel.toLowerCase()})`,
+    message: `${params.code} · ${params.consumerName}`,
+    link: "/admin/complaints",
+  });
+}

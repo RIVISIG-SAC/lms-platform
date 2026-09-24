@@ -2,6 +2,7 @@ import Link from "next/link";
 import {
   Award,
   BookOpen,
+  BookOpenText,
   ClipboardList,
   Clock3,
   CircleDollarSign,
@@ -123,6 +124,7 @@ export default async function AdminDashboardPage(props: {
     totalEstudiantes,
     // Cola operativa
     consultasAbiertas,
+    reclamacionesPendientes,
     certificadosPorPagar,
     cursosSinModulos,
     cursosSinEvaluacion,
@@ -165,6 +167,7 @@ export default async function AdminDashboardPage(props: {
     prisma.user.count({ where: { role: "STUDENT" } }),
 
     prisma.supportMessage.count({ where: { status: "OPEN" } }),
+    prisma.complaint.count({ where: { status: "PENDING" } }),
     prisma.certificate.count({ where: { status: "PENDING_PAYMENT" } }),
     prisma.course.count({ where: { published: true, modules: { none: {} } } }),
     prisma.course.count({ where: { published: true, questions: { none: {} } } }),
@@ -204,6 +207,14 @@ export default async function AdminDashboardPage(props: {
   );
 
   const pendientes: AttentionItem[] = [
+    {
+      label: "Reclamaciones sin responder",
+      detail: "Hojas del Libro de Reclamaciones con plazo legal de respuesta",
+      count: reclamacionesPendientes,
+      icon: BookOpenText,
+      href: "/admin/complaints",
+      severity: "alta",
+    },
     {
       label: "Consultas sin responder",
       detail: "Estudiantes esperando respuesta en la bandeja de soporte",

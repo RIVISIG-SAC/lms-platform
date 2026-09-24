@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { RefundPolicyNotice } from "@/components/legal/RefundPolicyNotice";
 
 declare global {
   interface Window {
@@ -116,6 +117,7 @@ export function CertificateCheckout({ enrollmentId, courseTitle, certificateFeeI
       <p className="text-xs text-center text-muted-foreground">
         Pago seguro procesado por Culqi
       </p>
+      <RefundPolicyNotice />
     </div>
   );
 }

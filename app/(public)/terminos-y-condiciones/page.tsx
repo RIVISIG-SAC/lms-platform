@@ -1,7 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { LegalPageLayout } from "../_components/LegalPageLayout";
-import { LEGAL_COMPANY, LEGAL_LAST_UPDATED } from "@/lib/legal/company";
+import {
+  LEGAL_COMPANY,
+  LEGAL_LAST_UPDATED,
+  REFUND_TERMS,
+} from "@/lib/legal/company";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://rivisig.com";
 
@@ -277,25 +281,19 @@ export default function TerminosYCondicionesPage() {
           <a href={`mailto:${LEGAL_COMPANY.email}`}>{LEGAL_COMPANY.email}</a>{" "}
           dentro de las 48 horas posteriores al pago.
         </p>
-        <h3>8.5. Política de no reembolso</h3>
+        <h3>8.5. Reembolsos y devoluciones</h3>
         <p>
-          Tratándose de contenido digital de acceso inmediato, una vez activado
-          el Curso el Usuario reconoce haber iniciado el consumo del servicio,
-          razón por la cual <strong>no procede el derecho de retracto</strong>{" "}
-          ni el reembolso del importe pagado, salvo en los siguientes
-          supuestos:
+          Las solicitudes de reembolso se rigen por la{" "}
+          <Link href="/politica-de-devoluciones">
+            Política de Reembolsos y Devoluciones
+          </Link>
+          , que forma parte integral de estos Términos. En resumen, el Usuario
+          puede solicitar el reembolso dentro de los{" "}
+          <strong>{REFUND_TERMS.diasParaSolicitar} días calendario</strong>{" "}
+          siguientes al pago; la solicitud se evalúa considerando, entre otros
+          criterios, el nivel de uso del contenido digital y si el Certificado
+          ya fue emitido o descargado.
         </p>
-        <ul>
-          <li>
-            Falla técnica imputable a RIVISIG que impida el acceso al Curso por
-            más de cinco (5) días hábiles consecutivos y no haya sido resuelta
-            tras solicitud formal del Usuario.
-          </li>
-          <li>
-            Error material en el cobro (doble cargo o cobro por un Curso no
-            adquirido).
-          </li>
-        </ul>
       </section>
 
       <section id="cap-9">
