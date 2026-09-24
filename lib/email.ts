@@ -544,3 +544,188 @@ export async function sendPasswordResetEmail(
     `.trim(),
   });
 }
+
+// ─── Libro de Reclamaciones ─────────────────────────────────────────────────
+
+export type ComplaintEmailData = {
+  code: string;
+  createdAt: Date;
+  typeLabel: string;
+  consumerName: string;
+  documentLabel: string;
+  documentNumber: string;
+  address: string;
+  phone: string;
+  email: string;
+  guardianName: string | null;
+  itemType: string;
+  amount: string | null;
+  itemDescription: string;
+  detail: string;
+  request: string;
+  company: { razonSocial: string; ruc: string; direccion: string | null };
+  deadlineDays: number;
+};
+
+const LABEL_STYLE =
+  'font-size:12px;font-weight:700;color:#71717a;text-transform:uppercase;letter-spacing:0.5px;';
+
+function multiline(value: string) {
+  return escapeHtml(value).replace(/\n/g, '<br />');
+}
+
+function complaintRow(label: string, value: string) {
+  return `<tr>
+    <td style="padding:6px 12px 6px 0;${LABEL_STYLE}vertical-align:top;width:40%;">${label}</td>
+    <td style="padding:6px 0;font-size:14px;color:#18181b;">${value}</td>
+  </tr>`;
+}
+
+function complaintBlock(title: string, rows: string[]) {
+  return `<p style="margin:24px 0 8px;font-size:13px;font-weight:700;color:#18181b;border-bottom:1px solid #e4e4e7;padding-bottom:6px;">${title}</p>
+  <table width="100%" cellpadding="0" cellspacing="0">${rows.join('')}</table>`;
+}
+
+function complaintShell(heading: string, body: string) {
+  return `
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>${heading}</title>
+</head>
+<body style="margin:0;padding:0;background:#f4f4f5;font-family:system-ui,-apple-system,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f5;padding:40px 16px;">
+    <tr>
+      <td align="center">
+        <table width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;background:#ffffff;border-radius:12px;overflow:hidden;border:1px solid #e4e4e7;">
+          <tr>
+            <td style="padding:32px 40px 24px;border-bottom:1px solid #f4f4f5;">
+              <img src="${getAppUrl()}/images/logo.png" alt="RIVISIG Consultores" width="160" style="display:block;max-width:160px;height:auto;" />
+              <p style="margin:8px 0 0;${LABEL_STYLE}">${heading}</p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:24px 40px 32px;">${body}</td>
+          </tr>
+          <tr>
+            <td style="padding:20px 40px;background:#fafafa;border-top:1px solid #f4f4f5;">
+              <p style="margin:0;font-size:12px;color:#a1a1aa;">
+                &copy; ${new Date().getFullYear()} RIVISIG Consultores. Libro de Reclamaciones virtual.
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`.trim();
+}
+
+/**
+ * Constancia de la hoja de reclamación. El Reglamento obliga a entregar una
+ * copia al consumidor; la empresa recibe la misma copia en BCC para su archivo.
+ * Lanza si Resend rechaza el envío, para que la action lo registre.
+ */
+export async function sendComplaintReceiptEmail(data: ComplaintEmailData) {
+  const e = escapeHtml;
+  const fecha = data.createdAt.toLocaleString('es-PE', { timeZone: 'America/Lima' });
+
+  const body = `
+    <p style="margin:0 0 4px;font-size:14px;color:#3f3f46;">Hola <strong>${e(data.consumerName)}</strong>,</p>
+    <p style="margin:0 0 16px;font-size:14px;color:#3f3f46;line-height:1.6;">
+      Hemos registrado tu hoja de reclamación. Esta es tu copia; consérvala como constancia.
+    </p>
+    <div style="padding:16px 20px;background:#f4f4f5;border:1px solid #e4e4e7;border-radius:10px;">
+      <p style="margin:0;${LABEL_STYLE}">Código</p>
+      <p style="margin:4px 0 0;font-size:20px;font-weight:800;color:#18181b;letter-spacing:1px;">${e(data.code)}</p>
+      <p style="margin:4px 0 0;font-size:13px;color:#52525b;">${e(fecha)} · ${e(data.typeLabel)}</p>
+    </div>
+    ${complaintBlock('1. Proveedor', [
+      complaintRow('Razón social', e(data.company.razonSocial)),
+      complaintRow('RUC', e(data.company.ruc)),
+      data.company.direccion ? complaintRow('Domicilio', e(data.company.direccion)) : '',
+    ])}
+    ${complaintBlock('2. Consumidor reclamante', [
+      complaintRow('Nombre', e(data.consumerName)),
+      complaintRow(e(data.documentLabel), e(data.documentNumber)),
+      complaintRow('Domicilio', e(data.address)),
+      complaintRow('Teléfono', e(data.phone)),
+      complaintRow('Correo', e(data.email)),
+      data.guardianName ? complaintRow('Padre, madre o apoderado', e(data.guardianName)) : '',
+    ])}
+    ${complaintBlock('3. Bien contratado', [
+      complaintRow('Tipo', e(data.itemType)),
+      complaintRow('Monto reclamado', data.amount ? `S/ ${e(data.amount)}` : '—'),
+      complaintRow('Descripción', multiline(data.itemDescription)),
+    ])}
+    ${complaintBlock('4. Detalle de la reclamación', [
+      complaintRow('Tipo', e(data.typeLabel)),
+      complaintRow('Detalle', multiline(data.detail)),
+      complaintRow('Pedido', multiline(data.request)),
+    ])}
+    <p style="margin:24px 0 0;font-size:13px;color:#52525b;line-height:1.6;">
+      Te responderemos a este correo en un plazo no mayor a <strong>${data.deadlineDays} días hábiles</strong>.
+    </p>
+    <p style="margin:12px 0 0;font-size:12px;color:#71717a;line-height:1.6;">
+      La formulación del reclamo no impide acudir a otras vías de solución de controversias
+      ni es requisito previo para interponer una denuncia ante el INDECOPI.
+    </p>`;
+
+  const { error } = await resend.emails.send({
+    from: 'RIVISIG Consultores <info@rivisig.com>',
+    to: data.email,
+    bcc: getSupportEmail(),
+    replyTo: getSupportEmail(),
+    subject: `Hoja de reclamación ${data.code} — RIVISIG Consultores`,
+    html: complaintShell('Libro de Reclamaciones', body),
+  });
+  if (error) throw new Error(error.message);
+}
+
+/** Respuesta del proveedor a una hoja de reclamación, con copia a la empresa. */
+export async function sendComplaintResponseEmail({
+  code,
+  consumerName,
+  email,
+  typeLabel,
+  detail,
+  response,
+}: {
+  code: string;
+  consumerName: string;
+  email: string;
+  typeLabel: string;
+  detail: string;
+  response: string;
+}) {
+  const e = escapeHtml;
+  const body = `
+    <p style="margin:0 0 4px;font-size:14px;color:#3f3f46;">Hola <strong>${e(consumerName)}</strong>,</p>
+    <p style="margin:0 0 16px;font-size:14px;color:#3f3f46;line-height:1.6;">
+      Esta es nuestra respuesta a tu ${e(typeLabel.toLowerCase())} con código <strong>${e(code)}</strong>.
+    </p>
+    <p style="margin:0 0 6px;${LABEL_STYLE}">Tu reclamación</p>
+    <div style="margin:0 0 20px;padding:16px 20px;background:#fafafa;border:1px solid #e4e4e7;border-radius:10px;font-size:14px;color:#52525b;line-height:1.6;">
+      ${multiline(detail)}
+    </div>
+    <p style="margin:0 0 6px;${LABEL_STYLE}">Respuesta y acciones adoptadas</p>
+    <div style="margin:0;padding:16px 20px;background:#f4f4f5;border:1px solid #e4e4e7;border-radius:10px;font-size:14px;color:#18181b;line-height:1.6;">
+      ${multiline(response)}
+    </div>
+    <p style="margin:20px 0 0;font-size:12px;color:#71717a;line-height:1.6;">
+      Si tienes dudas sobre esta respuesta, puedes responder directamente a este correo.
+    </p>`;
+
+  const { error } = await resend.emails.send({
+    from: 'RIVISIG Consultores <info@rivisig.com>',
+    to: email,
+    bcc: getSupportEmail(),
+    replyTo: getSupportEmail(),
+    subject: `Respuesta a tu hoja de reclamación ${code} — RIVISIG Consultores`,
+    html: complaintShell('Respuesta a tu reclamación', body),
+  });
+  if (error) throw new Error(error.message);
+}

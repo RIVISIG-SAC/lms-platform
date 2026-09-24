@@ -55,6 +55,7 @@ enum NotificationType {
   ADMIN_NEW_PAYMENT
   ADMIN_CERTIFICATE_ISSUED
   ADMIN_NEW_SUPPORT_MESSAGE
+  ADMIN_NEW_COMPLAINT
 }
 
 enum SupportMessageStatus {
@@ -614,5 +615,74 @@ model SupportMessage {
   @@index([status, createdAt])
   @@index([userId])
   @@index([courseId])
+  @@index([createdAt])
+}
+
+enum ComplaintType {
+  /// Disconformidad con el producto o servicio contratado.
+  RECLAMO
+  /// Malestar por la atención, no relacionado con el producto o servicio.
+  QUEJA
+}
+
+enum ComplaintStatus {
+  PENDING
+  ANSWERED
+}
+
+enum ComplaintDocumentType {
+  DNI
+  CE
+  PASAPORTE
+  RUC
+}
+
+/// Hoja de reclamación del Libro de Reclamaciones virtual (D.S. 011-2011-PCM).
+///
+/// Es un registro legal: no se borra ni se edita lo que escribió el consumidor.
+/// Solo se añade la respuesta del proveedor. INDECOPI exige conservarlas al
+/// menos dos años, así que no cuelga de `User` ni de `Course`: si se elimina
+/// la cuenta o el curso, la hoja sigue intacta.
+model Complaint {
+  id     String @id @default(cuid())
+  /// Correlativo de la hoja; el código visible es `LR-<año>-<número>`.
+  number Int    @unique @default(autoincrement())
+
+  // Consumidor
+  consumerName   String
+  documentType   ComplaintDocumentType
+  documentNumber String
+  address        String
+  phone          String
+  email          String
+  isMinor        Boolean               @default(false)
+  /// Padre, madre o apoderado; obligatorio si el consumidor es menor de edad.
+  guardianName   String?
+
+  // Bien contratado
+  itemType        String
+  amount          Decimal? @db.Decimal(10, 2)
+  itemDescription String
+
+  // Detalle
+  type    ComplaintType
+  detail  String
+  request String
+
+  // Respuesta del proveedor
+  status        ComplaintStatus @default(PENDING)
+  response      String?
+  respondedAt   DateTime?
+  respondedById String?
+
+  /// Si la constancia llegó al correo del consumidor; la hoja existe igual.
+  receiptEmailSent  Boolean @default(false)
+  responseEmailSent Boolean @default(false)
+  emailError        String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status, createdAt])
   @@index([createdAt])
 }

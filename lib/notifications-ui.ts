@@ -5,6 +5,7 @@
  */
 import {
   Award,
+  BookOpenText,
   Clock,
   CreditCard,
   GraduationCap,
@@ -34,6 +35,7 @@ export const NOTIFICATION_TYPES = [
   "ADMIN_NEW_PAYMENT",
   "ADMIN_CERTIFICATE_ISSUED",
   "ADMIN_NEW_SUPPORT_MESSAGE",
+  "ADMIN_NEW_COMPLAINT",
 ] as const satisfies readonly NotificationType[];
 
 export const NOTIFICATION_TYPE_LABELS: Record<NotificationType, string> = {
@@ -47,6 +49,7 @@ export const NOTIFICATION_TYPE_LABELS: Record<NotificationType, string> = {
   ADMIN_NEW_PAYMENT: "Admin · Pagos",
   ADMIN_CERTIFICATE_ISSUED: "Admin · Certificados",
   ADMIN_NEW_SUPPORT_MESSAGE: "Admin · Soporte",
+  ADMIN_NEW_COMPLAINT: "Admin · Reclamaciones",
 };
 
 /** El mapa se exporta tal cual: resolverlo con una función haría que el
@@ -62,6 +65,7 @@ export const NOTIFICATION_TYPE_ICONS: Record<NotificationType, LucideIcon> = {
   ADMIN_NEW_PAYMENT: CreditCard,
   ADMIN_CERTIFICATE_ISSUED: Award,
   ADMIN_NEW_SUPPORT_MESSAGE: LifeBuoy,
+  ADMIN_NEW_COMPLAINT: BookOpenText,
 };
 
 const dayFormatter = new Intl.DateTimeFormat("en-CA", {
