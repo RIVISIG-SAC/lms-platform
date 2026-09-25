@@ -17,6 +17,7 @@ import {
   HelpCircle,
   LifeBuoy,
   BookOpenText,
+  CreditCard,
   LogOut,
   X,
 } from 'lucide-react';
@@ -46,6 +47,12 @@ const adminNav: NavSection[] = [
       { label: 'Cursos', href: '/admin/courses', icon: BookOpen },
       { label: 'Estudiantes', href: '/admin/students', icon: GraduationCap },
       { label: 'Certificados', href: '/admin/certificates', icon: Award },
+    ],
+  },
+  {
+    title: 'Ventas',
+    items: [
+      { label: 'Pagos', href: '/admin/payments', icon: CreditCard },
     ],
   },
   {

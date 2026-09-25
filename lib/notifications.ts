@@ -117,7 +117,7 @@ export async function notifyPaymentReceived(params: {
       type: "ADMIN_NEW_PAYMENT",
       title: isCourse ? "Nuevo pago de curso" : "Nuevo pago de certificado",
       message: `${params.userName} pagó ${formatPEN(params.amount)} por ${params.resourceTitle}.`,
-      link: isCourse ? "/admin/students" : "/admin/certificates",
+      link: "/admin/payments",
     });
   }
 }
