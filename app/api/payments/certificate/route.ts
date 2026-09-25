@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { getSession } from "@/lib/auth";
-import { createCharge, toCents } from "@/lib/culqi";
+import { getSession, type SessionPayload } from "@/lib/auth";
+import { chargeAndFulfill } from "@/lib/payments";
 import { checkRateLimit } from "@/lib/security/rateLimit";
-import { notifyCertificateIssued, notifyPaymentReceived } from "@/lib/notifications";
+import { acquirePaymentLock, releasePaymentLock } from "@/lib/security/paymentLock";
 
 export async function POST(request: NextRequest) {
   const session = await getSession();
@@ -31,6 +31,24 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Datos incompletos" }, { status: 400 });
   }
 
+  // Serializa los cobros del mismo usuario sobre el mismo recurso: evita el
+  // doble cargo por doble clic o dos pestañas (ver paymentLock).
+  const lockKey = `certificate:${session.userId}:${enrollmentId}`;
+  if (!(await acquirePaymentLock(lockKey))) {
+    return NextResponse.json(
+      { error: "Ya hay un pago en proceso. Espera unos segundos." },
+      { status: 409 },
+    );
+  }
+
+  try {
+    return await chargeCertificate(session, token, enrollmentId);
+  } finally {
+    await releasePaymentLock(lockKey);
+  }
+}
+
+async function chargeCertificate(session: SessionPayload, token: string, enrollmentId: string) {
   const enrollment = await prisma.enrollment.findUnique({
     where: { id: enrollmentId },
     include: {
@@ -55,46 +73,32 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "El costo del certificado no está configurado" }, { status: 400 });
   }
 
-  try {
-    await createCharge({
-      amount: toCents(Number(enrollment.course.certificateFee)),
-      currencyCode: "PEN",
-      email: session.email,
-      sourceId: token,
-      description: `Certificado: ${enrollment.course.title}`,
-    });
-  } catch (err) {
-    const message = err instanceof Error ? err.message : "Error al procesar el pago";
-    return NextResponse.json({ error: message }, { status: 402 });
+  const outcome = await chargeAndFulfill({
+    userId: session.userId,
+    email: session.email,
+    kind: "CERTIFICATE",
+    courseId: enrollment.courseId,
+    enrollmentId,
+    amount: enrollment.course.certificateFee,
+    token,
+    description: `Certificado: ${enrollment.course.title}`,
+  });
+
+  if (!outcome.ok) {
+    return outcome.stage === "charge"
+      ? NextResponse.json({ error: outcome.message }, { status: 402 })
+      : NextResponse.json(
+          {
+            error: `Tu pago se registró (código ${outcome.chargeId}) pero no pudimos emitir el certificado. Escríbenos y lo resolveremos de inmediato.`,
+          },
+          { status: 500 },
+        );
   }
-
-  const updated = await prisma.certificate.update({
-    where: { id: enrollment.certificate.id },
-    data: { status: "ACTIVE", certificatePaidAt: new Date() },
-  });
-
-  await notifyPaymentReceived({
-    userId: session.userId,
-    userName: session.name,
-    userEmail: session.email,
-    amount: Number(enrollment.course.certificateFee),
-    kind: "certificate",
-    resourceTitle: enrollment.course.title,
-    resourceLink: "/student/certificates",
-    notifyAdminsAlso: true,
-  });
-
-  await notifyCertificateIssued({
-    userId: session.userId,
-    userName: session.name,
-    userEmail: session.email,
-    courseTitle: enrollment.course.title,
-    verificationCode: updated.verificationCode,
-    notifyAdminsAlso: true,
-  });
 
   return NextResponse.json({
     success: true,
-    verificationCode: updated.verificationCode,
+    verificationCode: outcome.result.fulfilled
+      ? outcome.result.verificationCode
+      : enrollment.certificate.verificationCode,
   });
 }

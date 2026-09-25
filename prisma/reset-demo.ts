@@ -25,6 +25,7 @@ async function cleanDatabase() {
     prisma.blogPost.deleteMany({}),
     prisma.blogTag.deleteMany({}),
     prisma.blogCategory.deleteMany({}),
+    prisma.payment.deleteMany({}),
     prisma.certificate.deleteMany({}),
     prisma.examAttempt.deleteMany({}),
     prisma.chapterProgress.deleteMany({}),
