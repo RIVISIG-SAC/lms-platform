@@ -99,7 +99,6 @@ export default async function ExamPage({ params }: Props) {
             <div className="mx-auto mt-5 max-w-xs">
               <CertificateCheckout
                 enrollmentId={enrollment.id}
-                courseTitle={enrollment.course.title}
                 certificateFeeInSoles={Number(enrollment.course.certificateFee)}
               />
             </div>
