@@ -172,6 +172,107 @@ export async function sendAdminEnrollmentEmail(
   });
 }
 
+/**
+ * Bienvenida al curso cuando el propio estudiante se inscribe (compra o curso
+ * gratuito). La inscripción hecha por un admin usa `sendAdminEnrollmentEmail`.
+ */
+export async function sendCourseWelcomeEmail({
+  email,
+  name,
+  courseId,
+  courseTitle,
+  accessUntil,
+}: {
+  email: string;
+  name: string;
+  courseId: string;
+  courseTitle: string;
+  accessUntil: Date;
+}) {
+  const courseUrl = `${getAppUrl()}/student/courses/${courseId}`;
+  const safeName = escapeHtml(name);
+  const safeCourse = escapeHtml(courseTitle);
+  const accessUntilLabel = accessUntil.toLocaleDateString('es-PE', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+    timeZone: 'America/Lima',
+  });
+
+  await resend.emails.send({
+    from: 'RIVISIG Consultores <info@rivisig.com>',
+    to: email,
+    subject: `¡Bienvenido a ${courseTitle}! — RIVISIG`,
+    html: `
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Bienvenido al curso</title>
+</head>
+<body style="margin:0;padding:0;background:#f4f4f5;font-family:system-ui,-apple-system,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f5;padding:40px 16px;">
+    <tr>
+      <td align="center">
+        <table width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;background:#ffffff;border-radius:12px;overflow:hidden;border:1px solid #e4e4e7;">
+          <!-- Header -->
+          <tr>
+            <td style="padding:32px 40px 24px;border-bottom:1px solid #f4f4f5;">
+              <img src="${getAppUrl()}/images/logo.png" alt="RIVISIG Consultores" width="160" style="display:block;max-width:160px;height:auto;" />
+            </td>
+          </tr>
+          <!-- Body -->
+          <tr>
+            <td style="padding:32px 40px;">
+              <h1 style="margin:0 0 8px;font-size:22px;font-weight:700;color:#18181b;">¡Bienvenido, ${safeName}!</h1>
+              <p style="margin:0 0 24px;font-size:15px;color:#52525b;line-height:1.6;">
+                Tu inscripción en <strong>${safeCourse}</strong> está confirmada y tu acceso ya está activo. Puedes empezar cuando quieras.
+              </p>
+              <div style="margin:0 0 24px;padding:16px 20px;background:#f4f4f5;border:1px solid #e4e4e7;border-radius:10px;">
+                <p style="margin:0 0 8px;font-size:12px;font-weight:700;color:#71717a;text-transform:uppercase;letter-spacing:0.5px;">
+                  Tu curso
+                </p>
+                <p style="margin:0 0 4px;font-size:15px;font-weight:600;color:#18181b;">${safeCourse}</p>
+                <p style="margin:0;font-size:14px;color:#52525b;">
+                  Acceso disponible hasta el <strong>${accessUntilLabel}</strong>.
+                </p>
+              </div>
+              <p style="margin:0 0 24px;font-size:14px;color:#52525b;line-height:1.6;">
+                Avanza a tu ritmo: tu progreso se guarda automáticamente. Al completar el curso y aprobar la evaluación podrás obtener tu certificado verificable.
+              </p>
+              <a href="${courseUrl}" style="display:inline-block;background:#2563eb;color:#ffffff;font-size:15px;font-weight:600;text-decoration:none;padding:12px 28px;border-radius:8px;margin-bottom:24px;">
+                Empezar el curso
+              </a>
+              <p style="margin:0 0 8px;font-size:13px;color:#71717a;">
+                Si el botón no funciona, copia y pega este enlace en tu navegador:
+              </p>
+              <p style="margin:0;font-size:13px;color:#2563eb;word-break:break-all;">
+                ${courseUrl}
+              </p>
+            </td>
+          </tr>
+          <!-- Footer -->
+          <tr>
+            <td style="padding:20px 40px;background:#fafafa;border-top:1px solid #f4f4f5;">
+              <p style="margin:0 0 4px;font-size:12px;color:#a1a1aa;">
+                ¿Dudas? Escríbenos a ${getSupportEmail()}.
+              </p>
+              <p style="margin:0;font-size:12px;color:#a1a1aa;">
+                &copy; ${new Date().getFullYear()} RIVISIG Consultores. Todos los derechos reservados.
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+    `.trim(),
+  });
+}
+
 function getSupportEmail() {
   return process.env.SUPPORT_EMAIL ?? 'info@rivisig.com';
 }

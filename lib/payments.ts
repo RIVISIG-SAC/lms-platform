@@ -7,7 +7,11 @@ import {
   REENROLLABLE_STATUSES,
   resetEnrollmentProgress,
 } from "@/lib/enrollments";
-import { notifyCertificateIssued, notifyPaymentReceived } from "@/lib/notifications";
+import {
+  notifyCertificateIssued,
+  notifyPaymentReceived,
+  sendCourseWelcome,
+} from "@/lib/notifications";
 
 /**
  * Marca un pago como cobrado. Idempotente: si ya estaba PAID (o REFUNDED) no
@@ -117,6 +121,14 @@ async function fulfillCourse(payment: LoadedPayment): Promise<FulfillResult> {
     resourceTitle: course.title,
     resourceLink: `/student/courses/${course.id}`,
     notifyAdminsAlso: true,
+  });
+
+  await sendCourseWelcome({
+    userEmail: user.email,
+    userName: user.name,
+    courseId: course.id,
+    courseTitle: course.title,
+    accessUntil: enrollment.endDate ?? endDate,
   });
 
   return { fulfilled: true, enrollmentId: enrollment.id };

@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { addDays } from "@/lib/utils";
-import { notifyEnrollmentConfirmed } from "@/lib/notifications";
+import { notifyEnrollmentConfirmed, sendCourseWelcome } from "@/lib/notifications";
 
 /** Estados desde los que un estudiante puede volver a inscribirse a un curso. */
 export const REENROLLABLE_STATUSES = ["FAILED", "EXPIRED"] as const;
@@ -86,6 +86,14 @@ export async function enrollInFreeCourse(params: {
     courseId: course.id,
     courseTitle: course.title,
     notifyAdminsAlso: true,
+  });
+
+  await sendCourseWelcome({
+    userEmail,
+    userName,
+    courseId: course.id,
+    courseTitle: course.title,
+    accessUntil: endDate,
   });
 
   return { ok: true, courseId, alreadyEnrolled: false };
