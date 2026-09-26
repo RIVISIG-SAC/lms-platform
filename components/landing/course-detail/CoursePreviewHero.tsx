@@ -5,11 +5,13 @@ import { cn, formatCurrency } from "@/lib/utils";
 import { BuyButton } from "@/components/landing/BuyButton";
 import { enrollFree } from "@/app/actions/enrollments";
 import { VimeoPlayer } from "@/components/student/VimeoPlayer";
+import { coursePurchasePath, withNextParam } from "@/lib/navigation/next-path";
 import {
   ArrowRight,
   Award,
   BarChart3,
   BookOpen,
+  CircleCheck,
   Clock,
   PlayCircle,
   ShieldCheck,
@@ -19,7 +21,7 @@ import {
 } from "lucide-react";
 import type { CourseDetail } from "./types";
 
-type SessionLike = { userId: string } | null;
+type SessionLike = { userId: string; email: string; name: string } | null;
 
 type Props = {
   course: CourseDetail;
@@ -27,6 +29,8 @@ type Props = {
   previewVideoId: string | null;
   session: SessionLike;
   isPaid: boolean;
+  /** Volvió tras registrarse para comprar: aviso + checkout abierto. */
+  resumePurchase?: boolean;
 };
 
 const LEVEL_LABEL: Record<string, string> = {
@@ -49,11 +53,14 @@ export function CoursePreviewHero({
   previewVideoId,
   session,
   isPaid,
+  resumePurchase = false,
 }: Props) {
   const instructorName = course.instructor?.user.name;
   const instructorInitial = instructorName?.trim().charAt(0).toUpperCase() ?? "?";
   const levelLabel = course.level ? LEVEL_LABEL[course.level] : null;
   const includes = INCLUDES(course.durationHours);
+  // Los cursos de pago llevan la intención de compra por registro → login.
+  const returnPath = course.isFree ? `/cursos/${course.slug}` : coursePurchasePath(course.slug);
 
   return (
     <section className="relative overflow-hidden border-b border-border bg-linear-to-b from-white via-muted/35 to-white">
@@ -223,10 +230,34 @@ export function CoursePreviewHero({
                     </Link>
                   )
                 ) : session ? (
-                  <BuyButton courseId={course.id} price={Number(course.price)} />
+                  <>
+                    {resumePurchase && (
+                      <div
+                        role="status"
+                        className="flex gap-3 rounded-lg border border-success/30 bg-success/10 p-3 text-sm"
+                      >
+                        <CircleCheck className="mt-0.5 size-5 shrink-0 text-success" aria-hidden="true" />
+                        <div>
+                          <p className="font-semibold text-foreground">
+                            ¡Listo, {session.name.split(" ")[0]}! Tu cuenta está activa.
+                          </p>
+                          <p className="mt-0.5 text-muted-foreground">
+                            Completa tu compra para empezar el curso.
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                    <BuyButton
+                      courseId={course.id}
+                      price={Number(course.price)}
+                      courseTitle={course.title}
+                      customerEmail={session.email}
+                      autoOpen={resumePurchase}
+                    />
+                  </>
                 ) : (
                   <Link
-                    href={`/registro?next=/cursos/${course.slug}`}
+                    href={withNextParam("/registro", returnPath)}
                     className={cn(buttonVariants(), "w-full h-11 justify-center focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2")}
                   >
                     Comprar ahora
@@ -237,7 +268,7 @@ export function CoursePreviewHero({
                   <p className="text-xs text-center text-muted-foreground">
                     ¿Ya tienes cuenta?{" "}
                     <Link
-                      href={`/login?next=/cursos/${course.slug}`}
+                      href={withNextParam("/login", returnPath)}
                       className="text-primary font-semibold hover:underline"
                     >
                       Inicia sesión

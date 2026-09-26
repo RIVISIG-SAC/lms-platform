@@ -100,6 +100,7 @@ export default async function ExamPage({ params }: Props) {
               <CertificateCheckout
                 enrollmentId={enrollment.id}
                 certificateFeeInSoles={Number(enrollment.course.certificateFee)}
+                customerEmail={session.email}
               />
             </div>
           </div>
