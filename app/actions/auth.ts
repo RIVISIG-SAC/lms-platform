@@ -91,15 +91,21 @@ export async function loginAction(_prev: unknown, formData: FormData) {
     };
   }
 
-  await prisma.user.update({
-    where: { id: user.id },
-    data: {
-      failedLoginAttempts: 0,
-      lockedUntil: null,
-      lastLoginAt: new Date(),
-      lastLoginIp: ip,
-    },
-  });
+  // Registro de auditoría: si la conexión se corta aquí, la contraseña ya se
+  // validó y no tiene sentido rechazar el login por no poder guardarlo.
+  try {
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        failedLoginAttempts: 0,
+        lockedUntil: null,
+        lastLoginAt: new Date(),
+        lastLoginIp: ip,
+      },
+    });
+  } catch (err) {
+    console.error("[auth] no se pudo registrar el último acceso", { userId: user.id, err });
+  }
 
   await createSession({
     userId: user.id,
