@@ -1,14 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { getSession } from "@/lib/auth";
-import { createCharge, toCents } from "@/lib/culqi";
-import { addDays } from "@/lib/utils";
-import {
-  REENROLLABLE_STATUSES,
-  resetEnrollmentProgress,
-} from "@/lib/enrollments";
+import { getSession, type SessionPayload } from "@/lib/auth";
+import { chargeAndFulfill } from "@/lib/payments";
 import { checkRateLimit } from "@/lib/security/rateLimit";
-import { notifyPaymentReceived } from "@/lib/notifications";
+import { acquirePaymentLock, releasePaymentLock } from "@/lib/security/paymentLock";
 
 export async function POST(request: NextRequest) {
   const session = await getSession();
@@ -36,9 +31,30 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Datos incompletos" }, { status: 400 });
   }
 
+  // Serializa los cobros del mismo usuario sobre el mismo recurso: evita el
+  // doble cargo por doble clic o dos pestañas (ver paymentLock).
+  const lockKey = `course:${session.userId}:${courseId}`;
+  if (!(await acquirePaymentLock(lockKey))) {
+    return NextResponse.json(
+      { error: "Ya hay un pago en proceso. Espera unos segundos." },
+      { status: 409 },
+    );
+  }
+
+  try {
+    return await chargeCourse(session, token, courseId);
+  } finally {
+    await releasePaymentLock(lockKey);
+  }
+}
+
+async function chargeCourse(session: SessionPayload, token: string, courseId: string) {
   const course = await prisma.course.findUnique({ where: { id: courseId } });
   if (!course || !course.published) {
     return NextResponse.json({ error: "Curso no disponible" }, { status: 404 });
+  }
+  if (course.isFree) {
+    return NextResponse.json({ error: "Este curso es gratuito" }, { status: 400 });
   }
 
   // Verificar que no tenga una inscripción activa
@@ -49,64 +65,31 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Ya estás inscrito en este curso" }, { status: 409 });
   }
 
-
-  // Procesar cobro con Culqi
-  let chargeId: string;
-  try {
-    const charge = await createCharge({
-      amount: toCents(Number(course.price)),
-      currencyCode: "PEN",
-      email: session.email,
-      sourceId: token,
-      description: `Curso: ${course.title}`,
-    });
-    chargeId = charge.id;
-  } catch (err) {
-    const message = err instanceof Error ? err.message : "Error al procesar el pago";
-    return NextResponse.json({ error: message }, { status: 402 });
-  }
-
-  // El cobro ya se hizo: recién ahora se limpia el intento anterior
-  if (existing && REENROLLABLE_STATUSES.includes(existing.status as never)) {
-    await resetEnrollmentProgress(existing.id);
-  }
-
-  // Crear o actualizar inscripción
-  const startDate = new Date();
-  const endDate = addDays(startDate, 180);
-
-  const enrollment = await prisma.enrollment.upsert({
-    where: { userId_courseId: { userId: session.userId, courseId } },
-    create: {
-      userId: session.userId,
-      courseId,
-      status: "PAID",
-      startDate,
-      endDate,
-    },
-    update: {
-      status: "PAID",
-      startDate,
-      endDate,
-      progressPercentage: 0,
-    },
-  });
-
-  await notifyPaymentReceived({
+  const outcome = await chargeAndFulfill({
     userId: session.userId,
-    userName: session.name,
-    userEmail: session.email,
-    amount: Number(course.price),
-    kind: "course",
-    resourceTitle: course.title,
-    resourceLink: `/student/courses/${courseId}`,
-    notifyAdminsAlso: true,
+    email: session.email,
+    kind: "COURSE",
+    courseId,
+    amount: course.price,
+    token,
+    description: `Curso: ${course.title}`,
   });
+
+  if (!outcome.ok) {
+    return outcome.stage === "charge"
+      ? NextResponse.json({ error: outcome.message }, { status: 402 })
+      : NextResponse.json(
+          {
+            error: `Tu pago se registró (código ${outcome.chargeId}) pero no pudimos activar el curso. Escríbenos y lo activaremos de inmediato.`,
+          },
+          { status: 500 },
+        );
+  }
 
   return NextResponse.json({
     success: true,
-    chargeId,
-    enrollmentId: enrollment.id,
+    chargeId: outcome.chargeId,
+    enrollmentId: outcome.result.fulfilled ? outcome.result.enrollmentId : null,
     courseId,
   });
 }

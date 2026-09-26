@@ -163,6 +163,12 @@ export async function deleteCourse(courseId: string) {
     return { error: `No se puede eliminar un curso con ${enrollmentCount} estudiante(s) inscrito(s).` };
   }
 
+  // Los pagos son registro contable: un curso con cobros no se elimina.
+  const paymentCount = await prisma.payment.count({ where: { courseId } });
+  if (paymentCount > 0) {
+    return { error: `No se puede eliminar un curso con ${paymentCount} pago(s) registrado(s). Despublícalo en su lugar.` };
+  }
+
   const session = await getRequiredSession();
   const deleted = await prisma.course.delete({ where: { id: courseId } });
   revalidatePath("/admin/courses");

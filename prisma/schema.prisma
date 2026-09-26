@@ -98,6 +98,7 @@ model User {
   blogPosts         BlogPost[]
   notifications     Notification[]
   supportMessages   SupportMessage[]
+  payments          Payment[]
 
   @@index([email])
   @@index([verificationToken])
@@ -151,6 +152,7 @@ model Course {
   certificates    Certificate[]
   faqs            CourseFaq[]
   supportMessages SupportMessage[]
+  payments        Payment[]
 
   @@index([published])
   @@index([category])
@@ -243,6 +245,7 @@ model Enrollment {
   examAttempts    ExamAttempt[]
   certificate     Certificate?
   chapterProgress ChapterProgress[]
+  payments        Payment[]
 
   @@unique([userId, courseId])
   @@index([userId])
@@ -323,6 +326,55 @@ model Certificate {
 
   @@index([verificationCode])
   @@index([courseId])
+}
+
+// ─── Pagos ─────────────────────────────────────────────────────────────────
+
+enum PaymentKind {
+  COURSE
+  CERTIFICATE
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
+}
+
+/// Cada intento de cobro con Culqi. Se crea en PENDING antes de llamar a la
+/// API para que ningún cobro quede sin rastro, y es la base para conciliar y
+/// aplicar la política de reembolsos.
+model Payment {
+  id             String        @id @default(cuid())
+  userId         String
+  kind           PaymentKind
+  courseId       String
+  /// Para CERTIFICATE se conoce desde el inicio; para COURSE se completa al
+  /// otorgar el acceso.
+  enrollmentId   String?
+  /// Monto cobrado, calculado en el servidor desde el precio de la BD.
+  amount         Decimal       @db.Decimal(10, 2)
+  currency       String        @default("PEN")
+  status         PaymentStatus @default(PENDING)
+  culqiChargeId  String?       @unique
+  failureMessage String?
+  paidAt         DateTime?
+  /// Momento en que se entregó lo comprado (acceso o certificado). Hace
+  /// idempotente la entrega entre la ruta de pago y el webhook.
+  fulfilledAt    DateTime?
+  refundedAt     DateTime?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  user       User        @relation(fields: [userId], references: [id], onDelete: Restrict)
+  course     Course      @relation(fields: [courseId], references: [id], onDelete: Restrict)
+  enrollment Enrollment? @relation(fields: [enrollmentId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([courseId])
+  @@index([status])
+  @@index([createdAt])
 }
 
 // ─── Notificaciones ────────────────────────────────────────────────────────

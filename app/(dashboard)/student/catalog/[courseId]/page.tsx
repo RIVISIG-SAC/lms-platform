@@ -181,7 +181,6 @@ export default async function CourseCatalogDetailPage({ params }: Props) {
             ) : (
               <CulqiCheckout
                 courseId={course.id}
-                courseTitle={course.title}
                 priceInSoles={Number(course.price)}
               />
             )}
