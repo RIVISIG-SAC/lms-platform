@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import { PetMascot } from "@/components/public/PetMascot";
+import { CourseIntentCard } from "@/components/auth/CourseIntentCard";
 import { sanitizeNextPath, withNextParam } from "@/lib/navigation/next-path";
 
 export const metadata = {
@@ -31,6 +32,8 @@ export default async function VerificarPage(props: {
           tu cuenta. El enlace expira en <strong>24 horas</strong>.
         </p>
       </div>
+
+      <CourseIntentCard next={next} stage="verificar" />
 
       <p className="text-sm text-muted-foreground">
         ¿No recibiste el correo?{" "}

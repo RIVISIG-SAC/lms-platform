@@ -14,6 +14,8 @@ export function WhatsAppBubble() {
       target="_blank"
       rel="noopener noreferrer"
       aria-label="Contactar por WhatsApp"
+      // Se reubica u oculta según lo que haya en pantalla (ver globals.css).
+      data-whatsapp-bubble=""
       // El enlace mide lo mismo que el círculo: el tooltip va en absoluto para
       // no ensanchar el área de clic sobre el contenido que queda debajo.
       className="group fixed bottom-6 right-6 z-50 size-14 rounded-full focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#25D366]"

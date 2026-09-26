@@ -4,6 +4,7 @@ import {
   sendCertificateIssuedEmail,
   sendAccessExpiringEmail,
   sendPasswordExpiringEmail,
+  sendCourseWelcomeEmail,
 } from "@/lib/email";
 
 type CreateInput = {
@@ -85,6 +86,31 @@ export async function notifyEnrollmentConfirmed(params: {
       message: `${params.userName} se inscribió en ${params.courseTitle}.`,
       link: `/admin/courses/${params.courseId}`,
     });
+  }
+}
+
+/**
+ * Correo de bienvenida cuando el estudiante se inscribe por su cuenta (compra
+ * o curso gratuito). Si el envío falla solo se registra: la inscripción ya
+ * está hecha y no debe revertirse por un correo.
+ */
+export async function sendCourseWelcome(params: {
+  userEmail: string;
+  userName: string;
+  courseId: string;
+  courseTitle: string;
+  accessUntil: Date;
+}) {
+  try {
+    await sendCourseWelcomeEmail({
+      email: params.userEmail,
+      name: params.userName,
+      courseId: params.courseId,
+      courseTitle: params.courseTitle,
+      accessUntil: params.accessUntil,
+    });
+  } catch (err) {
+    console.error("[notifications] sendCourseWelcomeEmail failed:", err);
   }
 }
 

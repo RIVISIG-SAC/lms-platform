@@ -2,11 +2,13 @@ import Link from "next/link";
 import { buttonVariants } from "@/components/ui/button";
 import { cn, formatCurrency } from "@/lib/utils";
 import { BuyButton } from "@/components/landing/BuyButton";
+import { RefundPolicyNotice } from "@/components/legal/RefundPolicyNotice";
 import { enrollFree } from "@/app/actions/enrollments";
 import { ArrowRight } from "lucide-react";
+import { coursePurchasePath, withNextParam } from "@/lib/navigation/next-path";
 import type { CourseDetail } from "./types";
 
-type SessionLike = { userId: string } | null;
+type SessionLike = { userId: string; email: string } | null;
 
 type Props = {
   course: CourseDetail;
@@ -15,8 +17,12 @@ type Props = {
 };
 
 export function MobileStickyCta({ course, session, isPaid }: Props) {
+  const showsCheckout = !isPaid && !course.isFree && !!session;
+
   return (
     <div
+      // La burbuja de WhatsApp se aparta de esta barra (ver globals.css).
+      data-mobile-cta=""
       className="fixed bottom-0 inset-x-0 z-40 lg:hidden bg-white/95 backdrop-blur border-t border-border shadow-[0_-4px_20px_rgba(0,0,0,0.06)]"
       role="region"
       aria-label="Acceso rápido a compra"
@@ -42,7 +48,7 @@ export function MobileStickyCta({ course, session, isPaid }: Props) {
           )}
         </div>
 
-        <div className="shrink-0 min-w-[140px]">
+        <div className="shrink-0">
           {isPaid ? (
             <Link
               href={`/student/courses/${course.id}`}
@@ -69,10 +75,16 @@ export function MobileStickyCta({ course, session, isPaid }: Props) {
               </Link>
             )
           ) : session ? (
-            <BuyButton courseId={course.id} price={Number(course.price)} />
+            <BuyButton
+              courseId={course.id}
+              price={Number(course.price)}
+              courseTitle={course.title}
+              customerEmail={session.email}
+              compact
+            />
           ) : (
             <Link
-              href={`/registro?next=/cursos/${course.slug}`}
+              href={withNextParam("/registro", coursePurchasePath(course.slug))}
               className={cn(buttonVariants(), "h-10 px-4 text-sm")}
             >
               Comprar
@@ -80,6 +92,12 @@ export function MobileStickyCta({ course, session, isPaid }: Props) {
           )}
         </div>
       </div>
+      {/* El aviso va a todo el ancho: dentro del botón aplastaba el precio. */}
+      {showsCheckout && (
+        <div className="max-w-7xl mx-auto px-4 pb-2 -mt-1">
+          <RefundPolicyNotice />
+        </div>
+      )}
     </div>
   );
 }

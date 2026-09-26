@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useState, type ReactNode } from "react";
 import Link from "next/link";
 import {
   ArrowRight,
@@ -20,7 +20,11 @@ import { registerAction } from "@/app/actions/register";
 import { cn } from "@/lib/utils";
 
 type ActionState = { error?: string } | null;
-type Props = { next?: string };
+type Props = {
+  next?: string;
+  /** Curso del que viene el visitante (se renderiza en el servidor). */
+  courseIntent?: ReactNode;
+};
 
 /** Mismas reglas que `registerSchema` en lib/validations/auth.ts. */
 const REGLAS = [
@@ -50,7 +54,7 @@ function Regla({ ok, label }: { ok: boolean; label: string }) {
   );
 }
 
-export function RegisterForm({ next }: Props) {
+export function RegisterForm({ next, courseIntent }: Props) {
   const [state, action, pending] = useActionState<ActionState, FormData>(
     registerAction,
     null,
@@ -73,6 +77,8 @@ export function RegisterForm({ next }: Props) {
         }
         description="Regístrate para inscribirte a los cursos y gestionar tus certificados."
       />
+
+      {courseIntent}
 
       <form action={action} className="space-y-5">
         {next && <input type="hidden" name="next" value={next} />}

@@ -10,6 +10,7 @@ import { CourseFaqSection } from '@/components/landing/course-detail/CourseFaqSe
 import { MobileStickyCta } from '@/components/landing/course-detail/MobileStickyCta';
 import { User } from 'lucide-react';
 import { LEGAL_COMPANY } from '@/lib/legal/company';
+import { PURCHASE_INTENT_PARAM } from '@/lib/navigation/next-path';
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://rivisig.com';
 
@@ -78,8 +79,10 @@ export async function generateMetadata(props: { params: Promise<unknown> }): Pro
 
 export default async function CourseDetailPage(props: {
   params: Promise<unknown>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const { slug } = (await props.params) as { slug: string };
+  const searchParams = await props.searchParams;
 
   const [course, session] = await Promise.all([
     // El `id` sigue aceptandose para no romper las URLs con cuid que ya
@@ -125,6 +128,10 @@ export default async function CourseDetailPage(props: {
 
   const isPaid =
     enrollment?.status === 'PAID' || enrollment?.status === 'COMPLETED';
+
+  // Volvió de registro → verificación → login para comprar este curso.
+  const resumePurchase =
+    searchParams[PURCHASE_INTENT_PARAM] === '1' && !!session && !isPaid && !course.isFree;
 
   const courseUrl = `${SITE_URL}/cursos/${course.slug}`;
   const priceNumber = course.isFree ? 0 : Number(course.price);
@@ -232,6 +239,7 @@ export default async function CourseDetailPage(props: {
         previewVideoId={previewVideoId}
         session={session}
         isPaid={isPaid}
+        resumePurchase={resumePurchase}
       />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8">

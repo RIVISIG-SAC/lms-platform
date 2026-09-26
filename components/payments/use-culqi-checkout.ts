@@ -3,8 +3,13 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { LEGAL_COMPANY } from "@/lib/legal/company";
 
-const CULQI_SCRIPT_ID = "culqi-js";
+// No usar "culqi-js": Culqi v4 monta su modal en `#culqi-js` y, si el <script>
+// tiene ese id, el modal termina dentro del script y no se ve.
+const CULQI_SCRIPT_ID = "culqi-checkout-script";
 const CULQI_SCRIPT_SRC = "https://checkout.culqi.com/js/v4";
+
+/** Tiempo que se muestra "¡Pago exitoso!" antes de continuar solo. */
+const SUCCESS_CONTINUE_MS = 1600;
 
 type CulqiError = { user_message?: string; merchant_message?: string };
 
@@ -19,6 +24,8 @@ type CulqiInstance = {
     >;
     style?: { logo?: string };
   }) => void;
+  /** Prellena el formulario del modal; Culqi ignora (y loguea) un email inválido. */
+  client?: { email: string };
   open: () => void;
   close: () => void;
   token?: { id: string; email: string } | null;
@@ -64,9 +71,28 @@ type OpenParams = {
   body: Record<string, string>;
 };
 
+/**
+ * - `processing`: el servidor está cobrando y activando.
+ * - `success`: cobrado y entregado.
+ * - `error`: rechazado; no se cobró, se puede reintentar.
+ * - `uncertain`: no sabemos si se cobró (5xx o se cortó la conexión). No se
+ *   ofrece reintentar para no provocar un segundo cargo.
+ */
+export type PaymentStatus = "idle" | "processing" | "success" | "error" | "uncertain";
+
+export type PaymentState = { status: PaymentStatus; message?: string };
+
 type Options = {
   endpoint: string;
   onSuccess: (data: unknown) => void;
+  /** Correo de la sesión: evita que el comprador lo vuelva a escribir en el modal. */
+  customerEmail?: string;
+  /**
+   * Cerrar la pantalla de estado después de `onSuccess`. Solo cuando la página
+   * se queda (p. ej. `router.refresh()`); si `onSuccess` navega, se deja
+   * abierta para que no se vea la página vieja durante la transición.
+   */
+  dismissOnSuccess?: boolean;
 };
 
 /**
@@ -75,11 +101,14 @@ type Options = {
  * El cobro lo hace siempre el servidor con el precio de la BD: el monto que se
  * pasa aquí sólo se muestra en el modal.
  */
-export function useCulqiCheckout({ endpoint, onSuccess }: Options) {
+export function useCulqiCheckout({ endpoint, onSuccess, customerEmail, dismissOnSuccess = false }: Options) {
   const [ready, setReady] = useState(false);
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [payment, setPayment] = useState<PaymentState>({ status: "idle" });
   const inFlight = useRef(false);
+  const lastParams = useRef<OpenParams | null>(null);
+  const successData = useRef<unknown>(null);
+  const continueTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -90,6 +119,31 @@ export function useCulqiCheckout({ endpoint, onSuccess }: Options) {
       cancelled = true;
     };
   }, []);
+
+  useEffect(
+    () => () => {
+      if (continueTimer.current) clearTimeout(continueTimer.current);
+    },
+    [],
+  );
+
+  /** Sale de la pantalla de éxito; lo llama el temporizador o el botón "Ir ahora". */
+  const continueAfterSuccess = useCallback(() => {
+    if (!continueTimer.current) return; // ya se ejecutó
+    clearTimeout(continueTimer.current);
+    continueTimer.current = null;
+    onSuccess(successData.current);
+    if (dismissOnSuccess) setPayment({ status: "idle" });
+  }, [onSuccess, dismissOnSuccess]);
+
+  // `window.culqi` se crea al abrir el modal y vive más que ese render: lee la
+  // versión vigente de `continueAfterSuccess` por ref.
+  const continueAfterSuccessRef = useRef(continueAfterSuccess);
+  useEffect(() => {
+    continueAfterSuccessRef.current = continueAfterSuccess;
+  }, [continueAfterSuccess]);
+
+  const dismiss = useCallback(() => setPayment({ status: "idle" }), []);
 
   const open = useCallback(
     ({ amountInSoles, body }: OpenParams) => {
@@ -106,6 +160,8 @@ export function useCulqiCheckout({ endpoint, onSuccess }: Options) {
         return;
       }
       setError(null);
+      setPayment({ status: "idle" });
+      lastParams.current = { amountInSoles, body };
 
       // `window.culqi` es global: se reasigna al abrir para que responda el
       // botón que el usuario pulsó (en la landing hay dos BuyButton).
@@ -119,7 +175,7 @@ export function useCulqiCheckout({ endpoint, onSuccess }: Options) {
         if (!token || inFlight.current) return;
         inFlight.current = true;
         Culqi.close();
-        setLoading(true);
+        setPayment({ status: "processing" });
 
         try {
           const res = await fetch(endpoint, {
@@ -128,20 +184,28 @@ export function useCulqiCheckout({ endpoint, onSuccess }: Options) {
             body: JSON.stringify({ token, ...body }),
           });
           const data = await res.json().catch(() => ({}));
-          if (!res.ok) {
-            setError(data.error ?? "Error al procesar el pago");
-            return;
+          if (res.ok) {
+            successData.current = data;
+            setPayment({ status: "success" });
+            continueTimer.current = setTimeout(
+              () => continueAfterSuccessRef.current(),
+              SUCCESS_CONTINUE_MS,
+            );
+          } else if (res.status >= 500) {
+            // Un 500 puede venir después del cobro (p. ej. no se pudo activar).
+            setPayment({ status: "uncertain", message: data.error });
+          } else {
+            setPayment({ status: "error", message: data.error ?? "No se pudo procesar el pago." });
           }
-          onSuccess(data);
         } catch {
-          setError("Error de conexión. Antes de reintentar revisa \"Mis cursos\": el cobro pudo haberse realizado.");
+          setPayment({ status: "uncertain" });
         } finally {
-          setLoading(false);
           inFlight.current = false;
         }
       };
 
       Culqi.publicKey = publicKey;
+      if (customerEmail) Culqi.client = { email: customerEmail };
       // El nombre del comercio en el modal debe coincidir con la marca que
       // Culqi valida (la misma del sitio y de los documentos legales).
       Culqi.settings({
@@ -165,8 +229,28 @@ export function useCulqiCheckout({ endpoint, onSuccess }: Options) {
       });
       Culqi.open();
     },
-    [endpoint, onSuccess],
+    [endpoint, customerEmail],
   );
 
-  return { ready, loading, error, open };
+  /** Vuelve a abrir Culqi con el mismo monto tras un rechazo. */
+  const retry = useCallback(() => {
+    if (lastParams.current) open(lastParams.current);
+  }, [open]);
+
+  // Culqi.js tarda unos segundos en la primera visita: sin esto el botón se
+  // ve deshabilitado sin explicación. Si la carga falla manda `error`.
+  const preparing = !ready && !error;
+  const loading = payment.status === "processing" || payment.status === "success";
+
+  return {
+    ready,
+    preparing,
+    loading,
+    error,
+    open,
+    payment,
+    retry,
+    dismiss,
+    continueAfterSuccess,
+  };
 }
