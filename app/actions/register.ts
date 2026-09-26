@@ -56,16 +56,17 @@ export async function registerAction(_prev: unknown, formData: FormData) {
     return { error: "Ya existe una cuenta con este correo electrónico." };
   }
 
-  // El visitante llegó desde un curso ("Inscribirse gratis"). Guardamos esa
-  // intención en el usuario para poder inscribirlo solo al iniciar sesión: el
-  // `next` de la URL no sobrevive al salto por el correo de verificación.
+  // El visitante llegó desde un curso ("Inscribirse gratis" o "Comprar
+  // ahora"). Guardamos esa intención en el usuario para retomarla al iniciar
+  // sesión aunque el `next` de la URL se pierda (p. ej. entra por /login sin
+  // usar el enlace del correo). Ver `consumePendingCourse` en actions/auth.
   const next = sanitizeNextPath(formData.get("next"));
   const courseSlug = courseSlugFromNextPath(next);
   let pendingCourseId: string | null = null;
 
   if (courseSlug) {
     const course = await prisma.course.findFirst({
-      where: { published: true, isFree: true, OR: [{ slug: courseSlug }, { id: courseSlug }] },
+      where: { published: true, OR: [{ slug: courseSlug }, { id: courseSlug }] },
       select: { id: true },
     });
     pendingCourseId = course?.id ?? null;

@@ -1,6 +1,8 @@
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import { RegisterForm } from "@/components/auth/RegisterForm";
+import { CourseIntentCard } from "@/components/auth/CourseIntentCard";
+import { sanitizeNextPath } from "@/lib/navigation/next-path";
 
 export const metadata = {
   title: "Crear cuenta — RIVISIG Consultores",
@@ -15,5 +17,10 @@ export default async function RegistroPage(props: { searchParams: Promise<unknow
   const sp = (await props.searchParams) as Record<string, string | undefined>;
   const next = sp.next ?? undefined;
 
-  return <RegisterForm next={next} />;
+  return (
+    <RegisterForm
+      next={next}
+      courseIntent={<CourseIntentCard next={sanitizeNextPath(next)} stage="registro" />}
+    />
+  );
 }

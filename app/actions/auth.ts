@@ -9,7 +9,7 @@ import { loginSchema } from "@/lib/validations/auth";
 import { checkRateLimitDb, pruneExpiredRateLimits } from "@/lib/security/rateLimit";
 import { getClientIp, getRateLimitId } from "@/lib/security/ip";
 import { enrollInFreeCourse } from "@/lib/enrollments";
-import { sanitizeNextPath } from "@/lib/navigation/next-path";
+import { coursePurchasePath, sanitizeNextPath } from "@/lib/navigation/next-path";
 
 const MAX_FAILED_ATTEMPTS = 3;
 const LOCKOUT_MINUTES = 15;
@@ -115,11 +115,11 @@ export async function loginAction(_prev: unknown, formData: FormData) {
     tokenVersion: user.tokenVersion,
   });
 
-  // Inscripción pendiente: el visitante eligió un curso gratuito antes de
-  // tener cuenta. Se consume aquí (no al verificar el correo) porque es el
-  // primer punto del flujo donde ya hay una sesión válida.
-  const pendingCourseId = await consumePendingEnrollment(user);
-  if (pendingCourseId) redirect(`/student/courses/${pendingCourseId}?enrolled=1`);
+  // Curso pendiente: el visitante lo eligió antes de tener cuenta. Se consume
+  // aquí (no al verificar el correo) porque es el primer punto del flujo donde
+  // ya hay una sesión válida.
+  const pendingDestination = await consumePendingCourse(user);
+  if (pendingDestination) redirect(pendingDestination);
 
   const next = sanitizeNextPath(formData.get("next"));
   if (next) redirect(next);
@@ -130,14 +130,16 @@ export async function loginAction(_prev: unknown, formData: FormData) {
 }
 
 /**
- * Inscribe al estudiante en el curso gratuito que dejó pendiente al
- * registrarse y limpia la marca. Devuelve el id del curso si quedó inscrito.
+ * Retoma el curso que el estudiante eligió al registrarse y limpia la marca.
+ * Devuelve a dónde redirigir:
+ * - gratuito: lo inscribe y va al curso;
+ * - de pago: vuelve a la ficha con la intención de compra (abre el checkout);
+ * - ya lo tiene: va directo al curso.
  *
- * Nunca hace fallar el login: si la inscripción no se puede completar (curso
- * despublicado, pasó a ser de pago, error transitorio) sólo se limpia la
- * intención y el usuario entra normalmente.
+ * Nunca hace fallar el login: si el curso ya no aplica (despublicado, error
+ * transitorio) sólo se limpia la intención y el usuario entra normalmente.
  */
-async function consumePendingEnrollment(user: {
+async function consumePendingCourse(user: {
   id: string;
   name: string;
   email: string;
@@ -148,7 +150,7 @@ async function consumePendingEnrollment(user: {
 
   const courseId = user.pendingCourseId;
 
-  // Se limpia siempre y antes de inscribir: así un curso que ya no aplica no
+  // Se limpia siempre y antes de actuar: así un curso que ya no aplica no
   // vuelve a intentarse en cada login.
   await prisma.user.update({
     where: { id: user.id },
@@ -158,15 +160,32 @@ async function consumePendingEnrollment(user: {
   if (user.role !== "STUDENT") return null;
 
   try {
-    const result = await enrollInFreeCourse({
-      userId: user.id,
-      userName: user.name,
-      userEmail: user.email,
-      courseId,
+    const course = await prisma.course.findUnique({
+      where: { id: courseId },
+      select: { slug: true, published: true, isFree: true },
     });
-    return result.ok ? result.courseId : null;
+    if (!course?.published) return null;
+
+    if (course.isFree) {
+      const result = await enrollInFreeCourse({
+        userId: user.id,
+        userName: user.name,
+        userEmail: user.email,
+        courseId,
+      });
+      return result.ok ? `/student/courses/${result.courseId}?enrolled=1` : null;
+    }
+
+    const enrollment = await prisma.enrollment.findUnique({
+      where: { userId_courseId: { userId: user.id, courseId } },
+      select: { status: true },
+    });
+    if (enrollment && ["PAID", "COMPLETED"].includes(enrollment.status)) {
+      return `/student/courses/${courseId}`;
+    }
+    return coursePurchasePath(course.slug);
   } catch (err) {
-    console.error("[loginAction] Error inscribiendo curso pendiente:", err);
+    console.error("[loginAction] Error retomando curso pendiente:", err);
     return null;
   }
 }

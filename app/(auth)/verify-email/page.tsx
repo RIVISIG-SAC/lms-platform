@@ -1,7 +1,9 @@
+import type { ReactNode } from "react";
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { PetMascot } from "@/components/public/PetMascot";
+import { CourseIntentCard } from "@/components/auth/CourseIntentCard";
 import { cn } from "@/lib/utils";
 import { sanitizeNextPath, withNextParam } from "@/lib/navigation/next-path";
 
@@ -37,6 +39,7 @@ export default async function VerifyEmailPage({ searchParams }: Props) {
       <Result
         success="Tu correo ya fue verificado anteriormente."
         action={{ href: loginHref, label: "Iniciar sesión" }}
+        intent={<CourseIntentCard next={next} stage="verificado" />}
       />
     );
   }
@@ -63,6 +66,7 @@ export default async function VerifyEmailPage({ searchParams }: Props) {
     <Result
       success="¡Tu correo ha sido verificado exitosamente!"
       action={{ href: loginHref, label: "Iniciar sesión" }}
+      intent={<CourseIntentCard next={next} stage="verificado" />}
     />
   );
 }
@@ -71,10 +75,13 @@ function Result({
   success,
   error,
   action,
+  intent,
 }: {
   success?: string;
   error?: string;
   action?: { href: string; label: string };
+  /** Curso que el estudiante quería, para que retome la compra. */
+  intent?: ReactNode;
 }) {
   const isSuccess = Boolean(success);
 
@@ -94,6 +101,8 @@ function Result({
           {success ?? error}
         </p>
       </div>
+
+      {intent}
 
       {action ? (
         <Link href={action.href} className={cn(buttonVariants(), "w-full h-11 text-sm font-medium")}>

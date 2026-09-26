@@ -87,8 +87,9 @@ model User {
   passwordResetToken    String?   @unique
   passwordResetTokenExp DateTime?
   tokenVersion          Int       @default(0)
-  /// Curso gratuito que el visitante eligio antes de registrarse; se
-  /// consume en el primer login para inscribirlo automaticamente.
+  /// Curso que el visitante eligio antes de registrarse; se consume en el
+  /// primer login: si es gratuito lo inscribe, si es de pago lo devuelve al
+  /// curso para retomar la compra.
   pendingCourseId       String?
   createdAt             DateTime  @default(now())
   updatedAt             DateTime  @updatedAt
